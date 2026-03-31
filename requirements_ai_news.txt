@@ -1,0 +1,15 @@
+# AI ニュース自動収集スクリプト 依存パッケージ
+# pip install -r requirements_ai_news.txt でインストール
+
+# RSS フィード解析
+feedparser>=6.0.0
+
+# Claude API クライアント
+anthropic>=0.40.0
+
+# Google Sheets 操作
+gspread>=6.0.0
+google-auth>=2.0.0
+
+# 環境変数の読み込み (.env ファイル)
+python-dotenv>=1.0.0
