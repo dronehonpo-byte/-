@@ -1,4 +1,4 @@
-# LINE スクリーンショット監視ツール 依存パッケージ
+# 依存パッケージ
 # pip install -r requirements.txt でインストール
 
 # D-Bus バインディング（Linux デスクトップ通知の受信に必要）
@@ -6,3 +6,6 @@ dbus-python>=1.3.2
 
 # GLib メインループ（PyGObject 経由）
 PyGObject>=3.42.0
+
+# Claude API（営業メール自動生成）
+anthropic>=0.40.0
