@@ -6,3 +6,9 @@ dbus-python>=1.3.2
 
 # GLib メインループ（PyGObject 経由）
 PyGObject>=3.42.0
+
+# 勤怠管理ボット 依存パッケージ
+slack-bolt>=1.18.0
+slack-sdk>=3.21.0
+google-api-python-client>=2.100.0
+google-auth>=2.22.0
