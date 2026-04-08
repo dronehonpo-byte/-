@@ -1,0 +1,25 @@
+# 環境変数（機密情報を含む）
+.env
+
+# Google Calendar認証情報
+credentials.json
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
