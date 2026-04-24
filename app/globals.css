@@ -1,0 +1,94 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --navy: #0a1f44;
+  --gold: #c9a94b;
+  --paper: #fafaf7;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  color: #0a1f44;
+  background-color: var(--paper);
+  font-feature-settings: "palt";
+}
+
+/* 日本語の行間・字間を最適化 */
+.text-jp {
+  letter-spacing: 0.02em;
+  line-height: 1.85;
+}
+
+/* セクション見出し */
+.heading-xl {
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.25;
+}
+
+/* 選択色 */
+::selection {
+  background: #c9a94b;
+  color: #0a1f44;
+}
+
+/* スクロールバー微調整 */
+@media (min-width: 768px) {
+  ::-webkit-scrollbar {
+    width: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #f3f5fa;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #c3ccde;
+    border-radius: 8px;
+  }
+}
+
+/* 背景のドットパターン */
+.bg-dots {
+  background-image: radial-gradient(rgba(10, 31, 68, 0.08) 1px, transparent 1px);
+  background-size: 22px 22px;
+}
+
+/* ゴールドのシマーアニメ（信頼バッジ用） */
+.gold-shimmer {
+  background: linear-gradient(
+    110deg,
+    #c9a94b 0%,
+    #e9d797 45%,
+    #c9a94b 55%,
+    #c9a94b 100%
+  );
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: shimmer 4s linear infinite;
+}
+
+/* フォーカスリング（アクセシビリティ） */
+:focus-visible {
+  outline: 2px solid #c9a94b;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* フローティングCTAが画面最下部に重ならないための下余白ユーティリティ */
+.pb-floating {
+  padding-bottom: 6rem;
+}
+@media (min-width: 768px) {
+  .pb-floating {
+    padding-bottom: 5rem;
+  }
+}
