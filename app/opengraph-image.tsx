@@ -16,8 +16,7 @@ export default async function OG() {
           flexDirection: "column",
           justifyContent: "center",
           padding: 80,
-          background:
-            "linear-gradient(135deg, #0A1F44 0%, #1a3370 60%, #0A1F44 100%)",
+          background: "#2B4FD4",
           color: "white",
           fontFamily: "sans-serif",
         }}
@@ -29,7 +28,7 @@ export default async function OG() {
             gap: 12,
             fontSize: 24,
             letterSpacing: "0.25em",
-            color: "#C9A94B",
+            color: "white",
             fontWeight: 700,
             marginBottom: 40,
           }}
@@ -38,7 +37,7 @@ export default async function OG() {
             style={{
               height: 14,
               width: 14,
-              background: "#C9A94B",
+              background: "#FF6B4A",
               borderRadius: 9999,
               display: "block",
             }}
@@ -52,7 +51,7 @@ export default async function OG() {
             lineHeight: 1.15,
           }}
         >
-          月<span style={{ color: "#C9A94B" }}>40時間</span>を、
+          月<span style={{ color: "#FF6B4A" }}>40時間</span>を、
           <br />
           AIが返します。
         </div>
