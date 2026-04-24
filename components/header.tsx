@@ -17,14 +17,6 @@ const nav = [
 
 export function Header() {
   const [open, setOpen] = React.useState(false);
-  const [scrolled, setScrolled] = React.useState(false);
-
-  React.useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 24);
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
 
   React.useEffect(() => {
     document.body.style.overflow = open ? "hidden" : "";
@@ -34,21 +26,14 @@ export function Header() {
   }, [open]);
 
   return (
-    <header
-      className={cn(
-        "fixed inset-x-0 top-0 z-50 transition-all duration-300",
-        scrolled
-          ? "bg-white/85 backdrop-blur border-b border-navy/5 shadow-sm"
-          : "bg-transparent",
-      )}
-    >
+    <header className="fixed inset-x-0 top-0 z-50 bg-white border-b border-ink/8 shadow-[0_1px_2px_rgba(15,26,58,0.04)]">
       <div className="container flex h-16 md:h-20 items-center justify-between">
         <Link
           href="/"
-          className="flex items-center gap-2 font-en text-xl md:text-2xl tracking-[0.2em] font-bold text-navy"
+          className="flex items-center gap-2.5 font-en text-xl md:text-2xl tracking-[0.18em] font-bold text-ink"
           aria-label="KUHAKU ホーム"
         >
-          <span className="text-gold">●</span>
+          <span className="inline-block h-3 w-3 rounded-sm bg-navy" aria-hidden />
           KUHAKU
         </Link>
 
@@ -57,7 +42,7 @@ export function Header() {
             <Link
               key={item.href}
               href={item.href}
-              className="text-sm font-medium text-navy/80 hover:text-navy transition"
+              className="text-sm font-medium text-ink/75 hover:text-ink transition"
             >
               {item.label}
             </Link>
@@ -90,7 +75,7 @@ export function Header() {
           aria-label={open ? "メニューを閉じる" : "メニューを開く"}
           aria-expanded={open}
           aria-controls="mobile-menu"
-          className="md:hidden inline-flex h-10 w-10 items-center justify-center rounded-full bg-navy text-white"
+          className="md:hidden inline-flex h-10 w-10 items-center justify-center rounded-md border border-ink/15 text-ink"
           onClick={() => setOpen((o) => !o)}
         >
           {open ? <X size={20} /> : <MenuIcon size={20} />}
@@ -100,14 +85,14 @@ export function Header() {
       {open && (
         <div
           id="mobile-menu"
-          className="md:hidden border-t border-navy/10 bg-white/95 backdrop-blur"
+          className="md:hidden border-t border-ink/10 bg-white"
         >
           <nav className="container flex flex-col gap-1 py-4" aria-label="モバイルメニュー">
             {nav.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
-                className="rounded-lg px-3 py-3 text-base font-medium text-navy/90 hover:bg-navy-50"
+                className="rounded-md px-3 py-3 text-base font-medium text-ink/85 hover:bg-paper"
                 onClick={() => setOpen(false)}
               >
                 {item.label}
