@@ -133,23 +133,23 @@ export function DiagnosisFlow() {
                       disabled={disabled}
                       aria-pressed={selected}
                       className={cn(
-                        "relative rounded-2xl border-2 px-4 py-4 md:py-5 text-left transition-all",
+                        "relative rounded-xl border px-4 py-4 md:py-5 text-left transition-colors",
                         selected
-                          ? "border-gold bg-gold/10 shadow-gold/30"
-                          : "border-navy/10 bg-white hover:border-navy/30",
+                          ? "border-accent bg-accent/8"
+                          : "border-ink/10 bg-white hover:border-navy/40",
                         disabled && "opacity-40 cursor-not-allowed",
                       )}
                     >
                       <div className="text-2xl md:text-3xl" aria-hidden>
                         {o.emoji}
                       </div>
-                      <div className="mt-1 text-sm md:text-base font-bold text-navy">
+                      <div className="mt-1 text-sm md:text-base font-bold text-ink">
                         {o.label}
                       </div>
                       {selected && (
                         <Check
                           size={16}
-                          className="absolute top-3 right-3 text-gold"
+                          className="absolute top-3 right-3 text-accent"
                         />
                       )}
                     </button>
@@ -215,7 +215,7 @@ export function DiagnosisFlow() {
                       setContact({ method: "email", email: e.target.value })
                     }
                     placeholder="your@email.com"
-                    className="w-full rounded-xl border-2 border-navy/10 focus:border-gold bg-white px-4 py-3 text-navy"
+                    className="w-full rounded-md border border-ink/15 focus:border-accent focus:outline-none bg-white px-4 py-3 text-ink"
                   />
                 )}
                 <ContactOption
@@ -245,7 +245,7 @@ export function DiagnosisFlow() {
             type="button"
             onClick={goPrev}
             disabled={step === 1}
-            className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-bold text-navy/60 hover:text-navy disabled:opacity-30 disabled:pointer-events-none"
+            className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-bold text-ink/60 hover:text-ink disabled:opacity-30 disabled:pointer-events-none"
           >
             <ArrowLeft size={16} />
             戻る
@@ -288,10 +288,10 @@ function StepPanel({
       exit={{ opacity: 0, x: -20 }}
       transition={{ duration: 0.3 }}
     >
-      <h2 className="text-xl md:text-2xl font-bold text-navy leading-snug">
+      <h2 className="text-xl md:text-2xl font-bold text-ink leading-snug">
         {title}
       </h2>
-      <p className="mt-2 text-sm text-navy/70">{subtitle}</p>
+      <p className="mt-2 text-sm text-ink/70">{subtitle}</p>
       <div className="mt-6">{children}</div>
     </motion.div>
   );
@@ -320,23 +320,23 @@ function Choices({
             aria-checked={selected}
             onClick={() => onChange(o.value)}
             className={cn(
-              "flex items-center justify-between rounded-2xl border-2 px-5 py-4 text-left transition-all",
+              "flex items-center justify-between rounded-xl border px-5 py-4 text-left transition-colors",
               selected
-                ? "border-gold bg-gold/10 shadow-gold/30"
-                : "border-navy/10 bg-white hover:border-navy/30",
+                ? "border-accent bg-accent/8"
+                : "border-ink/10 bg-white hover:border-navy/40",
             )}
           >
-            <span className="text-sm md:text-base font-bold text-navy">
+            <span className="text-sm md:text-base font-bold text-ink">
               {o.label}
             </span>
             <span
               className={cn(
                 "h-5 w-5 rounded-full border-2 flex items-center justify-center transition",
-                selected ? "border-gold bg-gold" : "border-navy/20",
+                selected ? "border-accent bg-accent" : "border-ink/25",
               )}
               aria-hidden
             >
-              {selected && <Check size={12} className="text-navy" />}
+              {selected && <Check size={12} className="text-white" />}
             </span>
           </button>
         );
@@ -360,10 +360,10 @@ function ContactOption({
       onClick={onClick}
       aria-pressed={selected}
       className={cn(
-        "rounded-2xl border-2 px-5 py-4 text-left text-sm md:text-base font-bold text-navy transition",
+        "rounded-xl border px-5 py-4 text-left text-sm md:text-base font-bold text-ink transition-colors",
         selected
-          ? "border-gold bg-gold/10"
-          : "border-navy/10 bg-white hover:border-navy/30",
+          ? "border-accent bg-accent/8"
+          : "border-ink/10 bg-white hover:border-navy/40",
       )}
     >
       {label}
@@ -388,40 +388,37 @@ function ResultPanel({
       className="space-y-8"
     >
       {/* 削減時間 */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-navy text-white p-8 md:p-12 text-center shadow-[0_30px_80px_-30px_rgba(10,31,68,0.6)]">
-        <div className="absolute -top-20 -right-20 h-60 w-60 rounded-full bg-gold/30 blur-3xl" aria-hidden />
-        <div className="relative">
-          <div className="text-xs font-bold tracking-[0.2em] uppercase text-gold">
-            Your Result
-          </div>
-          <h2 className="mt-4 text-lg md:text-xl text-white/80 font-bold">
-            あなたの会社は、月に
-          </h2>
-          <div className="mt-4 font-en font-bold text-gold leading-none">
-            <CountUp
-              to={result.savedHours}
-              className="text-7xl md:text-[112px]"
-            />
-            <span className="text-3xl md:text-5xl ml-2">時間</span>
-          </div>
-          <p className="mt-4 text-sm md:text-base text-white/75">
-            = 金額換算で約{" "}
-            <span className="text-gold font-bold">
-              <CountUp to={result.savedYen} format={(n) => Math.round(n).toLocaleString("ja-JP")} />
-              円
-            </span>
-            /月 を削減できます
-          </p>
-          <p className="mt-2 text-[11px] md:text-xs text-white/50">
-            ※ 削減時間（月）= 週時間中央値 × 4週 × 0.7 × 規模係数
-          </p>
+      <div className="rounded-xl bg-navy text-white p-8 md:p-12 text-center">
+        <div className="text-xs font-bold tracking-[0.22em] uppercase text-accent">
+          Your Result
         </div>
+        <h2 className="mt-4 text-lg md:text-xl text-white/80 font-bold">
+          あなたの会社は、月に
+        </h2>
+        <div className="mt-4 font-en font-bold text-white leading-none">
+          <CountUp
+            to={result.savedHours}
+            className="text-7xl md:text-[112px]"
+          />
+          <span className="text-3xl md:text-5xl ml-2">時間</span>
+        </div>
+        <p className="mt-4 text-sm md:text-base text-white/85">
+          = 金額換算で約{" "}
+          <span className="text-accent font-bold">
+            <CountUp to={result.savedYen} format={(n) => Math.round(n).toLocaleString("ja-JP")} />
+            円
+          </span>
+          /月 を削減できます
+        </p>
+        <p className="mt-2 text-[11px] md:text-xs text-white/50">
+          ※ 削減時間（月）= 週時間中央値 × 4週 × 0.7 × 規模係数
+        </p>
       </div>
 
       {/* 推奨メニュー */}
       {result.recommendedMenus.length > 0 && (
         <div>
-          <h3 className="text-lg md:text-xl font-bold text-navy mb-4">
+          <h3 className="text-lg md:text-xl font-bold text-ink mb-4">
             🎯 貴社におすすめのメニュー Top 3
           </h3>
           <div className="grid gap-3">
@@ -430,14 +427,14 @@ function ResultPanel({
               return (
                 <div
                   key={m.id}
-                  className="rounded-2xl border border-navy/10 bg-white p-5 shadow-soft flex items-start gap-4"
+                  className="rounded-xl border border-ink/10 bg-white p-5 flex items-start gap-4"
                 >
-                  <div className="h-10 w-10 shrink-0 rounded-xl bg-gradient-gold text-navy font-en font-bold flex items-center justify-center">
+                  <div className="h-10 w-10 shrink-0 rounded-md bg-navy text-white font-en font-bold flex items-center justify-center">
                     {i + 1}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-en text-[10px] font-bold tracking-widest text-navy/50 bg-navy/5 rounded px-1.5 py-0.5">
+                      <span className="font-en text-[10px] font-bold tracking-widest text-ink/55 bg-paper border border-ink/8 rounded px-1.5 py-0.5">
                         {m.no}
                       </span>
                       <span
@@ -447,15 +444,15 @@ function ResultPanel({
                         {t.label}
                       </span>
                     </div>
-                    <div className="mt-1.5 text-sm md:text-base font-bold text-navy leading-tight">
+                    <div className="mt-1.5 text-sm md:text-base font-bold text-ink leading-tight">
                       {m.name}
                     </div>
-                    <div className="mt-1 text-xs text-navy/60 leading-relaxed">
+                    <div className="mt-1 text-xs text-ink/60 leading-relaxed">
                       {m.shortDescription}
                     </div>
                   </div>
                   <div className="text-right shrink-0">
-                    <div className="font-en text-xl md:text-2xl font-bold text-navy">
+                    <div className="font-en text-xl md:text-2xl font-bold text-ink">
                       {m.price}
                       <span className="text-xs font-bold ml-0.5">万円</span>
                     </div>
@@ -469,34 +466,34 @@ function ResultPanel({
 
       {/* おすすめセット */}
       {result.recommendedSet && (
-        <div className="rounded-2xl border-2 border-gold bg-gold/5 p-6 md:p-8">
+        <div className="rounded-xl border border-accent bg-accent/8 p-6 md:p-8">
           <div className="flex items-center gap-3">
-            <div className="h-12 w-12 rounded-xl bg-gradient-gold text-2xl flex items-center justify-center">
+            <div className="h-12 w-12 rounded-md bg-accent text-white text-2xl flex items-center justify-center">
               {result.recommendedSet.emoji}
             </div>
             <div>
-              <div className="text-[11px] font-bold tracking-widest uppercase text-gold">
+              <div className="text-[11px] font-bold tracking-widest uppercase text-accent">
                 おすすめセット
               </div>
-              <div className="font-bold text-navy text-base md:text-lg">
+              <div className="font-bold text-ink text-base md:text-lg">
                 {result.recommendedSet.name}
               </div>
             </div>
           </div>
-          <p className="mt-3 text-sm text-navy/75 leading-relaxed">
+          <p className="mt-3 text-sm text-ink/75 leading-relaxed">
             {result.recommendedSet.summary}
           </p>
-          <div className="mt-4 flex items-end justify-between pt-4 border-t border-gold/30">
-            <div className="text-xs text-navy/60 font-en">
+          <div className="mt-4 flex items-end justify-between pt-4 border-t border-accent/30">
+            <div className="text-xs text-ink/60 font-en">
               {getSetMenus(result.recommendedSet)
                 .map((m) => m.no)
                 .join(" + ")}
             </div>
             <div>
-              <span className="text-xs text-navy/60 line-through">
+              <span className="text-xs text-ink/60 line-through">
                 {result.recommendedSet.listPrice}万円
               </span>
-              <span className="font-en text-2xl font-bold text-gold ml-2">
+              <span className="font-en text-2xl font-bold text-accent ml-2">
                 {result.recommendedSet.price}万円
               </span>
             </div>
@@ -538,13 +535,13 @@ function ResultPanel({
       </div>
 
       <div className="pt-4 text-center">
-        <Link href="/" className="text-sm text-navy/60 hover:text-navy underline underline-offset-4">
+        <Link href="/" className="text-sm text-ink/60 hover:text-ink underline underline-offset-4">
           ← ランディングページに戻る
         </Link>
       </div>
 
       {contact.method === "email" && contact.email && (
-        <p className="text-center text-xs text-navy/50">
+        <p className="text-center text-xs text-ink/50">
           結果を {contact.email} にお送りする準備ができました。
         </p>
       )}

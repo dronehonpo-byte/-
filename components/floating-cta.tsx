@@ -25,7 +25,7 @@ export function FloatingCTA() {
       )}
     >
       <div className="container pb-3 md:pb-4">
-        <div className="pointer-events-auto mx-auto max-w-4xl rounded-2xl bg-navy/95 backdrop-blur text-white shadow-[0_-8px_40px_-8px_rgba(10,31,68,0.4)] border border-white/10">
+        <div className="pointer-events-auto mx-auto max-w-4xl rounded-xl bg-navy-900 text-white border border-white/10 overflow-hidden shadow-[0_-4px_20px_-4px_rgba(15,26,58,0.18)]">
           <div className="grid grid-cols-3 divide-x divide-white/10">
             <a
               href={ctaLinks.timerex}
@@ -34,7 +34,7 @@ export function FloatingCTA() {
               data-ga="floating_timerex"
               className="flex flex-col md:flex-row items-center justify-center gap-1 md:gap-2 px-2 md:px-4 py-3 md:py-4 text-xs md:text-sm font-bold hover:bg-white/5 transition"
             >
-              <Calendar size={18} className="text-gold" />
+              <Calendar size={18} className="text-white" />
               <span>無料相談</span>
             </a>
             <a
@@ -50,7 +50,7 @@ export function FloatingCTA() {
             <Link
               href={ctaLinks.diagnosis}
               data-ga="floating_diagnosis"
-              className="flex flex-col md:flex-row items-center justify-center gap-1 md:gap-2 px-2 md:px-4 py-3 md:py-4 text-xs md:text-sm font-bold bg-gold text-navy hover:brightness-105 transition"
+              className="flex flex-col md:flex-row items-center justify-center gap-1 md:gap-2 px-2 md:px-4 py-3 md:py-4 text-xs md:text-sm font-bold bg-accent text-white hover:bg-accent-700 transition-colors"
             >
               <Sparkles size={18} />
               <span>AI診断</span>

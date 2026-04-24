@@ -17,45 +17,38 @@ export default function DiagnosisPage() {
     <>
       <Header />
       <main>
-        <section className="relative overflow-hidden pt-28 md:pt-36 pb-20 md:pb-28">
-          <div className="absolute inset-0 bg-dots opacity-60" aria-hidden />
-          <div
-            className="absolute -top-40 right-[-10%] h-[420px] w-[420px] rounded-full bg-gold/15 blur-3xl"
-            aria-hidden
-          />
-
-          <div className="container relative">
+        <section className="relative bg-paper pt-28 md:pt-36 pb-20 md:pb-28">
+          <div className="container">
             <div className="max-w-2xl mx-auto text-center mb-10 md:mb-14">
               <Link
                 href="/"
-                className="inline-flex items-center gap-2 text-xs md:text-sm font-bold text-navy/60 hover:text-navy mb-6"
+                className="inline-flex items-center gap-2 text-xs md:text-sm font-bold text-ink/60 hover:text-ink mb-6"
               >
                 ← LPに戻る
               </Link>
-              <div className="inline-flex items-center gap-2 rounded-full border border-navy/15 bg-white/80 px-4 py-1.5 text-xs font-bold tracking-[0.2em] text-navy/80 backdrop-blur">
-                <span className="h-1.5 w-1.5 rounded-full bg-gold" />
+              <div className="text-[11px] md:text-xs font-bold tracking-[0.22em] uppercase text-navy">
                 30秒でわかる
               </div>
-              <h1 className="heading-xl mt-5 text-3xl md:text-5xl lg:text-6xl leading-[1.2]">
+              <h1 className="heading-xl mt-3 text-3xl md:text-5xl lg:text-6xl leading-[1.18]">
                 あなたの会社、
                 <br className="md:hidden" />
-                <span className="text-gold">月何時間</span>
+                <span className="text-accent">月何時間</span>
                 削減できる？
               </h1>
-              <p className="mt-5 text-sm md:text-base text-navy/70 text-jp">
+              <p className="mt-5 text-sm md:text-base text-ink/75 text-jp">
                 5つの質問に答えるだけ。貴社の規模と業務内容から、
                 <br className="hidden md:inline" />
                 削減時間・金額・推奨メニューを自動で算出します。
               </p>
             </div>
 
-            <div className="mx-auto max-w-2xl rounded-3xl border border-navy/10 bg-white shadow-card p-6 md:p-10">
+            <div className="mx-auto max-w-2xl rounded-xl border border-ink/10 bg-white p-6 md:p-10">
               <DiagnosisFlow />
             </div>
 
-            <p className="mt-6 text-center text-xs text-navy/50">
+            <p className="mt-6 text-center text-xs text-ink/55">
               入力内容はサービス改善のため匿名で記録される場合があります。個人情報の取扱いは
-              <Link href="/legal/privacy-policy" className="underline underline-offset-2 hover:text-navy">
+              <Link href="/legal/privacy-policy" className="underline underline-offset-2 hover:text-ink">
                 プライバシーポリシー
               </Link>
               をご確認ください。
