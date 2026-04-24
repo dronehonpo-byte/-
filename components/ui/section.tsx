@@ -41,22 +41,20 @@ export function Section({
             {eyebrow && (
               <div
                 className={cn(
-                  "inline-flex items-center gap-2 self-center rounded-full border px-4 py-1.5 text-xs tracking-[0.2em] font-bold uppercase",
-                  tone === "navy"
-                    ? "border-gold/40 text-gold"
-                    : "border-navy/20 text-navy/70",
+                  "text-[11px] md:text-xs tracking-[0.22em] font-bold uppercase",
+                  tone === "navy" ? "text-accent" : "text-navy",
                 )}
               >
                 {eyebrow}
               </div>
             )}
             {heading && (
-              <h2 className="heading-xl text-2xl md:text-4xl lg:text-[42px] leading-[1.3]">
+              <h2 className="heading-xl text-2xl md:text-4xl lg:text-[44px] leading-[1.25]">
                 {heading}
               </h2>
             )}
             {lead && (
-              <p className="text-jp text-sm md:text-base opacity-80">{lead}</p>
+              <p className="text-jp text-sm md:text-base opacity-75">{lead}</p>
             )}
           </div>
         )}

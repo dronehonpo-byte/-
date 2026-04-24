@@ -14,7 +14,7 @@ export function Flow() {
       <div className="relative mx-auto max-w-3xl">
         {/* 縦のタイムラインライン */}
         <div
-          className="absolute left-5 md:left-1/2 top-2 bottom-2 w-px bg-navy/15 md:-translate-x-1/2"
+          className="absolute left-5 md:left-1/2 top-2 bottom-2 w-px bg-ink/12 md:-translate-x-1/2"
           aria-hidden
         />
 
@@ -28,19 +28,19 @@ export function Flow() {
               >
                 {/* カード */}
                 <div className={`pl-14 md:pl-0 ${i % 2 === 1 ? "md:pr-12 md:text-right" : "md:pl-12"}`}>
-                  <div className="rounded-2xl border border-navy/10 bg-paper p-5 md:p-6 shadow-soft">
+                  <div className="rounded-xl border border-ink/10 bg-white p-5 md:p-6">
                     <div className="flex flex-wrap items-center gap-2 mb-2">
-                      <span className="font-en text-[10px] font-bold tracking-[0.2em] uppercase text-gold">
+                      <span className="font-en text-[10px] font-bold tracking-[0.2em] uppercase text-accent">
                         Step {step.step}
                       </span>
-                      <span className="text-[11px] font-bold bg-navy/5 text-navy/70 rounded-full px-2 py-0.5">
+                      <span className="text-[11px] font-bold bg-paper text-ink/70 rounded-full px-2 py-0.5 border border-ink/8">
                         {step.duration}
                       </span>
                     </div>
-                    <h3 className="text-base md:text-lg font-bold text-navy">
+                    <h3 className="text-base md:text-lg font-bold text-ink">
                       {step.title}
                     </h3>
-                    <p className="mt-2 text-xs md:text-sm text-navy/70 leading-relaxed">
+                    <p className="mt-2 text-xs md:text-sm text-ink/70 leading-relaxed">
                       {step.body}
                     </p>
                   </div>
@@ -48,7 +48,7 @@ export function Flow() {
 
                 {/* タイムライン上のステップマーカー */}
                 <div
-                  className="absolute left-0 md:left-1/2 top-4 md:-translate-x-1/2 flex items-center justify-center h-10 w-10 rounded-full bg-gradient-gold text-navy font-en text-sm font-bold shadow-gold border-4 border-white"
+                  className="absolute left-0 md:left-1/2 top-4 md:-translate-x-1/2 flex items-center justify-center h-10 w-10 rounded-full bg-navy text-white font-en text-sm font-bold border-4 border-white"
                   aria-hidden
                 >
                   {step.step}

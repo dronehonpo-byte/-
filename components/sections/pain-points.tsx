@@ -20,19 +20,19 @@ export function PainPoints() {
       <StaggerList className="grid gap-4 md:gap-5 md:grid-cols-2 lg:grid-cols-3">
         {painPoints.map((p) => (
           <StaggerItem key={p.title}>
-            <div className="group h-full rounded-2xl border border-navy/10 bg-paper hover:border-gold/50 transition-all p-6 md:p-7 shadow-soft hover:shadow-card">
+            <div className="h-full rounded-xl border border-ink/10 bg-white hover:border-navy/40 transition-colors p-6 md:p-7">
               <div className="flex items-start gap-4">
                 <div
-                  className="h-12 w-12 shrink-0 rounded-xl bg-gradient-gold flex items-center justify-center text-2xl shadow-gold/50"
+                  className="h-11 w-11 shrink-0 rounded-lg bg-navy/8 flex items-center justify-center text-xl"
                   aria-hidden
                 >
                   {p.emoji}
                 </div>
                 <div className="min-w-0">
-                  <h3 className="text-base md:text-lg font-bold text-navy leading-tight">
+                  <h3 className="text-base md:text-lg font-bold text-ink leading-tight">
                     {p.title}
                   </h3>
-                  <p className="mt-3 text-sm text-navy/70 leading-relaxed border-l-2 border-gold/40 pl-3 italic">
+                  <p className="mt-3 text-sm text-ink/70 leading-relaxed border-l-2 border-navy/30 pl-3">
                     「{p.voice}」
                   </p>
                 </div>
@@ -43,15 +43,15 @@ export function PainPoints() {
       </StaggerList>
 
       <Reveal delay={0.15}>
-        <div className="mx-auto mt-14 md:mt-20 max-w-3xl rounded-2xl bg-navy text-white p-6 md:p-10 text-center shadow-soft">
-          <p className="text-base md:text-lg leading-relaxed text-white/90">
+        <div className="mx-auto mt-14 md:mt-20 max-w-3xl rounded-xl bg-navy text-white p-6 md:p-10 text-center">
+          <p className="text-base md:text-lg leading-relaxed text-white/95">
             これらは全て、本来
-            <span className="text-gold font-bold">「AIに任せるべき仕事」</span>
+            <span className="text-accent font-bold">「AIに任せるべき仕事」</span>
             です。
             <br className="hidden md:inline" />
             KUHAKUは、経営者の時間を奪っている定型業務を、AIで完全自動化します。
           </p>
-          <p className="mt-4 text-sm md:text-base text-gold font-bold">
+          <p className="mt-4 text-sm md:text-base text-accent font-bold">
             しかも、成果が出なければ1円もいただきません。
           </p>
         </div>

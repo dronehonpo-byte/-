@@ -7,25 +7,18 @@ export function FinalCta() {
   return (
     <section
       id="cta"
-      className="relative overflow-hidden bg-gradient-navy text-white py-24 md:py-32"
+      className="relative bg-navy text-white py-24 md:py-32"
     >
-      <div
-        className="absolute -top-40 left-1/2 -translate-x-1/2 h-[600px] w-[600px] rounded-full bg-gold/15 blur-3xl"
-        aria-hidden
-      />
-      <div className="absolute inset-0 bg-dots opacity-10" aria-hidden />
-
-      <div className="container relative">
+      <div className="container">
         <Reveal>
           <div className="max-w-3xl mx-auto text-center">
-            <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 py-1.5 text-xs font-bold tracking-[0.2em]">
-              <span className="h-1.5 w-1.5 rounded-full bg-gold" />
-              FINAL CTA
+            <div className="text-[11px] md:text-xs font-bold tracking-[0.22em] uppercase text-accent">
+              Final CTA
             </div>
-            <h2 className="mt-6 text-3xl md:text-5xl lg:text-6xl font-bold leading-[1.2]">
+            <h2 className="mt-5 text-3xl md:text-5xl lg:text-6xl font-bold leading-[1.18]">
               さあ、
               <br className="md:hidden" />
-              <span className="gold-shimmer">空白</span>
+              <span className="text-accent">空白</span>
               をつくる時間です。
             </h2>
             <p className="mt-6 text-jp text-sm md:text-base text-white/75">
@@ -91,10 +84,10 @@ function CtaCard({
   primary?: boolean;
   gaName: string;
 }) {
-  const className = `group h-full rounded-3xl p-6 md:p-7 border transition-all hover:-translate-y-1 flex flex-col ${
+  const className = `group h-full rounded-xl p-6 md:p-7 border transition-colors flex flex-col ${
     primary
-      ? "bg-gradient-gold text-navy border-transparent shadow-gold"
-      : "bg-white/5 border-white/10 backdrop-blur text-white hover:bg-white/10"
+      ? "bg-accent text-white border-accent hover:bg-accent-700"
+      : "bg-white/5 border-white/15 text-white hover:bg-white/10"
   }`;
 
   const content = (
@@ -102,38 +95,32 @@ function CtaCard({
       <div className="flex items-center justify-between">
         <span
           className={`text-[11px] font-bold tracking-widest uppercase ${
-            primary ? "text-navy/80" : "text-gold"
+            primary ? "text-white/85" : "text-accent"
           }`}
         >
           {chip}
         </span>
         <span
-          className={`inline-flex h-9 w-9 items-center justify-center rounded-full ${
-            primary
-              ? "bg-navy text-white"
-              : "bg-white/10 text-gold"
-          } group-hover:scale-110 transition`}
+          className={`inline-flex h-9 w-9 items-center justify-center rounded-md ${
+            primary ? "bg-white/15 text-white" : "bg-white/10 text-accent"
+          }`}
         >
           {icon}
         </span>
       </div>
-      <h3
-        className={`mt-4 text-lg md:text-xl font-bold leading-tight ${
-          primary ? "text-navy" : ""
-        }`}
-      >
+      <h3 className="mt-4 text-lg md:text-xl font-bold leading-tight">
         {title}
       </h3>
       <p
         className={`mt-2 text-xs md:text-sm leading-relaxed flex-1 ${
-          primary ? "text-navy/75" : "text-white/70"
+          primary ? "text-white/85" : "text-white/70"
         }`}
       >
         {body}
       </p>
       <div
         className={`mt-6 text-xs md:text-sm font-bold ${
-          primary ? "text-navy" : "text-gold"
+          primary ? "text-white" : "text-accent"
         }`}
       >
         詳しく見る →
