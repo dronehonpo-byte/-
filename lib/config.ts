@@ -37,8 +37,9 @@ export const company = {
 
 export const ctaLinks = {
   timerex:
-    process.env.NEXT_PUBLIC_TIMEREX_URL ?? "https://timerex.net/s/miyabee",
-  line: process.env.NEXT_PUBLIC_LINE_URL ?? "https://lin.ee/kuhaku",
+    process.env.NEXT_PUBLIC_TIMEREX_URL ??
+    "https://timerex.net/s/dronehonpo_dbab/8ea01e5e",
+  line: process.env.NEXT_PUBLIC_LINE_URL ?? "https://lin.ee/RtTNUsZ",
   diagnosis: "/ai-shindan",
 };
 
