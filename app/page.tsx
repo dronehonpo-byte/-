@@ -3,6 +3,7 @@ import { Footer } from "@/components/footer";
 import { FloatingCTA } from "@/components/floating-cta";
 import { Hero } from "@/components/sections/hero";
 import { PainPoints } from "@/components/sections/pain-points";
+import { DiagnosisInline } from "@/components/sections/diagnosis-inline";
 import { Strengths } from "@/components/sections/strengths";
 import { MenusSection } from "@/components/sections/menus-section";
 import { Pricing } from "@/components/sections/pricing";
@@ -18,6 +19,7 @@ export default function HomePage() {
       <main>
         <Hero />
         <PainPoints />
+        <DiagnosisInline />
         <Strengths />
         <MenusSection />
         <Pricing />

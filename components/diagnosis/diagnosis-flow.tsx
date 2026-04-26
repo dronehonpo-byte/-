@@ -536,7 +536,7 @@ function ResultPanel({
 
       <div className="pt-4 text-center">
         <Link href="/" className="text-sm text-ink/60 hover:text-ink underline underline-offset-4">
-          ← ランディングページに戻る
+          ↑ TOPに戻る
         </Link>
       </div>
 
