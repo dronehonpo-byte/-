@@ -31,33 +31,39 @@ export function FinalCta() {
 
         <Reveal delay={0.1}>
           <div className="mx-auto mt-12 md:mt-16 grid gap-4 md:grid-cols-3 max-w-4xl">
-            <CtaCard
-              href={ctaLinks.timerex}
-              target="_blank"
-              icon={<Calendar size={20} />}
-              chip="💎 メイン"
-              title="無料相談（60分）"
-              body="TimeRexで日程を予約する"
-              primary
-              gaName="final_timerex"
-            />
-            <CtaCard
-              href={ctaLinks.line}
-              target="_blank"
-              icon={<Gift size={20} />}
-              chip="🎁 サブ①"
-              title="LINE登録で3つの資料"
-              body="25メニューPDF・優先順位マトリクス・AIチェックリスト50"
-              gaName="final_line"
-            />
-            <CtaCard
-              href={ctaLinks.diagnosis}
-              icon={<Sparkles size={20} />}
-              chip="🔍 サブ②"
-              title="30秒のAI診断"
-              body="今すぐ貴社に合うメニューを診断する"
-              gaName="final_diagnosis"
-            />
+            <div className="md:col-span-2">
+              <CtaCard
+                href={ctaLinks.timerex}
+                target="_blank"
+                icon={<Calendar size={22} />}
+                chip="💎 まずはここから"
+                title="無料相談（60分）を予約する"
+                body="現状ヒアリング → 推奨メニュー → 概算見積。Zoomで売り込みなし。"
+                primary
+                gaName="final_timerex"
+              />
+            </div>
+            <div className="grid gap-4">
+              <CtaCard
+                href={ctaLinks.line}
+                target="_blank"
+                icon={<Gift size={18} />}
+                chip="サブ"
+                title="LINE登録で資料を受け取る"
+                body="25メニューPDF・優先順位マトリクス"
+                compact
+                gaName="final_line"
+              />
+              <CtaCard
+                href={ctaLinks.diagnosis}
+                icon={<Sparkles size={18} />}
+                chip="サブ"
+                title="30秒のAI診断"
+                body="貴社に合うメニューを自動算出"
+                compact
+                gaName="final_diagnosis"
+              />
+            </div>
           </div>
         </Reveal>
       </div>
@@ -73,6 +79,7 @@ function CtaCard({
   title,
   body,
   primary,
+  compact,
   gaName,
 }: {
   href: string;
@@ -82,48 +89,55 @@ function CtaCard({
   title: string;
   body: string;
   primary?: boolean;
+  compact?: boolean;
   gaName: string;
 }) {
-  const className = `group h-full rounded-xl p-6 md:p-7 border transition-colors flex flex-col ${
+  const className = `group h-full rounded-xl border transition-colors flex flex-col ${
     primary
-      ? "bg-accent text-white border-accent hover:bg-accent-700"
-      : "bg-white/5 border-white/15 text-white hover:bg-white/10"
+      ? "bg-accent text-white border-accent hover:bg-accent-700 p-6 md:p-8"
+      : compact
+        ? "bg-white/5 border-white/15 text-white hover:bg-white/10 p-4 md:p-5"
+        : "bg-white/5 border-white/15 text-white hover:bg-white/10 p-6 md:p-7"
   }`;
 
   const content = (
     <>
       <div className="flex items-center justify-between">
         <span
-          className={`text-[11px] font-bold tracking-widest uppercase ${
+          className={`text-[10px] md:text-[11px] font-bold tracking-widest uppercase ${
             primary ? "text-white/85" : "text-accent"
           }`}
         >
           {chip}
         </span>
         <span
-          className={`inline-flex h-9 w-9 items-center justify-center rounded-md ${
-            primary ? "bg-white/15 text-white" : "bg-white/10 text-accent"
-          }`}
+          className={`inline-flex items-center justify-center rounded-md ${
+            compact ? "h-8 w-8" : "h-9 w-9"
+          } ${primary ? "bg-white/15 text-white" : "bg-white/10 text-accent"}`}
         >
           {icon}
         </span>
       </div>
-      <h3 className="mt-4 text-lg md:text-xl font-bold leading-tight">
+      <h3
+        className={`mt-3 font-bold leading-tight ${
+          primary ? "text-xl md:text-2xl" : "text-sm md:text-base"
+        }`}
+      >
         {title}
       </h3>
       <p
-        className={`mt-2 text-xs md:text-sm leading-relaxed flex-1 ${
-          primary ? "text-white/85" : "text-white/70"
+        className={`mt-2 leading-relaxed flex-1 ${
+          primary ? "text-sm md:text-base text-white/90" : "text-xs text-white/70"
         }`}
       >
         {body}
       </p>
       <div
-        className={`mt-6 text-xs md:text-sm font-bold ${
-          primary ? "text-white" : "text-accent"
+        className={`mt-4 font-bold ${
+          primary ? "text-sm md:text-base text-white" : "text-xs text-accent"
         }`}
       >
-        詳しく見る →
+        {primary ? "TimeRexで日程を選ぶ →" : "詳しく見る →"}
       </div>
     </>
   );
