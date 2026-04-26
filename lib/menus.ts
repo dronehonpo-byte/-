@@ -266,6 +266,7 @@ export const menus: Menu[] = [
     name: "議事録・ToDo抽出",
     price: 20,
     tier: "pro",
+    featured: true,
     shortDescription:
       "会議音声をアップすると、要約＋決定事項＋ToDoがSlackに届く。",
     deliverable:

@@ -4,89 +4,73 @@ import * as React from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Plus, Star, ChevronDown } from "lucide-react";
 import { Section } from "../ui/section";
-import {
-  categories,
-  getMenusByCategory,
-  tierMeta,
-  type Category,
-  type Menu,
-} from "@/lib/menus";
+import { menus, tierMeta, type Menu } from "@/lib/menus";
 import { cn } from "@/lib/utils";
 
 export function MenusSection() {
-  const [active, setActive] = React.useState<Category>("sales");
+  const [showAll, setShowAll] = React.useState(false);
+  const featured = menus.filter((m) => m.featured);
+  const others = menus.filter((m) => !m.featured);
 
   return (
     <Section
       id="menus"
       tone="white"
       eyebrow="Service Menu"
-      heading="25の業務を、自動化できます。"
-      lead="5カテゴリ・25メニュー。貴社に合う組み合わせで導入できます。"
+      heading={
+        <>
+          まずは、特に効く
+          <br className="md:hidden" />
+          <span className="text-accent">6つのメニュー</span>から。
+        </>
+      }
+      lead="営業・マーケ・バックオフィス・書類・HR の5カテゴリで合計25メニュー。代表的な6つを紹介します。"
     >
-      {/* タブ */}
-      <div
-        role="tablist"
-        aria-label="サービスカテゴリ"
-        className="mx-auto mb-10 flex flex-wrap justify-center gap-2 md:gap-3"
-      >
-        {categories.map((cat) => {
-          const isActive = cat.id === active;
-          return (
-            <button
-              key={cat.id}
-              role="tab"
-              type="button"
-              aria-selected={isActive}
-              aria-controls={`panel-${cat.id}`}
-              id={`tab-${cat.id}`}
-              onClick={() => setActive(cat.id)}
-              className={cn(
-                "group relative rounded-full border px-4 md:px-6 py-2.5 md:py-3 text-xs md:text-sm font-bold transition-colors",
-                isActive
-                  ? "border-navy bg-navy text-white"
-                  : "border-ink/15 bg-white text-ink/70 hover:border-navy hover:text-navy",
-              )}
-            >
-              <span className="mr-1" aria-hidden>
-                {cat.emoji}
-              </span>
-              {cat.label}
-            </button>
-          );
-        })}
+      {/* Featured 6 */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {featured.map((menu) => (
+          <MenuCard key={menu.id} menu={menu} />
+        ))}
       </div>
 
-      {/* パネル */}
-      {categories.map((cat) => (
-        <div
-          key={cat.id}
-          id={`panel-${cat.id}`}
-          role="tabpanel"
-          aria-labelledby={`tab-${cat.id}`}
-          hidden={cat.id !== active}
+      {/* Toggle for the other 19 */}
+      <div className="mt-10 text-center">
+        <button
+          type="button"
+          onClick={() => setShowAll((v) => !v)}
+          aria-expanded={showAll}
+          aria-controls="all-menus"
+          className="inline-flex items-center gap-2 rounded-full border border-ink/15 px-6 py-3 text-sm font-bold text-ink hover:border-navy hover:text-navy transition-colors"
         >
-          {cat.id === active && (
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={cat.id}
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
-                transition={{ duration: 0.3 }}
-                className="grid gap-4 md:grid-cols-2 lg:grid-cols-3"
-              >
-                {getMenusByCategory(cat.id).map((menu) => (
-                  <MenuCard key={menu.id} menu={menu} />
-                ))}
-              </motion.div>
-            </AnimatePresence>
-          )}
-        </div>
-      ))}
+          {showAll ? "閉じる" : `他にも${others.length}メニューを見る`}
+          <ChevronDown
+            size={16}
+            className={cn("transition-transform", showAll && "rotate-180")}
+          />
+        </button>
+      </div>
+
+      <AnimatePresence initial={false}>
+        {showAll && (
+          <motion.div
+            id="all-menus"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.35 }}
+            className="overflow-hidden"
+          >
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 mt-10">
+              {others.map((menu) => (
+                <MenuCard key={menu.id} menu={menu} />
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <p className="mt-10 text-center text-xs md:text-sm text-ink/60">
-        ⭐ 印は各カテゴリの最推奨メニュー。どれから始めるか迷ったらこれ。
+        ⭐ 印は KUHAKU が特に推奨する 6 メニューです。
       </p>
     </Section>
   );
@@ -100,9 +84,7 @@ function MenuCard({ menu }: { menu: Menu }) {
     <article
       className={cn(
         "h-full rounded-xl border bg-white transition-colors overflow-hidden",
-        open
-          ? "border-accent"
-          : "border-ink/10 hover:border-navy/40",
+        open ? "border-accent" : "border-ink/10 hover:border-navy/40",
       )}
     >
       <div className="p-5 md:p-6">
@@ -115,7 +97,7 @@ function MenuCard({ menu }: { menu: Menu }) {
               <Star
                 size={14}
                 className="text-accent fill-accent shrink-0"
-                aria-label="注目メニュー"
+                aria-label="推奨メニュー"
               />
             )}
           </div>
