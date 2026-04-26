@@ -15,7 +15,7 @@ export function Faq() {
       tone="white"
       eyebrow="FAQ"
       heading="よくあるご質問"
-      lead="契約・料金・保守など、経営者の方から多くいただく12の質問にお答えします。"
+      lead="契約・料金・保守について、経営者の方から特に多くいただく質問にお答えします。"
     >
       <div className="mx-auto max-w-3xl divide-y divide-ink/10 rounded-xl border border-ink/10 bg-white overflow-hidden">
         {faqItems.map((item, i) => {
