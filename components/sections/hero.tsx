@@ -9,19 +9,23 @@ export function Hero() {
           {/* Left: copy + CTA */}
           <div className="lg:col-span-7">
             <p className="text-[11px] md:text-xs font-bold tracking-[0.22em] text-navy uppercase">
-              AI × 業務自動化 for SMB
+              中小企業の社長専用 AI業務代行サービス
             </p>
 
-            <h1 className="heading-xl mt-5 text-[40px] leading-[1.12] md:text-[64px] lg:text-[76px] lg:leading-[1.05] text-ink">
-              月<span className="text-accent">40時間</span>を、
+            <h1 className="heading-xl mt-5 text-[36px] leading-[1.15] md:text-[60px] lg:text-[72px] lg:leading-[1.08] text-ink">
+              社長専用、
               <br />
-              AIが返します。
+              <span className="text-accent">AI業務代行</span>。
+              <br className="md:hidden" />
+              月<span className="text-accent">10万円</span>から。
             </h1>
 
             <p className="mt-7 md:mt-8 text-jp text-sm md:text-base text-ink/75 max-w-xl">
-              社長がやるべきでない業務を、AIで自動化。
-              削減時間を事前に約束し、達成できなければ
-              <span className="font-bold text-ink">全額返金</span>します。
+              メール、議事録、レポート、見積もり。
+              <br className="hidden md:inline" />
+              社長がやらなくていい仕事を、AIに巻き取らせます。
+              削減時間は事前に約束し、達成できなければ
+              <span className="font-bold text-ink">全額返金</span>。
             </p>
 
             {/* CTA with speech bubble */}

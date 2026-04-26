@@ -1,7 +1,7 @@
 import { ImageResponse } from "next/og";
 
 export const runtime = "edge";
-export const alt = "KUHAKU｜月40時間を、AIが返します。";
+export const alt = "KUHAKU｜社長専用、AI業務代行。月10万円から。";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -51,9 +51,9 @@ export default async function OG() {
             lineHeight: 1.15,
           }}
         >
-          月<span style={{ color: "#FF6B4A" }}>40時間</span>を、
+          社長専用、
           <br />
-          AIが返します。
+          <span style={{ color: "#FF6B4A" }}>AI業務代行</span>。
         </div>
         <div
           style={{
@@ -63,9 +63,11 @@ export default async function OG() {
             lineHeight: 1.5,
           }}
         >
-          社長がやるべきでない業務を、AIで自動化。
+          メール・議事録・レポート・見積もり。
           <br />
-          完全成果報酬50/50 ／ 全額返金保証 ／ 10万円〜
+          社長がやらなくていい仕事を、AIに巻き取らせる。
+          <br />
+          月10万円から ／ 完全成果報酬 ／ 全額返金保証
         </div>
       </div>
     ),

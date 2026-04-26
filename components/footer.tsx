@@ -20,8 +20,8 @@ export function Footer() {
             KUHAKU
           </div>
           <p className="text-sm leading-relaxed opacity-80">
-            月40時間を、AIが返します。<br />
-            社長がやるべきでない業務を、AIで自動化。
+            社長専用、AI業務代行サービス。<br />
+            社長がやらなくていい業務を、AIに巻き取らせます。
           </p>
         </div>
 
