@@ -1,4 +1,4 @@
-import Image from "next/image";
+import { User } from "lucide-react";
 import { Section } from "../ui/section";
 import { Reveal } from "../ui/reveal";
 import { leadership } from "@/lib/content";
@@ -22,34 +22,14 @@ export function Leadership() {
         {leadership.map((person, i) => (
           <Reveal key={person.id} delay={i * 0.1}>
             <article className="h-full rounded-3xl bg-mist border border-navy/10 overflow-hidden shadow-soft">
-              {/* 写真 */}
-              <div className="relative aspect-[4/5] w-full bg-navy/5">
-                <Image
-                  src={person.image}
-                  alt={`${person.role} ${person.nameJp}`}
-                  fill
-                  sizes="(min-width: 768px) 50vw, 100vw"
-                  className="object-cover"
-                  priority={i === 0}
-                />
-                <div
-                  className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-navy/60 to-transparent"
-                  aria-hidden
-                />
-                <div className="absolute inset-x-0 bottom-0 p-5 md:p-6 text-white">
-                  <div className="text-[10px] md:text-xs font-bold tracking-[0.2em] uppercase text-vermilion-100">
-                    {person.role}
-                  </div>
-                  <div className="mt-1 flex items-baseline gap-3 flex-wrap">
-                    <h3 className="text-2xl md:text-3xl font-bold tracking-wide">
-                      {person.nameJp}
-                    </h3>
-                    <span className="font-en text-sm md:text-base tracking-widest opacity-80">
-                      {person.nameEn}
-                    </span>
-                  </div>
-                </div>
-              </div>
+              {/* ビジュアルブロック（写真未配置時のCSSプレースホルダー） */}
+              <PortraitPlaceholder
+                role={person.role}
+                nameJp={person.nameJp}
+                nameEn={person.nameEn}
+                initials={person.id === "ceo" ? "M" : "K"}
+                accent={person.id === "ceo" ? "navy" : "vermilion"}
+              />
 
               {/* テキスト */}
               <div className="p-6 md:p-8">
@@ -81,5 +61,80 @@ export function Leadership() {
         ))}
       </div>
     </Section>
+  );
+}
+
+function PortraitPlaceholder({
+  role,
+  nameJp,
+  nameEn,
+  initials,
+  accent,
+}: {
+  role: string;
+  nameJp: string;
+  nameEn: string;
+  initials: string;
+  accent: "navy" | "vermilion";
+}) {
+  const bg =
+    accent === "navy"
+      ? "bg-gradient-to-br from-navy via-navy-700 to-navy-800"
+      : "bg-gradient-to-br from-vermilion via-vermilion-600 to-navy-700";
+
+  return (
+    <div className={`relative aspect-[4/5] w-full ${bg} overflow-hidden`}>
+      {/* 装飾 */}
+      <div
+        className="absolute -top-20 -right-20 h-72 w-72 rounded-full bg-white/10 blur-3xl"
+        aria-hidden
+      />
+      <div
+        className="absolute -bottom-32 -left-20 h-72 w-72 rounded-full bg-black/30 blur-3xl"
+        aria-hidden
+      />
+      {/* ドットパターン */}
+      <div
+        className="absolute inset-0 opacity-15"
+        style={{
+          backgroundImage:
+            "radial-gradient(rgba(255,255,255,0.6) 1px, transparent 1px)",
+          backgroundSize: "16px 16px",
+        }}
+        aria-hidden
+      />
+
+      {/* イニシャル */}
+      <div className="absolute inset-0 flex items-center justify-center">
+        <div className="flex flex-col items-center text-white/95">
+          <div className="font-en font-bold text-[140px] md:text-[180px] leading-none tracking-tighter drop-shadow-lg">
+            {initials}
+          </div>
+          <div className="mt-2 inline-flex items-center gap-2 rounded-full border border-white/30 bg-white/10 backdrop-blur px-3 py-1 text-[10px] font-bold tracking-[0.25em] uppercase">
+            <User size={12} />
+            Photo coming soon
+          </div>
+        </div>
+      </div>
+
+      {/* 下部の名前ラベル */}
+      <div
+        className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/70 to-transparent"
+        aria-hidden
+      />
+      <div className="absolute inset-x-0 bottom-0 p-5 md:p-6 text-white">
+        <div className="text-[10px] md:text-xs font-bold tracking-[0.2em] uppercase text-vermilion-100">
+          {role}
+        </div>
+        <div className="mt-1 flex items-baseline gap-3 flex-wrap">
+          <h3 className="text-2xl md:text-3xl font-bold tracking-wide">
+            {nameJp}
+          </h3>
+          <span className="font-en text-sm md:text-base tracking-widest opacity-80">
+            {nameEn}
+          </span>
+        </div>
+      </div>
+    </div>
   );
 }
