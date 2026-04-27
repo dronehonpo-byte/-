@@ -3,9 +3,10 @@
 @tailwind utilities;
 
 :root {
-  --navy: #0a1f44;
-  --gold: #c9a94b;
-  --paper: #fafaf7;
+  --navy: #2b4fd4;
+  --accent: #ff6b4a;
+  --paper: #f7f9fc;
+  --ink: #0f1a3a;
 }
 
 html {
@@ -16,7 +17,7 @@ html {
 }
 
 body {
-  color: #0a1f44;
+  color: var(--ink);
   background-color: var(--paper);
   font-feature-settings: "palt";
 }
@@ -29,15 +30,15 @@ body {
 
 /* セクション見出し */
 .heading-xl {
-  font-weight: 700;
+  font-weight: 800;
   letter-spacing: -0.01em;
-  line-height: 1.25;
+  line-height: 1.2;
 }
 
 /* 選択色 */
 ::selection {
-  background: #c9a94b;
-  color: #0a1f44;
+  background: var(--accent);
+  color: white;
 }
 
 /* スクロールバー微調整 */
@@ -46,7 +47,7 @@ body {
     width: 10px;
   }
   ::-webkit-scrollbar-track {
-    background: #f3f5fa;
+    background: #eef1f7;
   }
   ::-webkit-scrollbar-thumb {
     background: #c3ccde;
@@ -54,31 +55,9 @@ body {
   }
 }
 
-/* 背景のドットパターン */
-.bg-dots {
-  background-image: radial-gradient(rgba(10, 31, 68, 0.08) 1px, transparent 1px);
-  background-size: 22px 22px;
-}
-
-/* ゴールドのシマーアニメ（信頼バッジ用） */
-.gold-shimmer {
-  background: linear-gradient(
-    110deg,
-    #c9a94b 0%,
-    #e9d797 45%,
-    #c9a94b 55%,
-    #c9a94b 100%
-  );
-  background-size: 200% 100%;
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  animation: shimmer 4s linear infinite;
-}
-
 /* フォーカスリング（アクセシビリティ） */
 :focus-visible {
-  outline: 2px solid #c9a94b;
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
   border-radius: 4px;
 }

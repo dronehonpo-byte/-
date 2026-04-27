@@ -114,10 +114,10 @@ export function Pricing() {
                   {t.label}
                 </div>
                 <div className="mt-3 flex items-end gap-1">
-                  <span className="font-en text-5xl md:text-6xl font-bold text-navy">
+                  <span className="font-en text-5xl md:text-6xl font-bold text-ink">
                     {t.price}
                   </span>
-                  <span className="text-lg font-bold text-navy pb-1">万円</span>
+                  <span className="text-lg font-bold text-ink pb-1">万円</span>
                 </div>
                 <div className="mt-1 text-xs md:text-sm font-bold text-vermilion">
                   + 月額1万円
@@ -161,7 +161,7 @@ export function Pricing() {
         <h3 className="text-center text-lg md:text-xl font-bold text-navy mb-6">
           <span className="text-vermilion">③</span> 複数導入割引
         </h3>
-        <div className="mx-auto max-w-2xl overflow-hidden rounded-2xl border border-navy/10 bg-white mb-14 shadow-soft">
+        <div className="mx-auto max-w-2xl overflow-hidden rounded-xl border border-ink/10 bg-white mb-14">
           <table className="w-full text-sm">
             <thead className="bg-navy text-white">
               <tr>
@@ -178,8 +178,8 @@ export function Pricing() {
                     i === discountTiers.length - 1 && "bg-vermilion/5",
                   )}
                 >
-                  <td className="py-3 px-4 text-navy">{d.count}</td>
-                  <td className="py-3 px-4 text-right font-bold font-en text-navy">
+                  <td className="py-3 px-4 text-ink">{d.count}</td>
+                  <td className="py-3 px-4 text-right font-bold font-en text-ink">
                     {d.rate}
                   </td>
                 </tr>
@@ -204,26 +204,26 @@ export function Pricing() {
             return (
               <article
                 key={set.id}
-                className="rounded-2xl border border-navy/10 bg-white p-5 md:p-6 shadow-soft hover:shadow-card transition"
+                className="rounded-xl border border-ink/10 bg-white p-5 md:p-6 hover:border-navy/40 transition-colors"
               >
                 <div className="flex items-center gap-3">
-                  <div className="h-12 w-12 rounded-xl bg-gradient-gold text-2xl flex items-center justify-center">
+                  <div className="h-12 w-12 rounded-lg bg-navy/8 text-2xl flex items-center justify-center">
                     {set.emoji}
                   </div>
                   <div className="min-w-0">
-                    <h4 className="font-bold text-navy leading-tight">
+                    <h4 className="font-bold text-ink leading-tight">
                       {set.name}
                     </h4>
-                    <div className="text-[11px] text-navy/50 font-en mt-0.5">
+                    <div className="text-[11px] text-ink/50 font-en mt-0.5">
                       {items.map((m) => m.no).join(" + ")}
                     </div>
                   </div>
                 </div>
-                <p className="mt-3 text-xs md:text-sm text-navy/70 leading-relaxed">
+                <p className="mt-3 text-xs md:text-sm text-ink/70 leading-relaxed">
                   {set.summary}
                 </p>
-                <div className="mt-4 flex items-end justify-between pt-3 border-t border-navy/10">
-                  <div className="text-xs text-navy/60">
+                <div className="mt-4 flex items-end justify-between pt-3 border-t border-ink/10">
+                  <div className="text-xs text-ink/60">
                     定価{" "}
                     <span className="line-through">{set.listPrice}万円</span>
                   </div>
@@ -245,13 +245,31 @@ export function Pricing() {
 
       {/* ⑤ フルパッケージ */}
       <Reveal delay={0.25}>
-        <div className="relative overflow-hidden rounded-3xl bg-gradient-navy text-white p-8 md:p-14 shadow-[0_30px_80px_-30px_rgba(10,31,68,0.6)]">
-          <div className="absolute -top-20 -right-20 h-60 w-60 rounded-full bg-gold/30 blur-3xl" aria-hidden />
-          <div className="absolute -bottom-20 -left-20 h-60 w-60 rounded-full bg-gold/20 blur-3xl" aria-hidden />
+        <div className="rounded-xl bg-navy text-white p-8 md:p-14">
+          <div className="inline-flex items-center gap-2 rounded-full bg-white/10 border border-white/20 text-white px-3 py-1 text-[10px] md:text-xs font-bold tracking-widest uppercase">
+            <Crown size={14} /> Full Package
+          </div>
+          <h3 className="mt-4 text-2xl md:text-4xl lg:text-5xl font-bold leading-tight">
+            KUHAKUフルパッケージ
+          </h3>
+          <p className="mt-3 text-sm md:text-base text-white/75">
+            全25メニュー導入。約26%OFFの特別価格で、貴社を丸ごとAIに委ねる。
+          </p>
 
-          <div className="relative">
-            <div className="inline-flex items-center gap-2 rounded-full bg-gold text-navy px-3 py-1 text-[10px] md:text-xs font-bold tracking-widest uppercase">
-              <Crown size={14} /> Gold Package
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, delay: 0.15 }}
+            className="mt-8 md:mt-10 flex flex-wrap items-end gap-3 md:gap-6"
+          >
+            <div>
+              <div className="text-xs text-white/50 tracking-widest uppercase">
+                List Price
+              </div>
+              <div className="font-en text-xl md:text-2xl line-through text-white/40">
+                {fullPackage.listPrice}万円
+              </div>
             </div>
             <h3 className="mt-4 text-2xl md:text-4xl lg:text-5xl font-bold leading-tight">
               KUHAKUフルパッケージ
@@ -260,12 +278,28 @@ export function Pricing() {
               全25メニュー導入。約26%OFFの特別価格で、貴社専属のAIチームを構築。
             </p>
 
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: 0.15 }}
-              className="mt-8 md:mt-10 flex flex-wrap items-end gap-3 md:gap-6"
+          <ul className="mt-6 grid md:grid-cols-3 gap-3 text-sm">
+            {fullPackage.includes.map((inc) => (
+              <li key={inc} className="flex items-start gap-2 text-white/90">
+                <CheckCircle2 size={16} className="text-accent shrink-0 mt-0.5" />
+                <span>{inc}</span>
+              </li>
+            ))}
+          </ul>
+
+          <div className="mt-6 grid gap-2 text-xs text-white/60">
+            <div>対象：{fullPackage.target}</div>
+            <div>納期：{fullPackage.leadtime}</div>
+          </div>
+
+          <div className="mt-8">
+            <ButtonLink
+              href={ctaLinks.timerex}
+              target="_blank"
+              rel="noopener noreferrer"
+              variant="primary"
+              size="lg"
+              data-ga="pricing_full_package"
             >
               <div>
                 <div className="text-xs text-white/50 tracking-widest uppercase">
@@ -367,7 +401,7 @@ function PaymentFlowDiagram() {
               {i < steps.length - 1 && (
                 <span
                   aria-hidden
-                  className="absolute left-full top-1/2 -translate-y-1/2 text-navy/30"
+                  className="absolute left-full top-1/2 -translate-y-1/2 text-ink/30"
                 >
                   <svg width="48" height="12" viewBox="0 0 48 12">
                     <line
@@ -384,7 +418,7 @@ function PaymentFlowDiagram() {
                 </span>
               )}
             </div>
-            <div className="mt-2 text-center text-xs md:text-sm font-bold text-navy">
+            <div className="mt-2 text-center text-xs md:text-sm font-bold text-ink">
               {s.label}
             </div>
           </div>
@@ -403,7 +437,7 @@ function PaymentFlowDiagram() {
             >
               {i + 1}
             </div>
-            <div className="text-sm font-bold text-navy">{s.label}</div>
+            <div className="text-sm font-bold text-ink">{s.label}</div>
           </li>
         ))}
       </ol>

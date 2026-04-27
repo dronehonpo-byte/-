@@ -17,18 +17,12 @@ export default function DiagnosisPage() {
     <>
       <Header />
       <main>
-        <section className="relative overflow-hidden pt-28 md:pt-36 pb-20 md:pb-28">
-          <div className="absolute inset-0 bg-dots opacity-60" aria-hidden />
-          <div
-            className="absolute -top-40 right-[-10%] h-[420px] w-[420px] rounded-full bg-gold/15 blur-3xl"
-            aria-hidden
-          />
-
-          <div className="container relative">
+        <section className="relative bg-paper pt-28 md:pt-36 pb-20 md:pb-28">
+          <div className="container">
             <div className="max-w-2xl mx-auto text-center mb-10 md:mb-14">
               <Link
                 href="/"
-                className="inline-flex items-center gap-2 text-xs md:text-sm font-bold text-navy/60 hover:text-navy mb-6"
+                className="inline-flex items-center gap-2 text-xs md:text-sm font-bold text-ink/60 hover:text-ink mb-6"
               >
                 ← LPに戻る
               </Link>
@@ -49,13 +43,13 @@ export default function DiagnosisPage() {
               </p>
             </div>
 
-            <div className="mx-auto max-w-2xl rounded-3xl border border-navy/10 bg-white shadow-card p-6 md:p-10">
+            <div className="mx-auto max-w-2xl rounded-xl border border-ink/10 bg-white p-6 md:p-10">
               <DiagnosisFlow />
             </div>
 
-            <p className="mt-6 text-center text-xs text-navy/50">
+            <p className="mt-6 text-center text-xs text-ink/55">
               入力内容はサービス改善のため匿名で記録される場合があります。個人情報の取扱いは
-              <Link href="/legal/privacy-policy" className="underline underline-offset-2 hover:text-navy">
+              <Link href="/legal/privacy-policy" className="underline underline-offset-2 hover:text-ink">
                 プライバシーポリシー
               </Link>
               をご確認ください。

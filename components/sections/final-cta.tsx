@@ -7,7 +7,7 @@ export function FinalCta() {
   return (
     <section
       id="cta"
-      className="relative overflow-hidden bg-gradient-navy text-white py-24 md:py-32"
+      className="relative bg-navy text-white py-24 md:py-32"
     >
       <div
         className="absolute -top-40 left-1/2 -translate-x-1/2 h-[600px] w-[600px] rounded-full bg-vermilion/20 blur-3xl"
@@ -79,6 +79,7 @@ function CtaCard({
   title,
   body,
   primary,
+  compact,
   gaName,
 }: {
   href: string;
@@ -88,9 +89,10 @@ function CtaCard({
   title: string;
   body: string;
   primary?: boolean;
+  compact?: boolean;
   gaName: string;
 }) {
-  const className = `group h-full rounded-3xl p-6 md:p-7 border transition-all hover:-translate-y-1 flex flex-col ${
+  const className = `group h-full rounded-xl border transition-colors flex flex-col ${
     primary
       ? "bg-vermilion text-white border-transparent shadow-[0_20px_50px_-20px_rgba(200,16,46,0.7)]"
       : "bg-white/5 border-white/10 backdrop-blur text-white hover:bg-white/10"
@@ -135,7 +137,7 @@ function CtaCard({
           primary ? "text-white" : "text-vermilion-200"
         }`}
       >
-        詳しく見る →
+        {primary ? "TimeRexで日程を選ぶ →" : "詳しく見る →"}
       </div>
     </>
   );

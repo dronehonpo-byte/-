@@ -61,7 +61,7 @@ export const flowSteps = [
     step: 1,
     title: "無料相談（Zoom 30分）",
     duration: "無料",
-    body: "お客様の現状をヒアリング。自動化したい業務・課題・優先順位・予算を把握。Zoomで無料。ここでは売り込みはしません。",
+    body: "Zoomで業務をヒアリング。自動化したい業務・優先順位・予算を把握。売り込みはしません。",
   },
   {
     step: 2,
@@ -71,9 +71,9 @@ export const flowSteps = [
   },
   {
     step: 3,
-    title: "完了基準の合意・契約",
-    duration: "1〜2営業日",
-    body: "「どうなれば完成か」を書面で合意し、電子契約を締結。納品物・完了基準・運用条件・料金・返金保証条件を明記。",
+    title: "開発・実装",
+    duration: "7〜18営業日",
+    body: "AIチームが Claude Code を駆使して貴社専用ツールを開発。週1回の進捗レポートと途中デモを共有。",
   },
   {
     step: 4,
@@ -124,11 +124,7 @@ export const faqItems = [
   },
   {
     q: "メニューにない業務も依頼できますか？",
-    a: "はい、カスタム開発にも対応。Claude Codeで実装可能な範囲であれば多くの業務を自動化できます。",
-  },
-  {
-    q: "自社のシステムと連携できますか？",
-    a: "API連携可能なシステム（Slack、Google Workspace、Notion、freee等）であれば連携機能を追加可能。",
+    a: "はい、カスタム開発にも対応。Claude Code で実装可能な範囲であれば多くの業務を自動化できます。Slack / Google Workspace / Notion / freee 等の主要SaaSとはAPI連携可能。",
   },
   {
     q: "最短でどれくらいの期間で導入できますか？",

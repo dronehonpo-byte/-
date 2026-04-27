@@ -52,7 +52,7 @@ function MenuCard({ menu }: { menu: Menu }) {
       <div className="p-5 md:p-6">
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-2 min-w-0">
-            <span className="font-en text-[10px] font-bold tracking-[0.15em] text-navy/50 bg-navy/5 rounded px-1.5 py-0.5">
+            <span className="font-en text-[10px] font-bold tracking-[0.15em] text-ink/55 bg-paper rounded px-1.5 py-0.5">
               {menu.no}
             </span>
             {menu.aiRole && (
@@ -69,19 +69,19 @@ function MenuCard({ menu }: { menu: Menu }) {
           </span>
         </div>
 
-        <h3 className="mt-3 text-lg md:text-xl font-bold text-navy leading-snug">
+        <h3 className="mt-3 text-lg md:text-xl font-bold text-ink leading-snug">
           {menu.name}
         </h3>
-        <p className="mt-2 text-sm text-navy/70 leading-relaxed">
+        <p className="mt-2 text-sm text-ink/70 leading-relaxed">
           {menu.shortDescription}
         </p>
 
         <div className="mt-4 flex items-end justify-between">
           <div>
-            <div className="text-[10px] font-bold tracking-widest uppercase text-navy/50">
+            <div className="text-[10px] font-bold tracking-widest uppercase text-ink/50">
               Price
             </div>
-            <div className="font-en text-2xl md:text-3xl font-bold text-navy">
+            <div className="font-en text-2xl md:text-3xl font-bold text-ink">
               {menu.price}
               <span className="text-sm font-bold ml-0.5">万円</span>
               <span className="text-xs font-bold ml-1 text-navy/60">
@@ -93,7 +93,7 @@ function MenuCard({ menu }: { menu: Menu }) {
             {menu.stack.slice(0, 3).map((s) => (
               <span
                 key={s}
-                className="text-[10px] bg-navy/5 text-navy/70 rounded-full px-2 py-0.5"
+                className="text-[10px] bg-paper text-ink/70 rounded-full px-2 py-0.5 border border-ink/8"
               >
                 {s}
               </span>
@@ -106,7 +106,7 @@ function MenuCard({ menu }: { menu: Menu }) {
           onClick={() => setOpen((o) => !o)}
           aria-expanded={open}
           aria-controls={`menu-detail-${menu.id}`}
-          className="mt-5 w-full inline-flex items-center justify-center gap-2 rounded-full border-2 border-navy/15 hover:border-navy py-2.5 text-xs md:text-sm font-bold text-navy transition"
+          className="mt-5 w-full inline-flex items-center justify-center gap-2 rounded-full border border-ink/15 hover:border-navy py-2.5 text-xs md:text-sm font-bold text-ink hover:text-navy transition-colors"
         >
           {open ? "閉じる" : "詳しく見る"}
           <ChevronDown
@@ -126,7 +126,7 @@ function MenuCard({ menu }: { menu: Menu }) {
             transition={{ duration: 0.3 }}
             className="overflow-hidden"
           >
-            <div className="border-t border-navy/10 bg-paper p-5 md:p-6 text-sm space-y-4">
+            <div className="border-t border-ink/10 bg-paper p-5 md:p-6 text-sm space-y-4">
               <Detail label="納品物" body={menu.deliverable} />
               <Detail
                 label="完了基準"
@@ -134,7 +134,7 @@ function MenuCard({ menu }: { menu: Menu }) {
                 highlight
               />
               <Detail label="運用条件" body={menu.conditions} />
-              <div className="flex items-center justify-between pt-2 text-xs text-navy/60">
+              <div className="flex items-center justify-between pt-2 text-xs text-ink/60">
                 <span>納期目安: {t.leadtime}</span>
                 <span>{t.note}</span>
               </div>
@@ -168,7 +168,7 @@ function Detail({
           {label}
         </span>
       </div>
-      <p className="text-navy/80 leading-relaxed">{body}</p>
+      <p className="text-ink/80 leading-relaxed">{body}</p>
     </div>
   );
 }

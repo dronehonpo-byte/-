@@ -11,9 +11,10 @@ export const siteConfig = {
   url: "https://kuhaku.miyabee.jp",
   ogImage: "/og.png",
   keywords: [
-    "AIコンサル",
+    "AI業務代行",
     "業務自動化",
     "中小企業",
+    "社長業務",
     "完全成果報酬",
     "ChatGPT",
     "Claude",
@@ -37,9 +38,10 @@ export const company = {
 
 export const ctaLinks = {
   timerex:
-    process.env.NEXT_PUBLIC_TIMEREX_URL ?? "https://timerex.net/s/miyabee",
-  line: process.env.NEXT_PUBLIC_LINE_URL ?? "https://lin.ee/kuhaku",
-  diagnosis: "/ai-shindan",
+    process.env.NEXT_PUBLIC_TIMEREX_URL ??
+    "https://timerex.net/s/dronehonpo_dbab/8ea01e5e",
+  line: process.env.NEXT_PUBLIC_LINE_URL ?? "https://lin.ee/RtTNUsZ",
+  diagnosis: "/#diagnosis",
 };
 
 export const gaId = process.env.NEXT_PUBLIC_GA_ID ?? "";

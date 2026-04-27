@@ -135,7 +135,7 @@ export function DiagnosisFlow() {
                       onClick={() => toggleWork(o.value)}
                       aria-pressed={selected}
                       className={cn(
-                        "relative rounded-2xl border-2 px-4 py-4 md:py-5 text-left transition-all",
+                        "relative rounded-xl border px-4 py-4 md:py-5 text-left transition-colors",
                         selected
                           ? "border-vermilion bg-vermilion/5"
                           : "border-navy/10 bg-white hover:border-navy/30",
@@ -144,7 +144,7 @@ export function DiagnosisFlow() {
                       <div className="text-2xl md:text-3xl" aria-hidden>
                         {o.emoji}
                       </div>
-                      <div className="mt-1 text-sm md:text-base font-bold text-navy">
+                      <div className="mt-1 text-sm md:text-base font-bold text-ink">
                         {o.label}
                       </div>
                       {selected && (
@@ -217,7 +217,7 @@ export function DiagnosisFlow() {
             type="button"
             onClick={goPrev}
             disabled={step === 1}
-            className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-bold text-navy/60 hover:text-navy disabled:opacity-30 disabled:pointer-events-none"
+            className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-bold text-ink/60 hover:text-ink disabled:opacity-30 disabled:pointer-events-none"
           >
             <ArrowLeft size={16} />
             戻る
@@ -260,10 +260,10 @@ function StepPanel({
       exit={{ opacity: 0, x: -20 }}
       transition={{ duration: 0.3 }}
     >
-      <h2 className="text-xl md:text-2xl font-bold text-navy leading-snug">
+      <h2 className="text-xl md:text-2xl font-bold text-ink leading-snug">
         {title}
       </h2>
-      <p className="mt-2 text-sm text-navy/70">{subtitle}</p>
+      <p className="mt-2 text-sm text-ink/70">{subtitle}</p>
       <div className="mt-6">{children}</div>
     </motion.div>
   );
@@ -292,13 +292,13 @@ function Choices({
             aria-checked={selected}
             onClick={() => onChange(o.value)}
             className={cn(
-              "flex items-center justify-between rounded-2xl border-2 px-5 py-4 text-left transition-all",
+              "flex items-center justify-between rounded-xl border px-5 py-4 text-left transition-colors",
               selected
                 ? "border-vermilion bg-vermilion/5"
                 : "border-navy/10 bg-white hover:border-navy/30",
             )}
           >
-            <span className="text-sm md:text-base font-bold text-navy">
+            <span className="text-sm md:text-base font-bold text-ink">
               {o.label}
             </span>
             <span
@@ -369,6 +369,27 @@ function ResultPanel({
             で算出した試算値です
           </p>
         </div>
+        <h2 className="mt-4 text-lg md:text-xl text-white/80 font-bold">
+          あなたの会社は、月に
+        </h2>
+        <div className="mt-4 font-en font-bold text-white leading-none">
+          <CountUp
+            to={result.savedHours}
+            className="text-7xl md:text-[112px]"
+          />
+          <span className="text-3xl md:text-5xl ml-2">時間</span>
+        </div>
+        <p className="mt-4 text-sm md:text-base text-white/85">
+          = 金額換算で約{" "}
+          <span className="text-accent font-bold">
+            <CountUp to={result.savedYen} format={(n) => Math.round(n).toLocaleString("ja-JP")} />
+            円
+          </span>
+          /月 を削減できます
+        </p>
+        <p className="mt-2 text-[11px] md:text-xs text-white/50">
+          ※ 削減時間（月）= 週時間中央値 × 4週 × 0.7 × 規模係数
+        </p>
       </div>
 
       {/* 推奨メニュー */}
@@ -383,14 +404,14 @@ function ResultPanel({
               return (
                 <div
                   key={m.id}
-                  className="rounded-2xl border border-navy/10 bg-white p-5 shadow-soft flex items-start gap-4"
+                  className="rounded-xl border border-ink/10 bg-white p-5 flex items-start gap-4"
                 >
                   <div className="h-10 w-10 shrink-0 rounded-xl bg-vermilion text-white font-en font-bold flex items-center justify-center">
                     {i + 1}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-en text-[10px] font-bold tracking-widest text-navy/50 bg-navy/5 rounded px-1.5 py-0.5">
+                      <span className="font-en text-[10px] font-bold tracking-widest text-ink/55 bg-paper border border-ink/8 rounded px-1.5 py-0.5">
                         {m.no}
                       </span>
                       {m.aiRole && (
@@ -405,15 +426,15 @@ function ResultPanel({
                         {t.label}
                       </span>
                     </div>
-                    <div className="mt-1.5 text-sm md:text-base font-bold text-navy leading-tight">
+                    <div className="mt-1.5 text-sm md:text-base font-bold text-ink leading-tight">
                       {m.name}
                     </div>
-                    <div className="mt-1 text-xs text-navy/60 leading-relaxed">
+                    <div className="mt-1 text-xs text-ink/60 leading-relaxed">
                       {m.shortDescription}
                     </div>
                   </div>
                   <div className="text-right shrink-0">
-                    <div className="font-en text-xl md:text-2xl font-bold text-navy">
+                    <div className="font-en text-xl md:text-2xl font-bold text-ink">
                       {m.price}
                       <span className="text-xs font-bold ml-0.5">万円</span>
                     </div>
@@ -432,19 +453,19 @@ function ResultPanel({
       {result.recommendedSet && (
         <div className="rounded-2xl border-2 border-vermilion/40 bg-vermilion/5 p-6 md:p-8">
           <div className="flex items-center gap-3">
-            <div className="h-12 w-12 rounded-xl bg-gradient-gold text-2xl flex items-center justify-center">
+            <div className="h-12 w-12 rounded-md bg-accent text-white text-2xl flex items-center justify-center">
               {result.recommendedSet.emoji}
             </div>
             <div>
               <div className="text-[11px] font-bold tracking-widest uppercase text-vermilion">
                 おすすめセット
               </div>
-              <div className="font-bold text-navy text-base md:text-lg">
+              <div className="font-bold text-ink text-base md:text-lg">
                 {result.recommendedSet.name}
               </div>
             </div>
           </div>
-          <p className="mt-3 text-sm text-navy/75 leading-relaxed">
+          <p className="mt-3 text-sm text-ink/75 leading-relaxed">
             {result.recommendedSet.summary}
           </p>
           <div className="mt-4 flex items-end justify-between pt-4 border-t border-vermilion/20">
@@ -454,7 +475,7 @@ function ResultPanel({
                 .join(" + ")}
             </div>
             <div>
-              <span className="text-xs text-navy/60 line-through">
+              <span className="text-xs text-ink/60 line-through">
                 {result.recommendedSet.listPrice}万円
               </span>
               <span className="font-en text-2xl font-bold text-vermilion ml-2">

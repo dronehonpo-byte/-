@@ -27,14 +27,14 @@ export function Trust() {
             </dl>
           </div>
 
-          <div className="rounded-2xl bg-navy text-white p-6 md:p-8 shadow-soft">
-            <h3 className="text-sm font-bold tracking-[0.2em] uppercase text-gold mb-4">
+          <div className="rounded-xl bg-navy text-white p-6 md:p-8">
+            <h3 className="text-sm font-bold tracking-[0.2em] uppercase text-accent mb-4">
               3つの約束
             </h3>
             <ul className="space-y-5">
               {promises.map((p) => (
                 <li key={p.num} className="flex gap-4">
-                  <div className="h-9 w-9 shrink-0 rounded-full bg-gradient-gold text-navy font-en font-bold flex items-center justify-center">
+                  <div className="h-9 w-9 shrink-0 rounded-md bg-accent text-white font-en font-bold flex items-center justify-center">
                     {p.num}
                   </div>
                   <div>
@@ -55,11 +55,11 @@ export function Trust() {
 
 function Row({ dt, dd }: { dt: string; dd: string }) {
   return (
-    <div className="flex gap-4 border-b border-navy/10 pb-3 last:border-0 last:pb-0">
-      <dt className="w-24 shrink-0 font-bold text-navy/60 text-xs md:text-sm pt-0.5">
+    <div className="flex gap-4 border-b border-ink/10 pb-3 last:border-0 last:pb-0">
+      <dt className="w-24 shrink-0 font-bold text-ink/60 text-xs md:text-sm pt-0.5">
         {dt}
       </dt>
-      <dd className="text-navy leading-relaxed">{dd}</dd>
+      <dd className="text-ink leading-relaxed">{dd}</dd>
     </div>
   );
 }

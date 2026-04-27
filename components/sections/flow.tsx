@@ -42,7 +42,7 @@ export function Flow() {
       <div className="relative mx-auto max-w-3xl">
         {/* 縦のタイムラインライン */}
         <div
-          className="absolute left-5 md:left-1/2 top-2 bottom-2 w-px bg-navy/15 md:-translate-x-1/2"
+          className="absolute left-5 md:left-1/2 top-2 bottom-2 w-px bg-ink/12 md:-translate-x-1/2"
           aria-hidden
         />
 
@@ -65,7 +65,7 @@ export function Flow() {
                       <span className="font-en text-[10px] font-bold tracking-[0.2em] uppercase text-vermilion">
                         STEP {String(step.step).padStart(2, "0")}
                       </span>
-                      <span className="text-[11px] font-bold bg-navy/5 text-navy/70 rounded-full px-2 py-0.5">
+                      <span className="text-[11px] font-bold bg-paper text-ink/70 rounded-full px-2 py-0.5 border border-ink/8">
                         {step.duration}
                       </span>
                     </div>
@@ -79,7 +79,7 @@ export function Flow() {
                         step.title
                       )}
                     </h3>
-                    <p className="mt-2 text-xs md:text-sm text-navy/70 leading-relaxed">
+                    <p className="mt-2 text-xs md:text-sm text-ink/70 leading-relaxed">
                       {step.body}
                     </p>
                   </div>
