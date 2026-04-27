@@ -19,8 +19,8 @@ export function Footer() {
             <span className="text-gold">●</span> KUHAKU
           </div>
           <p className="text-sm leading-relaxed opacity-80">
-            月40時間を、AIが返します。<br />
-            社長がやるべきでない業務を、AIで自動化。
+            あなたの会社に、AI社員を。<br />
+            中小企業のAI業務代行サービス。
           </p>
         </div>
 

@@ -5,9 +5,9 @@
 
 export const siteConfig = {
   name: "KUHAKU",
-  tagline: "月40時間を、AIが返します。",
+  tagline: "あなたの会社に、AI社員を。",
   description:
-    "社長がやるべきでない業務を、AIで自動化。削減時間を事前に約束し、達成できなければ全額返金します。完全成果報酬50/50、10万円から。",
+    "中小企業のAI業務代行サービス。24時間働き、文句を言わず、ミスをしない。メールも議事録もレポートも、AI社員に任せる。完全成果報酬50/50、10万円〜、月額1万円で保守無制限。",
   url: "https://kuhaku.miyabee.jp",
   ogImage: "/og.png",
   keywords: [

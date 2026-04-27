@@ -3,18 +3,27 @@
 import * as React from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import Link from "next/link";
-import { ArrowRight, ArrowLeft, Sparkles, RotateCcw, Check } from "lucide-react";
+import {
+  ArrowRight,
+  ArrowLeft,
+  Sparkles,
+  RotateCcw,
+  Check,
+} from "lucide-react";
 import {
   employeeOptions,
   workOptions,
-  weeklyHoursOptions,
-  hourlyRateOptions,
+  aiUsageOptions,
+  budgetOptions,
+  timingOptions,
   calculate,
+  HOURLY_RATE,
   type DiagnosisInput,
   type DiagnosisResult,
   type EmployeeRange,
-  type WeeklyHours,
-  type HourlyRate,
+  type AiUsage,
+  type Budget,
+  type StartTiming,
   type WorkTag,
 } from "@/lib/diagnosis";
 import { ButtonLink, Button } from "../ui/button";
@@ -27,28 +36,19 @@ import { getSetMenus } from "@/lib/sets";
 
 type Step = 1 | 2 | 3 | 4 | 5 | 6;
 
-type Contact = {
-  method: "line" | "email" | "skip";
-  email?: string;
-};
-
 export function DiagnosisFlow() {
   const [step, setStep] = React.useState<Step>(1);
   const [employees, setEmployees] = React.useState<EmployeeRange | null>(null);
   const [works, setWorks] = React.useState<WorkTag[]>([]);
-  const [weeklyHours, setWeeklyHours] = React.useState<WeeklyHours | null>(
-    null,
-  );
-  const [hourlyRate, setHourlyRate] = React.useState<HourlyRate | null>(null);
-  const [contact, setContact] = React.useState<Contact>({ method: "skip" });
+  const [aiUsage, setAiUsage] = React.useState<AiUsage | null>(null);
+  const [budget, setBudget] = React.useState<Budget | null>(null);
+  const [timing, setTiming] = React.useState<StartTiming | null>(null);
   const [result, setResult] = React.useState<DiagnosisResult | null>(null);
 
   const toggleWork = (tag: WorkTag) => {
-    setWorks((prev) => {
-      if (prev.includes(tag)) return prev.filter((t) => t !== tag);
-      if (prev.length >= 3) return prev; // 最大3つ
-      return [...prev, tag];
-    });
+    setWorks((prev) =>
+      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag],
+    );
   };
 
   const canProceed = () => {
@@ -58,11 +58,11 @@ export function DiagnosisFlow() {
       case 2:
         return works.length >= 1;
       case 3:
-        return !!weeklyHours;
+        return !!aiUsage;
       case 4:
-        return !!hourlyRate;
+        return !!budget;
       case 5:
-        return true; // 任意
+        return !!timing;
       default:
         return false;
     }
@@ -70,12 +70,12 @@ export function DiagnosisFlow() {
 
   const goNext = () => {
     if (step === 5) {
-      // 結果計算
       const input: DiagnosisInput = {
         employees: employees!,
         works,
-        weeklyHours: weeklyHours!,
-        hourlyRate: hourlyRate!,
+        aiUsage: aiUsage!,
+        budget: budget!,
+        timing: timing!,
       };
       setResult(calculate(input));
       setStep(6);
@@ -92,9 +92,9 @@ export function DiagnosisFlow() {
     setStep(1);
     setEmployees(null);
     setWorks([]);
-    setWeeklyHours(null);
-    setHourlyRate(null);
-    setContact({ method: "skip" });
+    setAiUsage(null);
+    setBudget(null);
+    setTiming(null);
     setResult(null);
   };
 
@@ -105,10 +105,14 @@ export function DiagnosisFlow() {
       <div className="mt-8">
         <AnimatePresence mode="wait">
           {step === 1 && (
-            <StepPanel key="s1" title="Q1. 従業員数を教えてください" subtitle="規模によって削減効果の係数が変わります。">
+            <StepPanel
+              key="s1"
+              title="Q1. 従業員数（経営者含む）"
+              subtitle="従業員規模が削減時間のベースになります。"
+            >
               <Choices
                 name="employees"
-                options={employeeOptions.map((o) => ({ value: o.value, label: o.label }))}
+                options={employeeOptions}
                 value={employees ?? ""}
                 onChange={(v) => setEmployees(v as EmployeeRange)}
               />
@@ -118,26 +122,23 @@ export function DiagnosisFlow() {
           {step === 2 && (
             <StepPanel
               key="s2"
-              title="Q2. どの業務を自動化したいですか？"
-              subtitle={`最大3つまで選択できます（現在 ${works.length} / 3）`}
+              title="Q2. 月の業務で時間を取られているもの"
+              subtitle={`複数選択できます（現在 ${works.length} 件）`}
             >
               <div className="grid grid-cols-2 gap-2 md:gap-3">
                 {workOptions.map((o) => {
                   const selected = works.includes(o.value);
-                  const disabled = !selected && works.length >= 3;
                   return (
                     <button
                       key={o.value}
                       type="button"
                       onClick={() => toggleWork(o.value)}
-                      disabled={disabled}
                       aria-pressed={selected}
                       className={cn(
                         "relative rounded-2xl border-2 px-4 py-4 md:py-5 text-left transition-all",
                         selected
-                          ? "border-gold bg-gold/10 shadow-gold/30"
+                          ? "border-vermilion bg-vermilion/5"
                           : "border-navy/10 bg-white hover:border-navy/30",
-                        disabled && "opacity-40 cursor-not-allowed",
                       )}
                     >
                       <div className="text-2xl md:text-3xl" aria-hidden>
@@ -149,7 +150,7 @@ export function DiagnosisFlow() {
                       {selected && (
                         <Check
                           size={16}
-                          className="absolute top-3 right-3 text-gold"
+                          className="absolute top-3 right-3 text-vermilion"
                         />
                       )}
                     </button>
@@ -162,14 +163,14 @@ export function DiagnosisFlow() {
           {step === 3 && (
             <StepPanel
               key="s3"
-              title="Q3. 週の業務時間は？"
-              subtitle="選択した業務にかかっているおおよその時間を教えてください。"
+              title="Q3. 社内のAI活用度"
+              subtitle="現在のAI浸透度から、削減余地を算定します。"
             >
               <Choices
-                name="weeklyHours"
-                options={weeklyHoursOptions.map((o) => ({ value: o.value, label: o.label }))}
-                value={weeklyHours ?? ""}
-                onChange={(v) => setWeeklyHours(v as WeeklyHours)}
+                name="aiUsage"
+                options={aiUsageOptions}
+                value={aiUsage ?? ""}
+                onChange={(v) => setAiUsage(v as AiUsage)}
               />
             </StepPanel>
           )}
@@ -177,14 +178,14 @@ export function DiagnosisFlow() {
           {step === 4 && (
             <StepPanel
               key="s4"
-              title="Q4. 経営者ご自身の時給イメージは？"
-              subtitle="「この業務をご自身でやっている時間」の機会コストを計算します。"
+              title="Q4. 業務効率化への月予算感"
+              subtitle="参考までに、想定の月予算をお選びください。"
             >
               <Choices
-                name="hourlyRate"
-                options={hourlyRateOptions.map((o) => ({ value: o.value, label: o.label }))}
-                value={hourlyRate ?? ""}
-                onChange={(v) => setHourlyRate(v as HourlyRate)}
+                name="budget"
+                options={budgetOptions}
+                value={budget ?? ""}
+                onChange={(v) => setBudget(v as Budget)}
               />
             </StepPanel>
           )}
@@ -192,53 +193,24 @@ export function DiagnosisFlow() {
           {step === 5 && (
             <StepPanel
               key="s5"
-              title="Q5. 結果の受け取り方（任意）"
-              subtitle="結果だけでなく、推奨メニューPDFも受け取れます。スキップ可。"
+              title="Q5. 導入希望時期"
+              subtitle="ご相談のタイミングをお聞かせください。"
             >
-              <div className="grid gap-3">
-                <ContactOption
-                  selected={contact.method === "line"}
-                  label="💚 LINEで受け取る（最速）"
-                  onClick={() => setContact({ method: "line" })}
-                />
-                <ContactOption
-                  selected={contact.method === "email"}
-                  label="✉️ メールで受け取る"
-                  onClick={() => setContact({ method: "email" })}
-                />
-                {contact.method === "email" && (
-                  <input
-                    type="email"
-                    required
-                    value={contact.email ?? ""}
-                    onChange={(e) =>
-                      setContact({ method: "email", email: e.target.value })
-                    }
-                    placeholder="your@email.com"
-                    className="w-full rounded-xl border-2 border-navy/10 focus:border-gold bg-white px-4 py-3 text-navy"
-                  />
-                )}
-                <ContactOption
-                  selected={contact.method === "skip"}
-                  label="スキップして結果を見る"
-                  onClick={() => setContact({ method: "skip" })}
-                />
-              </div>
+              <Choices
+                name="timing"
+                options={timingOptions}
+                value={timing ?? ""}
+                onChange={(v) => setTiming(v as StartTiming)}
+              />
             </StepPanel>
           )}
 
           {step === 6 && result && (
-            <ResultPanel
-              key="s6"
-              result={result}
-              onReset={reset}
-              contact={contact}
-            />
+            <ResultPanel key="s6" result={result} onReset={reset} />
           )}
         </AnimatePresence>
       </div>
 
-      {/* ナビゲーション */}
       {step !== 6 && (
         <div className="mt-8 flex items-center justify-between">
           <button
@@ -322,7 +294,7 @@ function Choices({
             className={cn(
               "flex items-center justify-between rounded-2xl border-2 px-5 py-4 text-left transition-all",
               selected
-                ? "border-gold bg-gold/10 shadow-gold/30"
+                ? "border-vermilion bg-vermilion/5"
                 : "border-navy/10 bg-white hover:border-navy/30",
             )}
           >
@@ -332,11 +304,11 @@ function Choices({
             <span
               className={cn(
                 "h-5 w-5 rounded-full border-2 flex items-center justify-center transition",
-                selected ? "border-gold bg-gold" : "border-navy/20",
+                selected ? "border-vermilion bg-vermilion" : "border-navy/20",
               )}
               aria-hidden
             >
-              {selected && <Check size={12} className="text-navy" />}
+              {selected && <Check size={12} className="text-white" />}
             </span>
           </button>
         );
@@ -345,41 +317,14 @@ function Choices({
   );
 }
 
-function ContactOption({
-  selected,
-  label,
-  onClick,
-}: {
-  selected: boolean;
-  label: string;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-pressed={selected}
-      className={cn(
-        "rounded-2xl border-2 px-5 py-4 text-left text-sm md:text-base font-bold text-navy transition",
-        selected
-          ? "border-gold bg-gold/10"
-          : "border-navy/10 bg-white hover:border-navy/30",
-      )}
-    >
-      {label}
-    </button>
-  );
-}
-
 function ResultPanel({
   result,
   onReset,
-  contact,
 }: {
   result: DiagnosisResult;
   onReset: () => void;
-  contact: Contact;
 }) {
+  const annualMan = Math.round(result.annualAmount / 10000);
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -389,31 +334,39 @@ function ResultPanel({
     >
       {/* 削減時間 */}
       <div className="relative overflow-hidden rounded-3xl bg-gradient-navy text-white p-8 md:p-12 text-center shadow-[0_30px_80px_-30px_rgba(10,31,68,0.6)]">
-        <div className="absolute -top-20 -right-20 h-60 w-60 rounded-full bg-gold/30 blur-3xl" aria-hidden />
+        <div className="absolute -top-20 -right-20 h-60 w-60 rounded-full bg-vermilion/30 blur-3xl" aria-hidden />
         <div className="relative">
-          <div className="text-xs font-bold tracking-[0.2em] uppercase text-gold">
+          <div className="text-xs font-bold tracking-[0.2em] uppercase text-vermilion-200">
             Your Result
           </div>
-          <h2 className="mt-4 text-lg md:text-xl text-white/80 font-bold">
-            あなたの会社は、月に
+          <h2 className="mt-4 text-base md:text-lg text-white/85 font-bold leading-relaxed">
+            あなたの会社が、AI社員導入で
+            <br />
+            取り戻せる時間と金額
           </h2>
-          <div className="mt-4 font-en font-bold text-gold leading-none">
-            <CountUp
-              to={result.savedHours}
-              className="text-7xl md:text-[112px]"
-            />
-            <span className="text-3xl md:text-5xl ml-2">時間</span>
-          </div>
-          <p className="mt-4 text-sm md:text-base text-white/75">
-            = 金額換算で約{" "}
-            <span className="text-gold font-bold">
-              <CountUp to={result.savedYen} format={(n) => Math.round(n).toLocaleString("ja-JP")} />
-              円
+          <div className="mt-6 font-en font-bold text-vermilion-200 leading-none">
+            <span className="text-base md:text-lg text-white/70 font-bold">
+              月
             </span>
-            /月 を削減できます
+            <CountUp
+              to={result.reducedHours}
+              className="text-7xl md:text-[112px] mx-2"
+            />
+            <span className="text-3xl md:text-5xl">時間</span>
+            <span className="text-base md:text-lg text-white/70 font-bold ml-1">
+              削減
+            </span>
+          </div>
+          <p className="mt-6 text-sm md:text-base text-white/85">
+            年間 約{" "}
+            <span className="text-gold font-bold text-xl md:text-2xl font-en">
+              <CountUp to={annualMan} />
+            </span>
+            <span className="text-gold font-bold ml-0.5">万円</span> 相当
           </p>
-          <p className="mt-2 text-[11px] md:text-xs text-white/50">
-            ※ 削減時間（月）= 週時間中央値 × 4週 × 0.7 × 規模係数
+          <p className="mt-3 text-[11px] md:text-xs text-white/55">
+            ※ 平均人件費 {HOURLY_RATE.toLocaleString("ja-JP")}円/h
+            で算出した試算値です
           </p>
         </div>
       </div>
@@ -422,7 +375,7 @@ function ResultPanel({
       {result.recommendedMenus.length > 0 && (
         <div>
           <h3 className="text-lg md:text-xl font-bold text-navy mb-4">
-            🎯 貴社におすすめのメニュー Top 3
+            🎯 おすすめのAI社員 Top {result.recommendedMenus.length}
           </h3>
           <div className="grid gap-3">
             {result.recommendedMenus.map((m, i) => {
@@ -432,7 +385,7 @@ function ResultPanel({
                   key={m.id}
                   className="rounded-2xl border border-navy/10 bg-white p-5 shadow-soft flex items-start gap-4"
                 >
-                  <div className="h-10 w-10 shrink-0 rounded-xl bg-gradient-gold text-navy font-en font-bold flex items-center justify-center">
+                  <div className="h-10 w-10 shrink-0 rounded-xl bg-vermilion text-white font-en font-bold flex items-center justify-center">
                     {i + 1}
                   </div>
                   <div className="flex-1 min-w-0">
@@ -440,6 +393,11 @@ function ResultPanel({
                       <span className="font-en text-[10px] font-bold tracking-widest text-navy/50 bg-navy/5 rounded px-1.5 py-0.5">
                         {m.no}
                       </span>
+                      {m.aiRole && (
+                        <span className="text-[10px] font-bold tracking-wider text-vermilion bg-vermilion/10 rounded-full px-2 py-0.5">
+                          {m.aiRole}
+                        </span>
+                      )}
                       <span
                         className="text-[10px] font-bold tracking-widest uppercase px-2 py-0.5 rounded-full border"
                         style={{ color: t.color, borderColor: t.color }}
@@ -459,6 +417,9 @@ function ResultPanel({
                       {m.price}
                       <span className="text-xs font-bold ml-0.5">万円</span>
                     </div>
+                    <div className="text-[10px] font-bold text-navy/60">
+                      + 月額1万
+                    </div>
                   </div>
                 </div>
               );
@@ -469,13 +430,13 @@ function ResultPanel({
 
       {/* おすすめセット */}
       {result.recommendedSet && (
-        <div className="rounded-2xl border-2 border-gold bg-gold/5 p-6 md:p-8">
+        <div className="rounded-2xl border-2 border-vermilion/40 bg-vermilion/5 p-6 md:p-8">
           <div className="flex items-center gap-3">
             <div className="h-12 w-12 rounded-xl bg-gradient-gold text-2xl flex items-center justify-center">
               {result.recommendedSet.emoji}
             </div>
             <div>
-              <div className="text-[11px] font-bold tracking-widest uppercase text-gold">
+              <div className="text-[11px] font-bold tracking-widest uppercase text-vermilion">
                 おすすめセット
               </div>
               <div className="font-bold text-navy text-base md:text-lg">
@@ -486,7 +447,7 @@ function ResultPanel({
           <p className="mt-3 text-sm text-navy/75 leading-relaxed">
             {result.recommendedSet.summary}
           </p>
-          <div className="mt-4 flex items-end justify-between pt-4 border-t border-gold/30">
+          <div className="mt-4 flex items-end justify-between pt-4 border-t border-vermilion/20">
             <div className="text-xs text-navy/60 font-en">
               {getSetMenus(result.recommendedSet)
                 .map((m) => m.no)
@@ -496,7 +457,7 @@ function ResultPanel({
               <span className="text-xs text-navy/60 line-through">
                 {result.recommendedSet.listPrice}万円
               </span>
-              <span className="font-en text-2xl font-bold text-gold ml-2">
+              <span className="font-en text-2xl font-bold text-vermilion ml-2">
                 {result.recommendedSet.price}万円
               </span>
             </div>
@@ -507,24 +468,24 @@ function ResultPanel({
       {/* CTA */}
       <div className="grid gap-3 md:grid-cols-3 pt-4">
         <ButtonLink
-          href={ctaLinks.line}
+          href={ctaLinks.timerex}
           target="_blank"
           rel="noopener noreferrer"
           variant="primary"
           size="lg"
-          data-ga="diagnosis_line"
+          data-ga="diagnosis_timerex"
         >
-          💚 LINE登録で詳細を受け取る
+          30分で無料相談する
         </ButtonLink>
         <ButtonLink
-          href={ctaLinks.timerex}
+          href={ctaLinks.line}
           target="_blank"
           rel="noopener noreferrer"
           variant="navy"
           size="lg"
-          data-ga="diagnosis_timerex"
+          data-ga="diagnosis_line"
         >
-          📅 無料相談を予約
+          LINE登録で資料を受け取る
         </ButtonLink>
         <Button
           variant="outline"
@@ -538,16 +499,13 @@ function ResultPanel({
       </div>
 
       <div className="pt-4 text-center">
-        <Link href="/" className="text-sm text-navy/60 hover:text-navy underline underline-offset-4">
-          ← ランディングページに戻る
+        <Link
+          href="/"
+          className="text-sm text-navy/60 hover:text-navy underline underline-offset-4"
+        >
+          ← LPに戻る
         </Link>
       </div>
-
-      {contact.method === "email" && contact.email && (
-        <p className="text-center text-xs text-navy/50">
-          結果を {contact.email} にお送りする準備ができました。
-        </p>
-      )}
     </motion.div>
   );
 }

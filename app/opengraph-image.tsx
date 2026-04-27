@@ -1,7 +1,7 @@
 import { ImageResponse } from "next/og";
 
 export const runtime = "edge";
-export const alt = "KUHAKU｜月40時間を、AIが返します。";
+export const alt = "KUHAKU｜あなたの会社に、AI社員を。";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -29,7 +29,7 @@ export default async function OG() {
             gap: 12,
             fontSize: 24,
             letterSpacing: "0.25em",
-            color: "#C9A94B",
+            color: "#C8102E",
             fontWeight: 700,
             marginBottom: 40,
           }}
@@ -38,7 +38,7 @@ export default async function OG() {
             style={{
               height: 14,
               width: 14,
-              background: "#C9A94B",
+              background: "#C8102E",
               borderRadius: 9999,
               display: "block",
             }}
@@ -52,9 +52,9 @@ export default async function OG() {
             lineHeight: 1.15,
           }}
         >
-          月<span style={{ color: "#C9A94B" }}>40時間</span>を、
+          あなたの会社に、
           <br />
-          AIが返します。
+          <span style={{ color: "#C8102E" }}>AI社員</span>を。
         </div>
         <div
           style={{
@@ -64,9 +64,9 @@ export default async function OG() {
             lineHeight: 1.5,
           }}
         >
-          社長がやるべきでない業務を、AIで自動化。
+          中小企業のAI業務代行サービス。
           <br />
-          完全成果報酬50/50 ／ 全額返金保証 ／ 10万円〜
+          平均月100時間削減 ／ 10万円〜 ／ 月額1万円で保守無制限
         </div>
       </div>
     ),

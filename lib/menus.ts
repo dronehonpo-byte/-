@@ -19,6 +19,8 @@ export type Menu = {
   price: number; // 万円
   tier: Tier;
   featured?: boolean;
+  /** 「○○AI社員」の擬人化呼称（主要メニューのみ） */
+  aiRole?: string;
   shortDescription: string;
   deliverable: string;
   completionCriteria: string;
@@ -73,6 +75,7 @@ export const menus: Menu[] = [
     price: 15,
     tier: "standard",
     featured: true,
+    aiRole: "営業AI社員",
     shortDescription:
       "条件指定で100-500社の企業リストを自動生成。Sheets連携で即使える。",
     deliverable:
@@ -162,6 +165,7 @@ export const menus: Menu[] = [
     price: 15,
     tier: "standard",
     featured: true,
+    aiRole: "マーケAI社員",
     shortDescription:
       "1つのネタから X / IG / TikTok 用の投稿案を月30本分、自動生成。",
     deliverable:
@@ -249,6 +253,7 @@ export const menus: Menu[] = [
     price: 15,
     tier: "standard",
     featured: true,
+    aiRole: "メール代筆AI社員",
     shortDescription:
       "受信メールを解釈し、社長の口調に合わせた下書きをGmail上に自動保存。",
     deliverable:
@@ -266,6 +271,7 @@ export const menus: Menu[] = [
     name: "議事録・ToDo抽出",
     price: 20,
     tier: "pro",
+    aiRole: "議事録AI社員",
     shortDescription:
       "会議音声をアップすると、要約＋決定事項＋ToDoがSlackに届く。",
     deliverable:
@@ -337,6 +343,7 @@ export const menus: Menu[] = [
     price: 10,
     tier: "light",
     featured: true,
+    aiRole: "経理AI社員",
     shortDescription:
       "紙・PDFの請求書を会計ソフト用CSVに自動変換。精度95%以上。",
     deliverable:
@@ -427,6 +434,7 @@ export const menus: Menu[] = [
     price: 15,
     tier: "standard",
     featured: true,
+    aiRole: "採用AI社員",
     shortDescription:
       "履歴書をアップすると、採用基準に沿ったスコアと評価コメントを即生成。",
     deliverable:
@@ -509,6 +517,15 @@ export const menus: Menu[] = [
     tags: ["その他"],
   },
 ];
+
+/** LPの「6人のAI社員」セクションで露出する代表メニュー */
+export const aiStaffMenuIds = ["S-1", "M-1", "B-1", "B-2", "D-1", "H-1"] as const;
+
+export function getAiStaffMenus(): Menu[] {
+  return aiStaffMenuIds
+    .map((id) => menus.find((m) => m.id === id))
+    .filter((m): m is Menu => Boolean(m));
+}
 
 export function getMenu(id: string): Menu | undefined {
   return menus.find((m) => m.id === id);

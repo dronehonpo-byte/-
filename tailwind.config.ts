@@ -46,6 +46,17 @@ const config: Config = {
         },
         ink: "#0E1523",
         paper: "#FAFAF7",
+        mist: "#F5F5F2",
+        vermilion: {
+          DEFAULT: "#C8102E",
+          50: "#FCEBEE",
+          100: "#F6CBD2",
+          200: "#EE96A1",
+          400: "#D6334B",
+          500: "#C8102E",
+          600: "#A60D26",
+          700: "#7E0A1D",
+        },
       },
       fontFamily: {
         sans: [

@@ -7,6 +7,7 @@ import { Strengths } from "@/components/sections/strengths";
 import { MenusSection } from "@/components/sections/menus-section";
 import { Pricing } from "@/components/sections/pricing";
 import { Flow } from "@/components/sections/flow";
+import { Leadership } from "@/components/sections/leadership";
 import { Trust } from "@/components/sections/trust";
 import { Faq } from "@/components/sections/faq";
 import { FinalCta } from "@/components/sections/final-cta";
@@ -22,8 +23,9 @@ export default function HomePage() {
         <MenusSection />
         <Pricing />
         <Flow />
-        <Trust />
         <Faq />
+        <Leadership />
+        <Trust />
         <FinalCta />
       </main>
       <Footer />

@@ -10,7 +10,7 @@ export function FinalCta() {
       className="relative overflow-hidden bg-gradient-navy text-white py-24 md:py-32"
     >
       <div
-        className="absolute -top-40 left-1/2 -translate-x-1/2 h-[600px] w-[600px] rounded-full bg-gold/15 blur-3xl"
+        className="absolute -top-40 left-1/2 -translate-x-1/2 h-[600px] w-[600px] rounded-full bg-vermilion/20 blur-3xl"
         aria-hidden
       />
       <div className="absolute inset-0 bg-dots opacity-10" aria-hidden />
@@ -19,19 +19,18 @@ export function FinalCta() {
         <Reveal>
           <div className="max-w-3xl mx-auto text-center">
             <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 py-1.5 text-xs font-bold tracking-[0.2em]">
-              <span className="h-1.5 w-1.5 rounded-full bg-gold" />
+              <span className="h-1.5 w-1.5 rounded-full bg-vermilion" />
               FINAL CTA
             </div>
             <h2 className="mt-6 text-3xl md:text-5xl lg:text-6xl font-bold leading-[1.2]">
-              さあ、
+              次の社員は、
               <br className="md:hidden" />
-              <span className="gold-shimmer">空白</span>
-              をつくる時間です。
+              <span className="text-vermilion-200">AI</span>にしませんか。
             </h2>
             <p className="mt-6 text-jp text-sm md:text-base text-white/75">
-              あなたの月40時間は、どの仕事に使うべきか。
+              あなたの会社の月100時間は、どの仕事に使うべきか。
               <br className="hidden md:inline" />
-              まずは30秒の診断か、60分の無料相談から。
+              まずは30秒の診断か、30分の無料相談から。
             </p>
           </div>
         </Reveal>
@@ -42,28 +41,28 @@ export function FinalCta() {
               href={ctaLinks.timerex}
               target="_blank"
               icon={<Calendar size={20} />}
-              chip="💎 メイン"
-              title="無料相談（60分）"
-              body="TimeRexで日程を予約する"
+              chip="メイン"
+              title="30分で無料相談する"
+              body="TimeRexで日程を予約。Zoomで貴社の業務をヒアリング。"
               primary
               gaName="final_timerex"
+            />
+            <CtaCard
+              href={ctaLinks.diagnosis}
+              icon={<Sparkles size={20} />}
+              chip="サブ"
+              title="30秒でAI診断する"
+              body="貴社に合うAI社員を、5問の質問から自動で診断。"
+              gaName="final_diagnosis"
             />
             <CtaCard
               href={ctaLinks.line}
               target="_blank"
               icon={<Gift size={20} />}
-              chip="🎁 サブ①"
-              title="LINE登録で3つの資料"
-              body="25メニューPDF・優先順位マトリクス・AIチェックリスト50"
+              chip="サブ"
+              title="LINE登録で資料を受け取る"
+              body="25メニューPDF・優先順位マトリクス・AIチェックリスト50。"
               gaName="final_line"
-            />
-            <CtaCard
-              href={ctaLinks.diagnosis}
-              icon={<Sparkles size={20} />}
-              chip="🔍 サブ②"
-              title="30秒のAI診断"
-              body="今すぐ貴社に合うメニューを診断する"
-              gaName="final_diagnosis"
             />
           </div>
         </Reveal>
@@ -93,7 +92,7 @@ function CtaCard({
 }) {
   const className = `group h-full rounded-3xl p-6 md:p-7 border transition-all hover:-translate-y-1 flex flex-col ${
     primary
-      ? "bg-gradient-gold text-navy border-transparent shadow-gold"
+      ? "bg-vermilion text-white border-transparent shadow-[0_20px_50px_-20px_rgba(200,16,46,0.7)]"
       : "bg-white/5 border-white/10 backdrop-blur text-white hover:bg-white/10"
   }`;
 
@@ -102,7 +101,7 @@ function CtaCard({
       <div className="flex items-center justify-between">
         <span
           className={`text-[11px] font-bold tracking-widest uppercase ${
-            primary ? "text-navy/80" : "text-gold"
+            primary ? "text-white/80" : "text-vermilion-200"
           }`}
         >
           {chip}
@@ -110,8 +109,8 @@ function CtaCard({
         <span
           className={`inline-flex h-9 w-9 items-center justify-center rounded-full ${
             primary
-              ? "bg-navy text-white"
-              : "bg-white/10 text-gold"
+              ? "bg-white/15 text-white"
+              : "bg-white/10 text-vermilion-200"
           } group-hover:scale-110 transition`}
         >
           {icon}
@@ -119,21 +118,21 @@ function CtaCard({
       </div>
       <h3
         className={`mt-4 text-lg md:text-xl font-bold leading-tight ${
-          primary ? "text-navy" : ""
+          primary ? "text-white" : ""
         }`}
       >
         {title}
       </h3>
       <p
         className={`mt-2 text-xs md:text-sm leading-relaxed flex-1 ${
-          primary ? "text-navy/75" : "text-white/70"
+          primary ? "text-white/85" : "text-white/70"
         }`}
       >
         {body}
       </p>
       <div
         className={`mt-6 text-xs md:text-sm font-bold ${
-          primary ? "text-navy" : "text-gold"
+          primary ? "text-white" : "text-vermilion-200"
         }`}
       >
         詳しく見る →

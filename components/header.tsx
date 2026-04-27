@@ -71,7 +71,7 @@ export function Header() {
             size="sm"
             data-ga="header_diagnosis"
           >
-            30秒で診断
+            30秒でAI診断する
           </ButtonLink>
           <ButtonLink
             href={ctaLinks.timerex}
@@ -81,7 +81,7 @@ export function Header() {
             size="sm"
             data-ga="header_timerex"
           >
-            無料相談
+            30分で無料相談する
           </ButtonLink>
         </div>
 
@@ -120,7 +120,7 @@ export function Header() {
                 size="md"
                 onClick={() => setOpen(false)}
               >
-                30秒で診断
+                30秒でAI診断する
               </ButtonLink>
               <ButtonLink
                 href={ctaLinks.timerex}
@@ -130,7 +130,7 @@ export function Header() {
                 size="md"
                 onClick={() => setOpen(false)}
               >
-                無料相談を予約
+                30分で無料相談する
               </ButtonLink>
             </div>
           </nav>

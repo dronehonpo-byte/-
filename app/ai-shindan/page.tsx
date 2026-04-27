@@ -33,19 +33,19 @@ export default function DiagnosisPage() {
                 ← LPに戻る
               </Link>
               <div className="inline-flex items-center gap-2 rounded-full border border-navy/15 bg-white/80 px-4 py-1.5 text-xs font-bold tracking-[0.2em] text-navy/80 backdrop-blur">
-                <span className="h-1.5 w-1.5 rounded-full bg-gold" />
+                <span className="h-1.5 w-1.5 rounded-full bg-vermilion" />
                 30秒でわかる
               </div>
               <h1 className="heading-xl mt-5 text-3xl md:text-5xl lg:text-6xl leading-[1.2]">
-                あなたの会社、
+                AI社員を雇うと、
                 <br className="md:hidden" />
-                <span className="text-gold">月何時間</span>
-                削減できる？
+                <span className="text-vermilion">月何時間</span>
+                取り戻せる？
               </h1>
               <p className="mt-5 text-sm md:text-base text-navy/70 text-jp">
-                5つの質問に答えるだけ。貴社の規模と業務内容から、
+                5つの質問に答えるだけ。貴社の規模・業務・AI活用度から、
                 <br className="hidden md:inline" />
-                削減時間・金額・推奨メニューを自動で算出します。
+                削減時間・金額・おすすめのAI社員を自動で算出します。
               </p>
             </div>
 
