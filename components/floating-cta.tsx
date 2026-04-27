@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import { Calendar, MessageCircle, Sparkles } from "lucide-react";
 import { ctaLinks } from "@/lib/config";
 import { cn } from "@/lib/utils";

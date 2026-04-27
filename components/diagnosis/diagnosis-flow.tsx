@@ -369,27 +369,6 @@ function ResultPanel({
             で算出した試算値です
           </p>
         </div>
-        <h2 className="mt-4 text-lg md:text-xl text-white/80 font-bold">
-          あなたの会社は、月に
-        </h2>
-        <div className="mt-4 font-en font-bold text-white leading-none">
-          <CountUp
-            to={result.savedHours}
-            className="text-7xl md:text-[112px]"
-          />
-          <span className="text-3xl md:text-5xl ml-2">時間</span>
-        </div>
-        <p className="mt-4 text-sm md:text-base text-white/85">
-          = 金額換算で約{" "}
-          <span className="text-accent font-bold">
-            <CountUp to={result.savedYen} format={(n) => Math.round(n).toLocaleString("ja-JP")} />
-            円
-          </span>
-          /月 を削減できます
-        </p>
-        <p className="mt-2 text-[11px] md:text-xs text-white/50">
-          ※ 削減時間（月）= 週時間中央値 × 4週 × 0.7 × 規模係数
-        </p>
       </div>
 
       {/* 推奨メニュー */}

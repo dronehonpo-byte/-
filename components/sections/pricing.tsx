@@ -245,31 +245,13 @@ export function Pricing() {
 
       {/* ⑤ フルパッケージ */}
       <Reveal delay={0.25}>
-        <div className="rounded-xl bg-navy text-white p-8 md:p-14">
-          <div className="inline-flex items-center gap-2 rounded-full bg-white/10 border border-white/20 text-white px-3 py-1 text-[10px] md:text-xs font-bold tracking-widest uppercase">
-            <Crown size={14} /> Full Package
-          </div>
-          <h3 className="mt-4 text-2xl md:text-4xl lg:text-5xl font-bold leading-tight">
-            KUHAKUフルパッケージ
-          </h3>
-          <p className="mt-3 text-sm md:text-base text-white/75">
-            全25メニュー導入。約26%OFFの特別価格で、貴社を丸ごとAIに委ねる。
-          </p>
+        <div className="relative overflow-hidden rounded-3xl bg-navy text-white p-8 md:p-14 shadow-[0_30px_80px_-30px_rgba(15,26,58,0.6)]">
+          <div className="absolute -top-20 -right-20 h-60 w-60 rounded-full bg-gold/30 blur-3xl" aria-hidden />
+          <div className="absolute -bottom-20 -left-20 h-60 w-60 rounded-full bg-gold/20 blur-3xl" aria-hidden />
 
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5, delay: 0.15 }}
-            className="mt-8 md:mt-10 flex flex-wrap items-end gap-3 md:gap-6"
-          >
-            <div>
-              <div className="text-xs text-white/50 tracking-widest uppercase">
-                List Price
-              </div>
-              <div className="font-en text-xl md:text-2xl line-through text-white/40">
-                {fullPackage.listPrice}万円
-              </div>
+          <div className="relative">
+            <div className="inline-flex items-center gap-2 rounded-full bg-gold text-navy px-3 py-1 text-[10px] md:text-xs font-bold tracking-widest uppercase">
+              <Crown size={14} /> Gold Package
             </div>
             <h3 className="mt-4 text-2xl md:text-4xl lg:text-5xl font-bold leading-tight">
               KUHAKUフルパッケージ
@@ -278,28 +260,12 @@ export function Pricing() {
               全25メニュー導入。約26%OFFの特別価格で、貴社専属のAIチームを構築。
             </p>
 
-          <ul className="mt-6 grid md:grid-cols-3 gap-3 text-sm">
-            {fullPackage.includes.map((inc) => (
-              <li key={inc} className="flex items-start gap-2 text-white/90">
-                <CheckCircle2 size={16} className="text-accent shrink-0 mt-0.5" />
-                <span>{inc}</span>
-              </li>
-            ))}
-          </ul>
-
-          <div className="mt-6 grid gap-2 text-xs text-white/60">
-            <div>対象：{fullPackage.target}</div>
-            <div>納期：{fullPackage.leadtime}</div>
-          </div>
-
-          <div className="mt-8">
-            <ButtonLink
-              href={ctaLinks.timerex}
-              target="_blank"
-              rel="noopener noreferrer"
-              variant="primary"
-              size="lg"
-              data-ga="pricing_full_package"
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: 0.15 }}
+              className="mt-8 md:mt-10 flex flex-wrap items-end gap-3 md:gap-6"
             >
               <div>
                 <div className="text-xs text-white/50 tracking-widest uppercase">
@@ -313,7 +279,7 @@ export function Pricing() {
                 <div className="text-xs text-gold tracking-widest uppercase">
                   Special
                 </div>
-                <div className="font-en text-5xl md:text-7xl font-bold gold-shimmer">
+                <div className="font-en text-5xl md:text-7xl font-bold text-gold">
                   {fullPackage.price}
                   <span className="text-2xl font-bold ml-1">万円</span>
                 </div>
