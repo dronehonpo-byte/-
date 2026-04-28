@@ -12,9 +12,9 @@ export const siteConfig = {
   ogImage: "/og.png",
   keywords: [
     "AI業務代行",
+    "AI社員",
     "業務自動化",
     "中小企業",
-    "社長業務",
     "完全成果報酬",
     "ChatGPT",
     "Claude",

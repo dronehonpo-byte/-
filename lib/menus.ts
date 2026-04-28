@@ -255,11 +255,11 @@ export const menus: Menu[] = [
     featured: true,
     aiRole: "メール代筆AI社員",
     shortDescription:
-      "受信メールを解釈し、社長の口調に合わせた下書きをGmail上に自動保存。",
+      "受信メールを解釈し、貴社の口調に合わせた下書きをGmail上に自動保存。",
     deliverable:
       "Gmail受信→下書き生成GASコード＋学習プロンプト5パターン＋マニュアル",
     completionCriteria:
-      "テスト10通で下書き自動生成、社長OK判定7通以上",
+      "テスト10通で下書き自動生成、お客様OK判定7通以上",
     conditions: "Google Workspace／Claude APIキー／過去メール50通",
     stack: ["GAS", "Gmail API", "Claude"],
     tags: ["メール"],

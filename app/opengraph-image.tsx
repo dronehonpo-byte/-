@@ -16,7 +16,8 @@ export default async function OG() {
           flexDirection: "column",
           justifyContent: "center",
           padding: 80,
-          background: "#2B4FD4",
+          background:
+            "linear-gradient(135deg, #0F1F5C 0%, #162A7C 60%, #0F1F5C 100%)",
           color: "white",
           fontFamily: "sans-serif",
         }}
@@ -28,7 +29,7 @@ export default async function OG() {
             gap: 12,
             fontSize: 24,
             letterSpacing: "0.25em",
-            color: "#C8102E",
+            color: "#FFB4BD",
             fontWeight: 700,
             marginBottom: 40,
           }}
@@ -53,13 +54,13 @@ export default async function OG() {
         >
           あなたの会社に、
           <br />
-          <span style={{ color: "#C8102E" }}>AI社員</span>を。
+          <span style={{ color: "#FF8A9A" }}>AI社員</span>を。
         </div>
         <div
           style={{
             marginTop: 36,
             fontSize: 28,
-            color: "rgba(255,255,255,0.8)",
+            color: "rgba(255,255,255,0.85)",
             lineHeight: 1.5,
           }}
         >

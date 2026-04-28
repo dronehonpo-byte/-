@@ -20,9 +20,9 @@ export const setBundles: SetBundle[] = [
   {
     id: "time-back",
     emoji: "🕐",
-    name: "社長の時間を取り戻す",
+    name: "会社の時間を取り戻す",
     summary:
-      "メール・議事録・日程調整をまとめて自動化。1日2時間を取り戻すセット。",
+      "メール・議事録・日程調整をまとめて自動化。経営者と社員の1日2時間を、判断業務に取り戻すセット。",
     menuIds: ["B-1", "B-2", "B-3"],
     listPrice: 45,
     price: 38,
