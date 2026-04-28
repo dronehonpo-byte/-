@@ -156,12 +156,6 @@ export const faqItems = [
   },
 ] as const;
 
-export const trustBadges = [
-  { label: "平均月100時間削減", detail: "AI社員1人 10万円〜" },
-  { label: "成果が出なければ全額返金", detail: "成果報酬50/50" },
-  { label: "月額1万円で保守無制限", detail: "メンテナンス・対応" },
-] as const;
-
 export const promises = [
   {
     num: "1",

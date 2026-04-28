@@ -79,7 +79,6 @@ function CtaCard({
   title,
   body,
   primary,
-  compact,
   gaName,
 }: {
   href: string;
@@ -89,7 +88,6 @@ function CtaCard({
   title: string;
   body: string;
   primary?: boolean;
-  compact?: boolean;
   gaName: string;
 }) {
   const className = `group h-full rounded-xl border transition-colors flex flex-col ${

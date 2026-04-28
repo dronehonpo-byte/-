@@ -7,16 +7,16 @@ export function DiagnosisInline() {
       id="diagnosis"
       tone="paper"
       className="scroll-mt-20 md:scroll-mt-24"
-      eyebrow="30秒診断"
+      eyebrow="30秒AI診断"
       heading={
         <>
-          あなたの会社、
+          AI社員を雇うと、
           <br className="md:hidden" />
           <span className="text-accent">月何時間</span>
-          削減できる？
+          取り戻せる？
         </>
       }
-      lead="5つの質問に答えるだけ。貴社の規模と業務内容から、削減時間・金額・推奨メニューを自動で算出します。"
+      lead="5つの質問に答えるだけ。貴社の規模・業務・AI活用度から、削減時間・金額・おすすめのAI社員を自動で算出します。"
     >
       <div className="mx-auto max-w-2xl rounded-xl border border-ink/10 bg-white p-6 md:p-10">
         <DiagnosisFlow />

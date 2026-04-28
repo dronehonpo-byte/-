@@ -33,7 +33,7 @@ export function Header() {
           className="flex items-center gap-2.5 font-en text-xl md:text-2xl tracking-[0.18em] font-bold text-ink"
           aria-label="KUHAKU ホーム"
         >
-          <span className="inline-block h-3 w-3 rounded-sm bg-navy" aria-hidden />
+          <span className="inline-block h-3 w-3 rounded-sm bg-vermilion" aria-hidden />
           KUHAKU
         </Link>
 
