@@ -42,6 +42,10 @@ export function Strengths() {
               <div className="mt-2 text-sm font-bold text-vermilion">
                 {s.lead}
               </div>
+
+              {/* 数字の強調表示 */}
+              <StrengthFigure num={s.num} />
+
               <p className="mt-4 text-sm md:text-base leading-relaxed text-navy/75">
                 {s.body}
               </p>
@@ -50,5 +54,63 @@ export function Strengths() {
         ))}
       </div>
     </Section>
+  );
+}
+
+function StrengthFigure({ num }: { num: string }) {
+  if (num === "01") {
+    return (
+      <div className="mt-5 rounded-xl bg-vermilion/5 border border-vermilion/20 px-4 py-3">
+        <div className="text-[10px] font-bold tracking-widest uppercase text-vermilion/80 mb-1">
+          基準未達なら
+        </div>
+        <div className="font-en flex items-baseline gap-1.5">
+          <span className="text-4xl md:text-5xl font-bold text-vermilion leading-none">
+            全額
+          </span>
+          <span className="text-sm md:text-base font-bold text-navy">
+            返金
+          </span>
+        </div>
+      </div>
+    );
+  }
+  if (num === "02") {
+    return (
+      <div className="mt-5 rounded-xl bg-navy/5 border border-navy/15 px-4 py-3">
+        <div className="text-[10px] font-bold tracking-widest uppercase text-navy/60 mb-1">
+          技術スタック
+        </div>
+        <div className="flex flex-wrap gap-1.5">
+          {["Claude Code", "Anthropic", "GAS", "Next.js"].map((t) => (
+            <span
+              key={t}
+              className="font-en text-[11px] md:text-xs font-bold bg-white border border-navy/15 rounded-full px-2 py-0.5 text-navy"
+            >
+              {t}
+            </span>
+          ))}
+        </div>
+      </div>
+    );
+  }
+  // 03: 10万円から
+  return (
+    <div className="mt-5 rounded-xl bg-vermilion/5 border border-vermilion/20 px-4 py-3">
+      <div className="text-[10px] font-bold tracking-widest uppercase text-vermilion/80 mb-1">
+        AI社員1人
+      </div>
+      <div className="font-en flex items-baseline gap-1.5">
+        <span className="text-5xl md:text-6xl font-bold text-vermilion leading-none">
+          10
+        </span>
+        <span className="text-base md:text-lg font-bold text-navy">
+          万円〜
+        </span>
+        <span className="ml-1 text-[10px] font-bold text-navy/55">
+          + 月額1万円
+        </span>
+      </div>
+    </div>
   );
 }

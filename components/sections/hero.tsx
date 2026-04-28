@@ -4,9 +4,7 @@ import { motion } from "framer-motion";
 import { ShieldCheck, RefreshCw, Wrench, Sparkles } from "lucide-react";
 import { ButtonLink } from "../ui/button";
 import { ctaLinks } from "@/lib/config";
-import { catchphrases, trustBadges } from "@/lib/content";
-
-const badgeIcons = [ShieldCheck, RefreshCw, Wrench];
+import { catchphrases } from "@/lib/content";
 
 export function Hero() {
   return (
@@ -46,30 +44,57 @@ export function Hero() {
             </span>
           </p>
 
-          {/* 信頼バッジ */}
+          {/* 信頼バッジ：数字を視覚的に強調 */}
           <ul className="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-3">
-            {trustBadges.map((b, i) => {
-              const Icon = badgeIcons[i] ?? ShieldCheck;
-              return (
-                <motion.li
-                  key={b.label}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: 0.2 + i * 0.08 }}
-                  className="flex items-center gap-3 rounded-xl border border-navy/10 bg-white/70 px-3 py-3 backdrop-blur shadow-soft"
-                >
-                  <Icon size={20} className="text-vermilion shrink-0" />
-                  <div className="leading-tight min-w-0">
-                    <div className="text-xs md:text-sm font-bold text-navy">
-                      {b.label}
-                    </div>
-                    <div className="text-[10px] md:text-xs text-navy/60">
-                      {b.detail}
-                    </div>
+            {[
+              {
+                Icon: ShieldCheck,
+                big: "100",
+                bigUnit: "時間",
+                label: "平均月削減",
+                detail: "AI社員1人 10万円〜",
+              },
+              {
+                Icon: RefreshCw,
+                big: "全額",
+                bigUnit: "返金",
+                label: "成果が出なければ",
+                detail: "成果報酬50/50",
+              },
+              {
+                Icon: Wrench,
+                big: "1万",
+                bigUnit: "円/月",
+                label: "保守無制限",
+                detail: "メンテ・対応",
+              },
+            ].map((b, i) => (
+              <motion.li
+                key={b.label}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.2 + i * 0.08 }}
+                className="relative overflow-hidden rounded-xl border border-navy/10 bg-white/80 px-4 py-3 backdrop-blur shadow-soft"
+              >
+                <div className="flex items-center gap-3">
+                  <b.Icon size={18} className="text-vermilion shrink-0" />
+                  <div className="text-[10px] md:text-[11px] font-bold tracking-wider text-navy/60">
+                    {b.label}
                   </div>
-                </motion.li>
-              );
-            })}
+                </div>
+                <div className="mt-1.5 flex items-baseline gap-1">
+                  <span className="font-en text-3xl md:text-4xl font-bold text-vermilion leading-none">
+                    {b.big}
+                  </span>
+                  <span className="text-xs md:text-sm font-bold text-navy">
+                    {b.bigUnit}
+                  </span>
+                </div>
+                <div className="mt-1 text-[10px] md:text-xs text-navy/60">
+                  {b.detail}
+                </div>
+              </motion.li>
+            ))}
           </ul>
 
           {/* CTA */}
