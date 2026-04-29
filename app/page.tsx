@@ -11,6 +11,7 @@ import { Flow } from "@/components/sections/flow";
 import { Leadership } from "@/components/sections/leadership";
 import { Trust } from "@/components/sections/trust";
 import { Faq } from "@/components/sections/faq";
+import { Contact } from "@/components/sections/contact";
 import { FinalCta } from "@/components/sections/final-cta";
 
 export default function HomePage() {
@@ -28,6 +29,7 @@ export default function HomePage() {
         <Faq />
         <Leadership />
         <Trust />
+        <Contact />
         <FinalCta />
       </main>
       <Footer />

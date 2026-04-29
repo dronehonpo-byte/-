@@ -42,6 +42,16 @@ export const ctaLinks = {
     "https://timerex.net/s/dronehonpo_dbab/8ea01e5e",
   line: process.env.NEXT_PUBLIC_LINE_URL ?? "https://lin.ee/RtTNUsZ",
   diagnosis: "/#diagnosis",
+  contact: "/#contact",
+  tel: company.tel,
+  telLink: `tel:${company.tel.replace(/-/g, "")}`,
 };
+
+/** お問い合わせフォーム送信先（受信者）。環境変数で上書き可。 */
+export const contactRecipient =
+  process.env.CONTACT_TO_EMAIL ?? "dronehonpo@gmail.com";
+
+/** 電話相談の受付時間表記 */
+export const phoneHours = "平日 9:00 〜 18:00";
 
 export const gaId = process.env.NEXT_PUBLIC_GA_ID ?? "";

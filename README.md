@@ -32,10 +32,31 @@ http://localhost:3000
 `.env.local` を作成：
 
 ```
+# 公開（クライアントから参照）
 NEXT_PUBLIC_GA_ID=G-XXXXXXXXXX
 NEXT_PUBLIC_LINE_URL=https://lin.ee/your-line
 NEXT_PUBLIC_TIMEREX_URL=https://timerex.net/s/your-page
+
+# お問い合わせフォーム送信先（デフォルト: dronehonpo@gmail.com）
+CONTACT_TO_EMAIL=dronehonpo@gmail.com
+
+# SMTP（未設定時はサーバーログに記録のみ：開発／プレビュー用フォールバック）
+# Gmail を使う場合は「アプリパスワード」を発行して SMTP_PASS に設定
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=your-sender@gmail.com
+SMTP_PASS=xxxx-xxxx-xxxx-xxxx
+SMTP_FROM=your-sender@gmail.com
+SMTP_SECURE=false
 ```
+
+### お問い合わせフォーム
+
+- 送信先: `CONTACT_TO_EMAIL`（デフォルト `dronehonpo@gmail.com`）
+- 実装: `app/api/contact/route.ts`（POST）
+- SMTP 環境変数が揃っていれば nodemailer で実送信。未設定時は payload を
+  サーバーログに出力して 200 を返すため、UI 動線は壊れません（プレビュー想定）。
+- Honeypot フィールド（`website`）と簡易バリデーションで bot を排除。
 
 ## 会社情報
 

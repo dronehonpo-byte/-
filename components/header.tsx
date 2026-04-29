@@ -13,6 +13,7 @@ const nav = [
   { href: "/#pricing", label: "料金" },
   { href: "/#flow", label: "導入フロー" },
   { href: "/#faq", label: "FAQ" },
+  { href: "/#contact", label: "お問い合わせ" },
 ];
 
 export function Header() {
