@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% block title %}{{ contract.title }}{% endblock %}
+{% block content %}
+<section class="page-head">
+  <div>
+    <h1>{{ contract.title }}</h1>
+    <p class="muted">
+      契約番号 C-{{ '%06d' % contract.id }}
+      ・状態 <span class="badge badge-{{ contract.status_enum.badge }}">{{ contract.status_enum.label }}</span>
+      ・作成 {{ contract.creator.name }}
+      ・更新 {{ contract.updated_at | dt }}
+    </p>
+  </div>
+  <div class="page-head-actions">
+    <a href="{{ url_for('contracts.download_pdf', contract_id=contract.id) }}" class="btn-ghost">📄 PDFダウンロード</a>
+    {% if contract.status_enum.value == 'completed' %}
+      <a href="{{ url_for('contracts.download_certificate', contract_id=contract.id) }}" class="btn-primary">🧾 締結証明書</a>
+    {% elif contract.status_enum.value == 'draft' %}
+      <a href="{{ url_for('contracts.edit', contract_id=contract.id) }}" class="btn-ghost">✏️ 編集</a>
+      <form method="post" action="{{ url_for('contracts.send', contract_id=contract.id) }}" style="display:inline">
+        <button class="btn-primary" type="submit">📨 署名依頼を送信</button>
+      </form>
+    {% endif %}
+  </div>
+</section>
+
+<section class="two-col">
+  <div class="panel">
+    <div class="panel-head">
+      <h2>契約本文</h2>
+      {% if contract.document_hash %}
+        <small class="muted">SHA-256: {{ contract.document_hash[:16] }}…</small>
+      {% endif %}
+    </div>
+    {% if contract.body %}
+      <article class="contract-body">
+        {% for paragraph in contract.body.split('\n\n') %}
+          {% set first = paragraph.split('\n')[0] %}
+          {% if first.startswith('第') and '条' in first[:6] %}
+            <h3>{{ first }}</h3>
+            <p>{{ paragraph.split('\n', 1)[1] if '\n' in paragraph else '' }}</p>
+          {% else %}
+            <p>{{ paragraph }}</p>
+          {% endif %}
+        {% endfor %}
+      </article>
+    {% elif contract.pdf_path %}
+      <p class="muted">本文は PDF が正本です。<a href="{{ url_for('contracts.download_pdf', contract_id=contract.id) }}">PDFを確認</a></p>
+    {% endif %}
+  </div>
+
+  <div>
+    <div class="panel">
+      <div class="panel-head"><h2>署名状況</h2></div>
+      <div class="progress big"><span style="width: {{ contract.progress_percent }}%"></span></div>
+      <p class="muted small">{{ contract.signed_count }} / {{ contract.total_signers }} 名が署名済み</p>
+      <ul class="signer-list">
+        {% for s in contract.signers %}
+        <li>
+          <div>
+            <b>{{ s.name }}</b>
+            {% if s.role == 'internal' %}<span class="badge badge-info">社内</span>
+            {% elif s.role == 'witness' %}<span class="badge badge-secondary">立会人</span>
+            {% else %}<span class="badge badge-secondary">取引先</span>{% endif %}
+            <div class="muted small">{{ s.email }}{% if s.company %} · {{ s.company }}{% endif %}</div>
+          </div>
+          <div class="signer-status">
+            <span class="badge badge-{{ {'pending':'warning','signed':'success','declined':'danger'}[s.status] }}">{{ s.status_enum.label }}</span>
+            {% if s.status == 'signed' %}
+              <small class="muted">{{ s.signed_at | dt }}</small>
+            {% endif %}
+            {% if contract.status_enum.value in ('sent', 'partial') and s.status == 'pending' %}
+              <a class="link-sm" href="{{ url_for('sign.view', token=s.access_token, _external=True) }}" target="_blank">署名URL</a>
+            {% endif %}
+          </div>
+        </li>
+        {% endfor %}
+      </ul>
+
+      {% if contract.status_enum.value not in ('completed', 'cancelled') %}
+      <form method="post" action="{{ url_for('contracts.cancel', contract_id=contract.id) }}" onsubmit="return confirm('この契約を取り消しますか？');" class="cancel-form">
+        <button class="btn-ghost btn-sm" type="submit">この契約を取り消す</button>
+      </form>
+      {% endif %}
+    </div>
+
+    <div class="panel">
+      <div class="panel-head"><h2>監査ログ</h2></div>
+      <ul class="audit-list">
+        {% for log in contract.audit_logs %}
+        <li>
+          <div class="audit-time">{{ log.created_at | dt('%Y-%m-%d %H:%M:%S') }}</div>
+          <div class="audit-body">
+            <b>{{ log.action }}</b> by {{ log.actor }}
+            {% if log.detail %}<div class="muted small">{{ log.detail }}</div>{% endif %}
+            {% if log.ip_address %}<div class="muted small">IP: {{ log.ip_address }}</div>{% endif %}
+          </div>
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+</section>
+{% endblock %}

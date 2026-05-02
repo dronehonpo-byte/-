@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}新規契約{% endblock %}
+{% block content %}
+<section class="page-head">
+  <div>
+    <h1>新規契約の作成</h1>
+    <p class="muted">テンプレートから始めるか、自由入力で本文を作成できます。</p>
+  </div>
+  <a href="{{ url_for('contracts.list_contracts') }}" class="btn-ghost">一覧へ戻る</a>
+</section>
+
+<form method="post" enctype="multipart/form-data" class="form contract-form">
+  {% if selected_template %}
+    <input type="hidden" name="template_id" value="{{ selected_template.id }}" />
+    <div class="info-banner">テンプレート: <b>{{ selected_template.name }}</b></div>
+  {% endif %}
+  <div class="grid2">
+    <label class="span2">タイトル
+      <input type="text" name="title" required value="{{ prefilled_title or '' }}" placeholder="例: 〇〇社との業務委託契約書" />
+    </label>
+    <label>有効期限 (任意)
+      <input type="date" name="expires_at" />
+    </label>
+    <label>テンプレート選択
+      <select name="template_id" onchange="if (this.value) location.href='{{ url_for('contracts.new') }}?template_id=' + this.value">
+        <option value="">— 自由入力 —</option>
+        {% for t in templates %}
+          <option value="{{ t.id }}" {% if selected_template and selected_template.id == t.id %}selected{% endif %}>{{ t.category }} / {{ t.name }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label class="span2">説明 (任意)
+      <input type="text" name="description" placeholder="社内向けメモ・案件名など" />
+    </label>
+    <label class="span2">本文
+      <textarea name="body" rows="18" required placeholder="契約条文を入力。空行で段落区切り。「第○条（…）」始まりの行は見出しとして装飾されます。">{{ prefilled_body or (selected_template.body if selected_template else '') }}</textarea>
+    </label>
+    <label class="span2">既存PDFをアップロード (任意)
+      <input type="file" name="pdf_file" accept="application/pdf" />
+      <small class="muted">PDFを指定した場合は本文ではなくPDFが正本として扱われます。</small>
+    </label>
+  </div>
+
+  {% include "contracts/_form_signers.html" %}
+
+  <div class="form-actions">
+    <a href="{{ url_for('contracts.list_contracts') }}" class="btn-ghost">キャンセル</a>
+    <button type="submit" class="btn-primary">下書きとして作成</button>
+  </div>
+</form>
+{% endblock %}

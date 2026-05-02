@@ -1,0 +1,6 @@
+instance/
+storage/contracts/*.pdf
+storage/signatures/*.png
+__pycache__/
+*.pyc
+.env

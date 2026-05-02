@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}テンプレート一覧{% endblock %}
+{% block content %}
+<section class="page-head">
+  <div>
+    <h1>テンプレート</h1>
+    <p class="muted">よく使う契約書のひな形。変数を埋めて素早く起票できます。</p>
+  </div>
+  <a href="{{ url_for('contracts.new') }}" class="btn-ghost">テンプレートを使わず作成</a>
+</section>
+
+<div class="grid3">
+  {% for t in templates %}
+  <a class="template-card" href="{{ url_for('contracts.template_detail', template_id=t.id) }}">
+    <span class="chip">{{ t.category }}</span>
+    <h3>{{ t.name }}</h3>
+    <p>{{ t.description }}</p>
+  </a>
+  {% endfor %}
+</div>
+{% endblock %}

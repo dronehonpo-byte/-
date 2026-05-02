@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}監査ログ{% endblock %}
+{% block content %}
+<section class="page-head">
+  <div>
+    <h1>監査ログ</h1>
+    <p class="muted">最新200件の操作履歴を時系列で確認できます。</p>
+  </div>
+</section>
+
+<table class="table">
+  <thead>
+    <tr><th>日時</th><th>操作</th><th>実行者</th><th>契約</th><th>詳細</th><th>IP</th></tr>
+  </thead>
+  <tbody>
+  {% for log in logs %}
+    <tr>
+      <td class="muted">{{ log.created_at | dt('%Y-%m-%d %H:%M:%S') }}</td>
+      <td><span class="badge badge-info">{{ log.action }}</span></td>
+      <td>{{ log.actor }}</td>
+      <td><a href="{{ url_for('contracts.detail', contract_id=log.contract_id) }}">C-{{ '%06d' % log.contract_id }}</a></td>
+      <td class="muted">{{ log.detail or '' }}</td>
+      <td class="muted">{{ log.ip_address or '—' }}</td>
+    </tr>
+  {% else %}
+    <tr><td colspan="6" class="muted">監査ログはまだありません。</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
