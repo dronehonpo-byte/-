@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}アカウント作成{% endblock %}
+{% block content %}
+<div class="auth-card">
+  <h1>アカウント作成</h1>
+  <p class="muted">最初に登録したユーザーは自動的に管理者になります。</p>
+  <form method="post" class="form">
+    <label>氏名
+      <input type="text" name="name" required />
+    </label>
+    <label>部署
+      <input type="text" name="department" placeholder="例: 法務部" />
+    </label>
+    <label>メールアドレス
+      <input type="email" name="email" required />
+    </label>
+    <label>パスワード（6文字以上）
+      <input type="password" name="password" required minlength="6" />
+    </label>
+    <label>パスワード（確認）
+      <input type="password" name="password2" required minlength="6" />
+    </label>
+    <button type="submit" class="btn-primary">登録する</button>
+  </form>
+  <p class="muted small">
+    既にアカウントをお持ちですか？ <a href="{{ url_for('auth.login') }}">ログイン</a>
+  </p>
+</div>
+{% endblock %}

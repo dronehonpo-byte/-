@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}{{ template.name }}{% endblock %}
+{% block content %}
+<section class="page-head">
+  <div>
+    <span class="chip">{{ template.category }}</span>
+    <h1>{{ template.name }}</h1>
+    <p class="muted">{{ template.description }}</p>
+  </div>
+  <a href="{{ url_for('contracts.template_list') }}" class="btn-ghost">テンプレート一覧</a>
+</section>
+
+<section class="two-col">
+  <div class="panel">
+    <div class="panel-head"><h2>本文プレビュー</h2></div>
+    <pre class="template-preview">{{ template.body }}</pre>
+  </div>
+  <div class="panel">
+    <div class="panel-head"><h2>変数を入力して起票</h2></div>
+    <form method="post" action="{{ url_for('contracts.template_use', template_id=template.id) }}" class="form">
+      {% for v in variables %}
+      <label>{{ v }}
+        <input type="text" name="var_{{ v }}" placeholder="{{ v }} を入力" />
+      </label>
+      {% else %}
+      <p class="muted">このテンプレートには変数がありません。</p>
+      {% endfor %}
+      <button class="btn-primary" type="submit">この内容で起票画面へ</button>
+    </form>
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,17 @@
+instance/
+storage/contracts/*.pdf
+storage/signatures/*.png
+__pycache__/
+*.pyc
+.env
+
+# 環境変数
+.env
+.env.local
+
+# テスト
+.pytest_cache/
+.coverage
+htmlcov/
+__pycache__/
+*.pyc

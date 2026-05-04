@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}社内向け電子契約サービス{% endblock %}
+{% block content %}
+<section class="hero">
+  <div class="hero-text">
+    <span class="eyebrow">FOR INTERNAL USE</span>
+    <h1>あらゆる契約を、<br />電子で完結。</h1>
+    <p>
+      NDA・業務委託・雇用契約・SaaS規約まで、社内のあらゆる契約を一気通貫で管理。<br />
+      テンプレート、署名フロー、監査ログ、締結証明書発行までワンストップで。
+    </p>
+    <div class="hero-cta">
+      <a href="{{ url_for('auth.register') }}" class="btn-primary">アカウントを作成</a>
+      <a href="{{ url_for('auth.login') }}" class="btn-ghost">ログイン</a>
+    </div>
+  </div>
+  <div class="hero-card">
+    <div class="card-row"><span>📄</span><div><b>テンプレート 5種類</b><small>NDA / 業務委託 / 雇用 / SaaS / 売買</small></div></div>
+    <div class="card-row"><span>✍️</span><div><b>マルチパーティ署名</b><small>手書き / テキスト / IPと時刻記録</small></div></div>
+    <div class="card-row"><span>🔐</span><div><b>HMAC-SHA256 署名値</b><small>文書ハッシュ＋署名者で改ざん検知</small></div></div>
+    <div class="card-row"><span>🧾</span><div><b>締結証明書 PDF</b><small>監査ログ付きで発行</small></div></div>
+    <div class="card-row"><span>🔍</span><div><b>監査ログ</b><small>作成・送信・署名・取消をすべて記録</small></div></div>
+  </div>
+</section>
+
+<section class="features">
+  <h2>主な機能</h2>
+  <div class="grid3">
+    <div class="feature">
+      <h3>1. 起票・テンプレート</h3>
+      <p>変数を埋めるだけで契約書を生成。ゼロから自由入力も可能。PDF アップロードにも対応。</p>
+    </div>
+    <div class="feature">
+      <h3>2. 署名フロー</h3>
+      <p>署名者ごとにユニークな署名URLを発行。ブラウザだけで手書き署名やテキスト署名が可能。</p>
+    </div>
+    <div class="feature">
+      <h3>3. 締結・保管</h3>
+      <p>全員の署名完了で自動締結。署名済PDFと締結証明書を自動生成し、いつでもダウンロード可能。</p>
+    </div>
+  </div>
+</section>
+{% endblock %}

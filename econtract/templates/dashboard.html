@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}ダッシュボード{% endblock %}
+{% block content %}
+<section class="page-head">
+  <div>
+    <h1>ダッシュボード</h1>
+    <p class="muted">{{ current_user.name }} さんの契約状況サマリ</p>
+  </div>
+  <div class="page-head-actions">
+    <a href="{{ url_for('contracts.template_list') }}" class="btn-ghost">テンプレートから作成</a>
+    <a href="{{ url_for('contracts.new') }}" class="btn-primary">新規契約を作成</a>
+  </div>
+</section>
+
+<section class="stats">
+  <div class="stat-card">
+    <div class="stat-num">{{ total }}</div>
+    <div class="stat-label">契約 合計</div>
+  </div>
+  {% for s in ContractStatus %}
+  <div class="stat-card">
+    <div class="stat-num">{{ by_status.get(s.value, 0) }}</div>
+    <div class="stat-label"><span class="badge badge-{{ s.badge }}">{{ s.label }}</span></div>
+  </div>
+  {% endfor %}
+</section>
+
+<section class="two-col">
+  <div class="panel">
+    <div class="panel-head">
+      <h2>最近更新された契約</h2>
+      <a href="{{ url_for('contracts.list_contracts') }}">すべて表示 →</a>
+    </div>
+    {% if recent %}
+    <table class="table">
+      <thead>
+        <tr><th>タイトル</th><th>状態</th><th>署名</th><th>更新日時</th></tr>
+      </thead>
+      <tbody>
+      {% for c in recent %}
+        <tr>
+          <td><a href="{{ url_for('contracts.detail', contract_id=c.id) }}">{{ c.title }}</a></td>
+          <td><span class="badge badge-{{ c.status_enum.badge }}">{{ c.status_enum.label }}</span></td>
+          <td>{{ c.signed_count }} / {{ c.total_signers }}</td>
+          <td class="muted">{{ c.updated_at | dt }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p class="muted">まだ契約がありません。<a href="{{ url_for('contracts.new') }}">最初の契約を作成</a>してみましょう。</p>
+    {% endif %}
+  </div>
+
+  <div class="panel">
+    <div class="panel-head">
+      <h2>署名待ち</h2>
+    </div>
+    {% if pending_signers %}
+    <ul class="list">
+      {% for s in pending_signers %}
+      <li>
+        <div>
+          <b>{{ s.name }}</b> <span class="muted">{{ s.email }}</span>
+          <div class="muted small">
+            契約: <a href="{{ url_for('contracts.detail', contract_id=s.contract.id) }}">{{ s.contract.title }}</a>
+          </div>
+        </div>
+        <a class="btn-ghost btn-sm" href="{{ url_for('sign.view', token=s.access_token) }}" target="_blank">署名URL</a>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p class="muted">署名待ちの依頼はありません。</p>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

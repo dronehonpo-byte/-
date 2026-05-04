@@ -1,0 +1,30 @@
+# --- Flask core ---
+Flask>=3.0.0
+Flask-Login>=0.6.3
+Flask-SQLAlchemy>=3.1.1
+Flask-WTF>=1.2.1
+Flask-Migrate>=4.0.5
+Werkzeug>=3.0.1
+
+# --- PDF / 暗号 ---
+reportlab>=4.0.7
+pypdf>=4.0.1
+cryptography>=41.0.7
+Pillow>=10.0.0
+
+# --- 認証 (Google OAuth) ---
+Authlib>=1.3.0
+requests>=2.31.0
+
+# --- メール送信 (SendGrid HTTP API + SMTP fallback) ---
+# ※ SendGrid は requests で HTTP API を直接叩くので追加SDK不要
+
+# --- DB (本番: PostgreSQL) ---
+psycopg2-binary>=2.9.9
+
+# --- 本番サーバー ---
+gunicorn>=21.2.0
+
+# --- ユーティリティ ---
+python-dateutil>=2.8.2
+python-dotenv>=1.0.0

@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}署名完了{% endblock %}
+{% block content %}
+<div class="auth-card success-card">
+  <div class="big-check">✓</div>
+  <h1>署名が完了しました</h1>
+  <p class="muted">
+    {{ signer.name }} さん、ご署名ありがとうございました。<br />
+    契約「<b>{{ contract.title }}</b>」への電子署名を {{ signer.signed_at | dt('%Y-%m-%d %H:%M:%S') }} (UTC) に記録しました。
+  </p>
+
+  <div class="receipt">
+    <div><span>契約番号</span><b>C-{{ '%06d' % contract.id }}</b></div>
+    <div><span>署名値</span><b class="mono">{{ signer.signature_hash[:32] }}…</b></div>
+    <div><span>状態</span><b>
+      {% if contract.status_enum.value == 'completed' %}締結完了 (全員の署名が完了しました)
+      {% else %}{{ contract.status_enum.label }} - 他の署名者の対応をお待ちください{% endif %}
+    </b></div>
+  </div>
+
+  <a href="{{ url_for('sign.view', token=signer.access_token) }}" class="btn-ghost">契約画面に戻る</a>
+</div>
+{% endblock %}

@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% block title %}署名: {{ contract.title }}{% endblock %}
+{% block content %}
+<section class="page-head">
+  <div>
+    <span class="badge badge-{{ contract.status_enum.badge }}">{{ contract.status_enum.label }}</span>
+    <h1>{{ contract.title }}</h1>
+    <p class="muted">
+      署名者: <b>{{ signer.name }}</b> ({{ signer.email }})
+      ・契約番号 C-{{ '%06d' % contract.id }}
+      ・発行: {{ company_name }}
+    </p>
+  </div>
+</section>
+
+{% if signer.status == 'signed' %}
+<div class="info-banner success">あなたは {{ signer.signed_at | dt }} に署名済みです。</div>
+{% elif signer.status == 'declined' %}
+<div class="info-banner error">あなたはこの契約への署名を拒否しました。</div>
+{% endif %}
+
+<section class="two-col">
+  <div class="panel">
+    <div class="panel-head"><h2>契約内容</h2>
+      <a class="link-sm" href="{{ url_for('sign.view_pdf', token=signer.access_token) }}" target="_blank">📄 PDFで開く</a>
+    </div>
+    {% if contract.body %}
+    <article class="contract-body">
+      {% for paragraph in contract.body.split('\n\n') %}
+        {% set first = paragraph.split('\n')[0] %}
+        {% if first.startswith('第') and '条' in first[:6] %}
+          <h3>{{ first }}</h3>
+          <p>{{ paragraph.split('\n', 1)[1] if '\n' in paragraph else '' }}</p>
+        {% else %}
+          <p>{{ paragraph }}</p>
+        {% endif %}
+      {% endfor %}
+    </article>
+    {% else %}
+      <p class="muted">PDFを開いて内容をご確認ください。</p>
+    {% endif %}
+  </div>
+
+  <div class="panel">
+    <div class="panel-head"><h2>署名する</h2></div>
+    {% if signer.status == 'pending' and contract.status_enum.value in ('sent', 'partial') %}
+    <form method="post" action="{{ url_for('sign.sign', token=signer.access_token) }}" id="sign-form" class="form">
+      <label>テキスト署名 (氏名)
+        <input type="text" name="signature_text" value="{{ signer.name }}" />
+      </label>
+      <label>手書き署名（マウス・指で記入）</label>
+      <div class="signature-pad-wrap">
+        <canvas id="sigpad" width="500" height="180"></canvas>
+        <div class="signature-actions">
+          <button type="button" class="btn-ghost btn-sm" id="sig-clear">クリア</button>
+        </div>
+      </div>
+      <input type="hidden" name="signature_image" id="signature_image" />
+      <label class="checkbox">
+        <input type="checkbox" name="agree" required /> 上記契約内容に同意し、電子署名を行います。
+      </label>
+      <div class="form-actions">
+        <button type="button" class="btn-ghost" data-decline="open">署名を拒否</button>
+        <button type="submit" class="btn-primary">電子署名を実行</button>
+      </div>
+    </form>
+
+    <form method="post" action="{{ url_for('sign.decline', token=signer.access_token) }}" class="form decline-form" id="decline-form" hidden>
+      <label>拒否理由 (任意)
+        <textarea name="reason" rows="3" placeholder="拒否の理由を入力..."></textarea>
+      </label>
+      <div class="form-actions">
+        <button type="button" class="btn-ghost btn-sm" data-decline="cancel">戻る</button>
+        <button type="submit" class="btn-danger">この契約への署名を拒否する</button>
+      </div>
+    </form>
+    {% else %}
+    <p class="muted">この契約はもう署名できません。</p>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/sigpad.js') }}"></script>
+<script>
+  initSignaturePad("sigpad", "signature_image", "sig-clear");
+  document.querySelectorAll("[data-decline]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const open = btn.dataset.decline === "open";
+      document.getElementById("sign-form").hidden = open;
+      document.getElementById("decline-form").hidden = !open;
+    });
+  });
+</script>
+{% endblock %}

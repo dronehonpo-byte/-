@@ -1,0 +1,63 @@
+services:
+  - type: web
+    name: econtract
+    runtime: python
+    plan: starter
+    rootDir: .
+    region: singapore
+    buildCommand: |
+      pip install --upgrade pip
+      pip install -r econtract/requirements.txt
+    preDeployCommand: |
+      flask --app econtract.wsgi db upgrade
+    startCommand: |
+      gunicorn -c econtract/gunicorn.conf.py econtract.wsgi:app
+    healthCheckPath: /healthz
+    autoDeploy: true
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.4
+      - key: FLASK_ENV
+        value: production
+      - key: ECONTRACT_SECRET_KEY
+        generateValue: true
+      - key: APP_BASE_URL
+        sync: false                      # ← デプロイ後に Render の URL/独自ドメインを入れる
+      - key: ECONTRACT_COMPANY_NAME
+        sync: false
+      - key: ECONTRACT_DEFAULT_FROM
+        sync: false
+      - key: ECONTRACT_DEFAULT_FROM_NAME
+        sync: false
+      - key: EMAIL_BACKEND
+        value: sendgrid
+      - key: SENDGRID_API_KEY
+        sync: false
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: GOOGLE_HOSTED_DOMAIN
+        sync: false
+      - key: ALLOW_PASSWORD_LOGIN
+        value: "false"
+      - key: DISABLE_REGISTRATION
+        value: "true"
+      - key: SESSION_COOKIE_SECURE
+        value: "true"
+      - key: ECONTRACT_STORAGE_DIR
+        value: /var/data/econtract
+      - key: DATABASE_URL
+        fromDatabase:
+          name: econtract-db
+          property: connectionString
+    disk:
+      name: storage
+      mountPath: /var/data/econtract
+      sizeGB: 5
+
+databases:
+  - name: econtract-db
+    plan: free
+    region: singapore
+    postgresMajorVersion: "16"

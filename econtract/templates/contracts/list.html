@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}契約一覧{% endblock %}
+{% block content %}
+<section class="page-head">
+  <div>
+    <h1>契約一覧</h1>
+    <p class="muted">作成・送信・締結済みの全ての契約を確認できます。</p>
+  </div>
+  <div class="page-head-actions">
+    <a href="{{ url_for('contracts.new') }}" class="btn-primary">新規契約を作成</a>
+  </div>
+</section>
+
+<form class="filters" method="get">
+  <input type="search" name="q" value="{{ q }}" placeholder="契約名・説明で検索" />
+  <select name="status">
+    <option value="">すべての状態</option>
+    {% for s in statuses %}
+    <option value="{{ s.value }}" {% if current_status == s.value %}selected{% endif %}>{{ s.label }}</option>
+    {% endfor %}
+  </select>
+  <button class="btn-ghost btn-sm" type="submit">絞り込み</button>
+</form>
+
+{% if contracts %}
+<table class="table">
+  <thead>
+    <tr><th>タイトル</th><th>状態</th><th>署名進捗</th><th>作成者</th><th>更新日時</th><th></th></tr>
+  </thead>
+  <tbody>
+  {% for c in contracts %}
+    <tr>
+      <td>
+        <a href="{{ url_for('contracts.detail', contract_id=c.id) }}"><b>{{ c.title }}</b></a>
+        <div class="muted small">C-{{ '%06d' % c.id }}{% if c.template %} · {{ c.template.name }}{% endif %}</div>
+      </td>
+      <td><span class="badge badge-{{ c.status_enum.badge }}">{{ c.status_enum.label }}</span></td>
+      <td>
+        <div class="progress"><span style="width: {{ c.progress_percent }}%"></span></div>
+        <small>{{ c.signed_count }} / {{ c.total_signers }}</small>
+      </td>
+      <td>{{ c.creator.name }}</td>
+      <td class="muted">{{ c.updated_at | dt }}</td>
+      <td><a href="{{ url_for('contracts.detail', contract_id=c.id) }}" class="btn-ghost btn-sm">開く</a></td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<div class="empty">
+  <p>契約が見つかりません。</p>
+  <a href="{{ url_for('contracts.new') }}" class="btn-primary">新規契約を作成</a>
+</div>
+{% endif %}
+{% endblock %}

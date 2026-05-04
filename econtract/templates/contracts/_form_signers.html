@@ -1,0 +1,50 @@
+{# 署名者入力ブロック (new/edit で共有) #}
+<fieldset class="signers-block">
+  <legend>署名者</legend>
+  <p class="muted small">最低1名の署名者を追加してください。社外取引先・社内決裁者・立会人などを設定できます。</p>
+  <div id="signers-list">
+    {% set existing = signers if signers else [{'name': '', 'email': '', 'company': '', 'role': 'counterparty'}] %}
+    {% for s in existing %}
+    <div class="signer-row">
+      <input name="signer_name[]" placeholder="氏名" value="{{ s.name or '' }}" required />
+      <input name="signer_email[]" type="email" placeholder="メール" value="{{ s.email or '' }}" required />
+      <input name="signer_company[]" placeholder="会社名 (任意)" value="{{ s.company or '' }}" />
+      <select name="signer_role[]">
+        <option value="counterparty" {% if s.role == 'counterparty' %}selected{% endif %}>取引先</option>
+        <option value="internal" {% if s.role == 'internal' %}selected{% endif %}>社内決裁</option>
+        <option value="witness" {% if s.role == 'witness' %}selected{% endif %}>立会人</option>
+      </select>
+      <button type="button" class="btn-ghost btn-sm signer-remove">削除</button>
+    </div>
+    {% endfor %}
+  </div>
+  <button type="button" class="btn-ghost btn-sm" id="add-signer">+ 署名者を追加</button>
+</fieldset>
+
+<script>
+(function () {
+  const list = document.getElementById("signers-list");
+  document.getElementById("add-signer").addEventListener("click", () => {
+    const row = document.createElement("div");
+    row.className = "signer-row";
+    row.innerHTML = `
+      <input name="signer_name[]" placeholder="氏名" required />
+      <input name="signer_email[]" type="email" placeholder="メール" required />
+      <input name="signer_company[]" placeholder="会社名 (任意)" />
+      <select name="signer_role[]">
+        <option value="counterparty">取引先</option>
+        <option value="internal">社内決裁</option>
+        <option value="witness">立会人</option>
+      </select>
+      <button type="button" class="btn-ghost btn-sm signer-remove">削除</button>
+    `;
+    list.appendChild(row);
+  });
+  list.addEventListener("click", (ev) => {
+    if (ev.target.classList.contains("signer-remove")) {
+      if (list.querySelectorAll(".signer-row").length <= 1) return;
+      ev.target.closest(".signer-row").remove();
+    }
+  });
+})();
+</script>
