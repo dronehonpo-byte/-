@@ -1,104 +1,207 @@
-# 電子契約クラウド (econtract)
+# 電子契約クラウドツール (社内向け)
 
-社内利用向けの電子契約管理ツール。マネーフォワード クラウド契約のように、契約書の起票
-（テンプレート / 自由入力 / PDF アップロード）から複数署名者への送信、ブラウザ上での
-電子署名、締結、監査ログ、締結証明書の発行までをワンストップで提供する Flask アプリです。
+社内スタッフが PDF / 本文ベースの契約書を作り、外部の取引先へメールリンク経由で
+署名してもらう、自社ホスティング前提の Flask アプリです。
 
-## 主な機能
+- ✅ Google Workspace OAuth (社内ドメイン制限) でスタッフがログイン
+- ✅ 取引先(外部) はアカウント不要、メール内リンクで署名
+- ✅ PDF への可視署名 (手書き/タイプ) + タイムスタンプ + HMAC-SHA256 ハッシュ
+- ✅ 監査ログ (作成・送信・閲覧・署名・締結・取消)
+- ✅ 締結証明書 PDF を自動生成
+- ✅ メール通知 (SendGrid / SMTP / コンソール の3バックエンド)
+- ✅ 契約書テンプレート (NDA・業務委託・雇用・SaaS規約・売買 etc) + 変数差込
+- ✅ Render Blueprint 一発デプロイ / Dockerfile 同梱
 
-- 📄 **契約起票**
-  - テンプレート（NDA / 業務委託 / 雇用 / SaaS / 売買）から変数を埋めて作成
-  - 自由入力モード／PDF アップロード対応
-- 👥 **マルチパーティ署名**
-  - 取引先・社内決裁者・立会人を任意人数追加
-  - 署名者ごとにユニークな署名 URL を発行（メール送付想定）
-- ✍️ **電子署名**
-  - ブラウザ上の手書き署名パッド + テキスト署名
-  - 署名時の IP・User-Agent・タイムスタンプを記録
-  - 文書ハッシュ＋署名者情報＋時刻に対して **HMAC-SHA256** 署名値を生成
-- ✅ **締結フロー**
-  - 全員の署名完了で自動的にステータスを「締結完了」に
-  - 署名情報ページを差し込んだ「署名済み PDF」を自動生成
-  - 監査ログ込みの「締結証明書 PDF」をダウンロード可能
-- 🔍 **監査ログ**
-  - 作成・編集・送信・署名・拒否・取消・締結のすべてを時系列で記録
-- 🛡️ **アクセス制御**
-  - 一般ユーザーは自分の契約のみ閲覧、管理者は全契約を閲覧
+> **正本性について**: 本ツールが付与するハッシュは「内容の改ざん検知」を目的とした
+> HMAC-SHA256 で、e-Sign / 電子署名法 上の「特定認証業務」(認定タイムスタンプ付与)
+> ではありません。グループ会社内・取引先との簡易的な合意形成や、書面リプレース用途を
+> 想定しています。法的に厳格な真正性が必要な場合は、外部のタイムスタンプ局
+> (TSA) を併用してください。
 
-## ディレクトリ構成
+---
+
+## ローカルで動かす
+
+```bash
+git clone https://github.com/dronehonpo-byte/-.git
+cd -
+python -m venv .venv && source .venv/bin/activate
+pip install -r econtract/requirements.txt
+
+# 環境変数 (最低限)
+cp econtract/.env.example econtract/.env
+# .env を編集 — ローカル試験は EMAIL_BACKEND=console のままで OK
+
+# DB 初期化 + サンプルデータ
+flask --app econtract.wsgi db upgrade
+flask --app econtract.wsgi seed
+
+# 開発サーバー
+flask --app econtract.wsgi run --debug
+# → http://127.0.0.1:5000
+# 初期ログイン: admin@example.com / admin1234
+```
+
+---
+
+## Render に本番デプロイ (推奨)
+
+リポジトリに `render.yaml` を入れてあるので、Render の Blueprint からそのまま立ち上げられます。
+
+### 1. Render アカウントとリポジトリ連携
+1. https://render.com/ にサインアップ
+2. New → Blueprint → このリポジトリを選択
+3. `render.yaml` が読み込まれ、Web Service + Postgres が自動でプロビジョニングされます
+
+### 2. 環境変数を Render の Dashboard で設定
+
+| キー | 例 | 説明 |
+|---|---|---|
+| `APP_BASE_URL` | `https://econtract.onrender.com` | デプロイ後の自分の URL (独自ドメインに変えたら更新) |
+| `ECONTRACT_COMPANY_NAME` | `株式会社Miyabee` | 自社名 (PDF とメールに表示) |
+| `ECONTRACT_DEFAULT_FROM` | `noreply@miyabee.jp` | メール差出人アドレス |
+| `ECONTRACT_DEFAULT_FROM_NAME` | `Miyabee 電子契約` | 差出人表示名 |
+| `SENDGRID_API_KEY` | `SG.xxx...` | SendGrid のフルアクセスキー |
+| `GOOGLE_CLIENT_ID` | `xxx.apps.googleusercontent.com` | OAuth クライアントID (下記参照) |
+| `GOOGLE_CLIENT_SECRET` | `GOCSPX-...` | OAuth クライアントシークレット |
+| `GOOGLE_HOSTED_DOMAIN` | `miyabee.jp` | 許可する Workspace ドメイン |
+
+`ECONTRACT_SECRET_KEY` は `generateValue: true` で Render が自動採番します。
+
+### 3. Google OAuth クライアント発行 (1回限り)
+
+1. Google Cloud Console → 「APIとサービス」→「認証情報」
+2. 「OAuth クライアント ID を作成」→ ウェブアプリケーション
+3. 承認済みリダイレクト URI に **`https://<Render の URL>/auth/google/callback`** を追加
+   - 独自ドメインを後から付けるなら、そっちも追加 (`https://econtract.miyabee.jp/auth/google/callback`)
+4. クライアント ID/シークレットを Render の env に貼る
+5. (OAuth 同意画面で「内部」を選択しておくと、Workspace のメンバー以外を弾けて安全)
+
+### 4. SendGrid 設定 (1回限り)
+1. https://signup.sendgrid.com で無料アカウント (12,000通/月まで無料)
+2. Email API → Single Sender か Domain Authentication で送信元検証
+   - 独自ドメインで送るなら Domain Authentication 推奨 (DKIM/SPF が自動で揃う)
+3. Settings → API Keys → 新規作成 → 「Full Access」
+4. Render の `SENDGRID_API_KEY` に入れる
+
+### 5. デプロイ
+
+```bash
+git push
+```
+
+push すると Render が自動でビルド → `flask db upgrade` 実行 → gunicorn 起動。
+`/healthz` で 200 が返れば成功。
+
+### 6. 初回管理者の作成
+```bash
+# Render の Shell (Web Service の右上から開く) で実行
+flask --app econtract.wsgi seed
+```
+これでサンプル管理者 `admin@example.com / admin1234` と各種テンプレートが投入されます。
+**本番ではログイン後すぐに `/auth/register` または DB で安全なパスワードに変えるか、
+このアカウントを削除し Google OAuth のみで運用してください。**
+
+---
+
+## Docker で動かす場合 (社内 VPS など)
+
+```bash
+docker build -t econtract .
+docker run -d --name econtract \
+  -p 8000:8000 \
+  -e ECONTRACT_SECRET_KEY="$(openssl rand -hex 32)" \
+  -e DATABASE_URL=postgresql://user:pass@db:5432/econtract \
+  -e APP_BASE_URL=https://econtract.example.com \
+  -e GOOGLE_CLIENT_ID=... \
+  -e GOOGLE_CLIENT_SECRET=... \
+  -e GOOGLE_HOSTED_DOMAIN=miyabee.jp \
+  -e SENDGRID_API_KEY=... \
+  -e EMAIL_BACKEND=sendgrid \
+  -v econtract-storage:/app/econtract/storage \
+  econtract
+```
+
+リバースプロキシ (Caddy / nginx) 配下で TLS を当ててください。
+
+---
+
+## 機能フロー
+
+```
+[社内スタッフ]                             [外部取引先]
+     │ Google OAuth ログイン
+     ▼
+┌────────────┐
+│ 契約書作成   │  ─ PDFをアップロード or 本文+テンプレ
+│ 署名者を追加 │  ─ name + email + 会社
+└──────┬─────┘
+       │ [送信]
+       ▼
+   メール送信 ───────────────────►  メール受信 + リンククリック
+                                        │
+                                        ▼
+                                   [署名画面]
+                                  PDF を確認
+                                  手書きor タイプで署名
+                                  同意 → 提出
+                                        │
+                                        ▼
+   全員署名済み判定                  完了画面
+       │
+       ├─ 署名証明ページ付きPDF生成
+       ├─ 監査ログ記録
+       └─ 完了通知メール (社内 + 外部)
+```
+
+---
+
+## CLI コマンド
+
+```bash
+flask --app econtract.wsgi db upgrade        # マイグレーション適用
+flask --app econtract.wsgi db migrate -m "..." # 新マイグレーション (モデル変更時)
+flask --app econtract.wsgi seed              # サンプルテンプレ + 管理者投入
+```
+
+---
+
+## テスト
+
+```bash
+PYTHONPATH=. pytest econtract/tests -v
+```
+
+---
+
+## ディレクトリ
 
 ```
 econtract/
-├── __init__.py            アプリファクトリ
-├── config.py              設定
-├── extensions.py          Flask 拡張
-├── models.py              SQLAlchemy モデル
-├── cli.py                 init-db / seed コマンド
-├── wsgi.py                エントリポイント
-├── blueprints/            画面別ルーティング
-│   ├── auth.py
-│   ├── contracts.py
-│   ├── main.py            ダッシュボード・監査
-│   └── sign.py            公開署名ページ
+├── __init__.py            # Application Factory
+├── config.py              # 環境変数からの設定
+├── extensions.py          # db / login / migrate / oauth
+├── models.py              # User / Template / Contract / Signer / AuditLog
+├── wsgi.py                # gunicorn エントリ
+├── gunicorn.conf.py
+├── cli.py                 # flask seed
+├── blueprints/
+│   ├── auth.py            # email+pw / Google OAuth
+│   ├── contracts.py       # 内部用: 作成/編集/送信/再送
+│   ├── sign.py            # 外部用: 公開URL署名
+│   └── main.py            # ダッシュボード/監査ログ
 ├── services/
-│   ├── pdf.py             契約書 / 締結証明書 PDF 生成
-│   └── signing.py         署名値生成・署名済 PDF 結合
-├── templates/             Jinja2 テンプレート
-├── static/                CSS / JS（手書き署名パッド）
-├── storage/               生成 PDF / 署名画像
-├── instance/              SQLite DB
-├── requirements.txt
-├── run.sh                 開発用ワンコマンド起動
-└── README.md
+│   ├── pdf.py             # reportlab で日本語PDF生成
+│   ├── signing.py         # ハッシュ + 署名画像 + PDFスタンプ
+│   └── email.py           # SendGrid / SMTP / console
+├── templates/             # Jinja2 (HTML + email)
+├── static/
+├── storage/               # 契約PDF + 署名画像 (本番では永続ディスク)
+└── migrations/            # Alembic
 ```
 
-## セットアップ
+---
 
-```bash
-cd econtract
-python3 -m venv ../.venv
-source ../.venv/bin/activate
-pip install -r requirements.txt
-```
+## ライセンス & お問い合わせ
 
-## 起動
-
-```bash
-./run.sh
-# もしくは:
-export FLASK_APP=econtract.wsgi
-flask init-db
-flask seed
-flask run --host=0.0.0.0 --port=5000
-```
-
-ブラウザで `http://localhost:5000` を開いてください。
-
-### シードユーザー（`flask seed` 実行後）
-
-| 役割     | メール              | パスワード   |
-| -------- | ------------------- | ------------ |
-| 管理者   | admin@example.com   | admin1234    |
-| 法務担当 | legal@example.com   | legal1234    |
-
-## 環境変数
-
-| 変数 | 既定値 | 説明 |
-|------|--------|------|
-| `ECONTRACT_SECRET_KEY` | `dev-...` | セッション秘密鍵（本番では必須で変更） |
-| `ECONTRACT_DATABASE_URI` | SQLite | SQLAlchemy 接続文字列 |
-| `ECONTRACT_COMPANY_NAME` | `株式会社サンプル` | 自社名（PDF 等に表示） |
-
-## 想定する署名フロー
-
-1. 起案者が契約書を起票（テンプレート or 自由入力 or PDF）
-2. 署名者を1名以上追加（取引先 / 社内決裁 / 立会人）
-3. 「署名依頼を送信」で発行された署名 URL を各担当者へ共有（メール送信は要連携）
-4. 各署名者がブラウザで内容確認 → 同意チェック → 手書き or テキスト署名
-5. 全員署名完了で自動締結 → 署名済 PDF と締結証明書 PDF が利用可能
-
-## 注意
-
-- 法律上の電子署名法／電子帳簿保存法対応のためには、本実装に加えて
-  タイムスタンプ局（TSA）連携、長期署名 PAdES、本人確認(eKYC) 等の組み合わせが必要です。
-  本ツールは社内ワークフローのデモ実装としてご利用ください。
+社内利用想定。商用ライセンスや改変についてはリポジトリ管理者まで。

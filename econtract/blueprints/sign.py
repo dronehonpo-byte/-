@@ -1,4 +1,4 @@
-"""署名ブループリント (公開URLで署名者がアクセス)."""
+"""署名ブループリント (公開URLで外部署名者がアクセス)."""
 from __future__ import annotations
 
 from datetime import datetime
@@ -18,6 +18,7 @@ from flask import (
 
 from ..extensions import db
 from ..models import AuditLog, Contract, ContractStatus, Signer, SignerStatus
+from ..services.email import send_completion_notice
 from ..services.pdf import render_contract_pdf
 from ..services.signing import (
     file_sha256,
@@ -36,10 +37,26 @@ def _get_signer_or_404(token: str) -> Signer:
     return signer
 
 
+def _base_url() -> str:
+    configured = current_app.config.get("APP_BASE_URL")
+    if configured:
+        return configured.rstrip("/")
+    return request.host_url.rstrip("/")
+
+
 @bp.route("/<token>")
 def view(token: str):
     signer = _get_signer_or_404(token)
     contract = signer.contract
+    # 閲覧ログ (初回のみ重複しないようにシンプルに毎回記録)
+    db.session.add(AuditLog(
+        contract_id=contract.id,
+        actor=f"{signer.name} <{signer.email}>",
+        action="viewed",
+        detail="署名ページを閲覧",
+        ip_address=request.remote_addr,
+    ))
+    db.session.commit()
     if contract.status_enum in (ContractStatus.CANCELLED, ContractStatus.EXPIRED):
         return render_template("sign/closed.html", contract=contract, signer=signer)
     return render_template("sign/view.html", contract=contract, signer=signer)
@@ -111,21 +128,18 @@ def sign(token: str):
         now.isoformat(timespec="seconds"),
     )
 
-    log = AuditLog(
+    db.session.add(AuditLog(
         contract_id=contract.id,
         actor=f"{signer.name} <{signer.email}>",
         action="signed",
         detail=f"署名値: {signer.signature_hash[:16]}…",
         ip_address=request.remote_addr,
-    )
-    db.session.add(log)
+    ))
 
-    # 全員署名完了か判定
     if contract.is_fully_signed():
         contract.status = ContractStatus.COMPLETED.value
         contract.completed_at = now
 
-        # 署名済PDFを生成
         sealed_path = Path(current_app.config["CONTRACT_PDF_DIR"]) / f"contract_{contract.id}_signed.pdf"
         stamp_signed_pdf(
             Path(contract.pdf_path) if contract.pdf_path else None,
@@ -143,10 +157,25 @@ def sign(token: str):
             detail="全署名者の署名完了 — 契約締結",
             ip_address=request.remote_addr,
         ))
+
+        db.session.commit()  # 通知メール送信前にコミット
+
+        # 通知メール: 発信者(社内) と 各署名者(外部)
+        base = _base_url()
+        try:
+            if contract.creator and contract.creator.email:
+                send_completion_notice(
+                    contract.creator.email, contract.creator.name,
+                    contract, base, is_internal=True,
+                )
+            for s in contract.signers:
+                send_completion_notice(s.email, s.name, contract, base, is_internal=False)
+        except Exception as e:  # noqa: BLE001
+            current_app.logger.exception("Completion notice failed: %s", e)
     else:
         contract.status = ContractStatus.PARTIALLY_SIGNED.value
+        db.session.commit()
 
-    db.session.commit()
     return redirect(url_for("sign.done", token=token))
 
 

@@ -3,21 +3,47 @@
 {% block content %}
 <div class="auth-card">
   <h1>ログイン</h1>
-  <p class="muted">登録済みのメールアドレスとパスワードでサインインしてください。</p>
-  <form method="post" class="form">
-    <label>メールアドレス
-      <input type="email" name="email" required autofocus />
-    </label>
-    <label>パスワード
-      <input type="password" name="password" required />
-    </label>
-    <label class="checkbox">
-      <input type="checkbox" name="remember" /> ログイン状態を保持する
-    </label>
-    <button type="submit" class="btn-primary">ログイン</button>
-  </form>
-  <p class="muted small">
-    アカウントが無い方は <a href="{{ url_for('auth.register') }}">こちらから登録</a>。
-  </p>
+
+  {% if oauth_enabled %}
+  <a href="{{ url_for('auth.google_login', next=request.args.get('next')) }}" class="btn-google" style="display:flex;align-items:center;justify-content:center;gap:10px;width:100%;background:#fff;border:1px solid #cbd5e1;color:#0f172a;padding:12px 16px;border-radius:6px;font-weight:600;text-decoration:none;margin-bottom:16px;">
+    <svg width="20" height="20" viewBox="0 0 48 48" aria-hidden="true">
+      <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.6 32.6 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.1 6.5 29.3 4.5 24 4.5 13.2 4.5 4.5 13.2 4.5 24S13.2 43.5 24 43.5c10.8 0 19.5-8.7 19.5-19.5 0-1.2-.1-2.3-.4-3.5z"/>
+      <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.6 16 19 13 24 13c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.1 6.5 29.3 4.5 24 4.5 16.3 4.5 9.6 8.9 6.3 14.7z"/>
+      <path fill="#4CAF50" d="M24 43.5c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.4 34.7 26.8 36 24 36c-5.2 0-9.6-3.4-11.2-8H6.1l-.1.1C9.3 35.1 16.1 43.5 24 43.5z"/>
+      <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.3-2.3 4.3-4.1 5.6l6.2 5.2c-.4.3 6.6-4.8 6.6-14.8 0-1.2-.1-2.3-.4-3.5z"/>
+    </svg>
+    Google でログイン
+  </a>
+  {% endif %}
+
+  {% if allow_password_login %}
+    {% if oauth_enabled %}
+      <div style="display:flex;align-items:center;gap:12px;color:#94a3b8;margin:16px 0;font-size:13px;">
+        <hr style="flex:1;border:none;border-top:1px solid #e2e8f0;">
+        または
+        <hr style="flex:1;border:none;border-top:1px solid #e2e8f0;">
+      </div>
+    {% endif %}
+    <p class="muted">登録済みのメールアドレスとパスワードでサインインしてください。</p>
+    <form method="post" class="form">
+      <label>メールアドレス
+        <input type="email" name="email" required autofocus />
+      </label>
+      <label>パスワード
+        <input type="password" name="password" required />
+      </label>
+      <label class="checkbox">
+        <input type="checkbox" name="remember" /> ログイン状態を保持する
+      </label>
+      <button type="submit" class="btn-primary">ログイン</button>
+    </form>
+    {% if allow_registration %}
+    <p class="muted small">
+      アカウントが無い方は <a href="{{ url_for('auth.register') }}">こちらから登録</a>。
+    </p>
+    {% endif %}
+  {% elif not oauth_enabled %}
+    <p class="muted">ログイン手段が設定されていません。管理者にご連絡ください。</p>
+  {% endif %}
 </div>
 {% endblock %}

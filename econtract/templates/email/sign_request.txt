@@ -1,0 +1,15 @@
+{{ signer.name }} 様
+
+{{ company_name }}{% if sender_name %}（担当: {{ sender_name }}）{% endif %} より、
+契約書「{{ contract.title }}」の電子署名をお願いいたします。
+
+▼ 署名はこちらから (専用リンク)
+{{ sign_url }}
+
+※ このリンクはあなた専用です。他の方には共有しないでください。
+※ 内容を確認し、画面下部の同意欄にチェックの上、署名をお願いします。
+{% if contract.expires_at %}※ 署名期限: {{ contract.expires_at.strftime('%Y年%m月%d日') }}
+{% endif %}
+ご不明点があれば、本メールに返信ください。
+
+― {{ company_name }} 電子契約システム

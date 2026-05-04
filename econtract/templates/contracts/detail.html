@@ -17,7 +17,7 @@
       <a href="{{ url_for('contracts.download_certificate', contract_id=contract.id) }}" class="btn-primary">🧾 締結証明書</a>
     {% elif contract.status_enum.value == 'draft' %}
       <a href="{{ url_for('contracts.edit', contract_id=contract.id) }}" class="btn-ghost">✏️ 編集</a>
-      <form method="post" action="{{ url_for('contracts.send', contract_id=contract.id) }}" style="display:inline">
+      <form method="post" action="{{ url_for('contracts.send', contract_id=contract.id) }}" style="display:inline" onsubmit="return confirm('登録した署名者全員にメール署名依頼を送信します。よろしいですか？');">
         <button class="btn-primary" type="submit">📨 署名依頼を送信</button>
       </form>
     {% endif %}
@@ -63,14 +63,26 @@
             {% elif s.role == 'witness' %}<span class="badge badge-secondary">立会人</span>
             {% else %}<span class="badge badge-secondary">取引先</span>{% endif %}
             <div class="muted small">{{ s.email }}{% if s.company %} · {{ s.company }}{% endif %}</div>
+            {% if s.notification_count %}
+              <div class="muted small">📨 {{ s.notification_count }} 回送信
+                {% if s.last_reminded_at %} · 最終送信 {{ s.last_reminded_at | dt }}{% endif %}
+              </div>
+            {% endif %}
           </div>
           <div class="signer-status">
             <span class="badge badge-{{ {'pending':'warning','signed':'success','declined':'danger'}[s.status] }}">{{ s.status_enum.label }}</span>
             {% if s.status == 'signed' %}
               <small class="muted">{{ s.signed_at | dt }}</small>
             {% endif %}
-            {% if contract.status_enum.value in ('sent', 'partial') and s.status == 'pending' %}
-              <a class="link-sm" href="{{ url_for('sign.view', token=s.access_token, _external=True) }}" target="_blank">署名URL</a>
+            {% if contract.status_enum.value in ('sent', 'partial', 'draft') and s.status == 'pending' %}
+              <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:4px;">
+                <button type="button" class="link-sm btn-copy-url" data-signer-id="{{ s.id }}" data-contract-id="{{ contract.id }}">🔗 URLコピー</button>
+                {% if contract.status_enum.value in ('sent', 'partial') %}
+                <form method="post" action="{{ url_for('contracts.resend', contract_id=contract.id, signer_id=s.id) }}" style="display:inline">
+                  <button type="submit" class="link-sm" onclick="return confirm('{{ s.email }} にリマインドメールを送信します。よろしいですか？');">↻ 再送</button>
+                </form>
+                {% endif %}
+              </div>
             {% endif %}
           </div>
         </li>
@@ -96,9 +108,31 @@
             {% if log.ip_address %}<div class="muted small">IP: {{ log.ip_address }}</div>{% endif %}
           </div>
         </li>
+        {% else %}
+        <li class="muted">操作履歴はまだありません。</li>
         {% endfor %}
       </ul>
     </div>
   </div>
 </section>
+
+<script>
+document.querySelectorAll('.btn-copy-url').forEach(btn => {
+  btn.addEventListener('click', async () => {
+    const cid = btn.dataset.contractId;
+    const sid = btn.dataset.signerId;
+    try {
+      const r = await fetch(`/contracts/${cid}/signers/${sid}/url`);
+      if (!r.ok) throw new Error('URL取得失敗');
+      const data = await r.json();
+      await navigator.clipboard.writeText(data.url);
+      const original = btn.textContent;
+      btn.textContent = '✓ コピーしました';
+      setTimeout(() => { btn.textContent = original; }, 1800);
+    } catch (e) {
+      alert('URLコピーに失敗しました: ' + e.message);
+    }
+  });
+});
+</script>
 {% endblock %}

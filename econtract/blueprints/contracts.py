@@ -11,6 +11,7 @@ from flask import (
     abort,
     current_app,
     flash,
+    jsonify,
     redirect,
     render_template,
     request,
@@ -31,6 +32,11 @@ from ..models import (
     Template,
     User,
 )
+from ..services.email import (
+    send_completion_notice,
+    send_reminder,
+    send_signature_request,
+)
 from ..services.pdf import render_completion_certificate, render_contract_pdf
 from ..services.signing import file_sha256, text_sha256
 
@@ -47,17 +53,27 @@ def _log(contract: Contract, actor: str, action: str, detail: str = "") -> None:
         actor=actor,
         action=action,
         detail=detail,
-        ip_address=request.remote_addr,
+        ip_address=request.remote_addr if request else None,
     )
     db.session.add(log)
 
 
 def _accessible_q():
-    """ログイン中ユーザーが閲覧できる契約のクエリ."""
     if current_user.is_admin:
         return Contract.query
     return Contract.query.filter(Contract.creator_id == current_user.id)
 
+
+def _base_url() -> str:
+    """メールに埋める署名URLの絶対URLベース."""
+    configured = current_app.config.get("APP_BASE_URL")
+    if configured:
+        return configured.rstrip("/")
+    # ProxyFix 経由で host を取れる
+    return request.host_url.rstrip("/")
+
+
+# ---------- 一覧/詳細/編集 ----------
 
 @bp.route("/")
 @login_required
@@ -102,8 +118,8 @@ def _save_new(templates):
     expires_at_raw = request.form.get("expires_at")
     template_id = request.form.get("template_id", type=int)
 
-    if not title or not body:
-        flash("タイトルと本文は必須です。", "danger")
+    if not title:
+        flash("タイトルは必須です。", "danger")
         return render_template("contracts/new.html", templates=templates)
 
     expires_at = None
@@ -123,9 +139,9 @@ def _save_new(templates):
         status=ContractStatus.DRAFT.value,
     )
     db.session.add(contract)
-    db.session.flush()  # id を採番
+    db.session.flush()  # id 採番
 
-    # 署名者の取り込み
+    # 署名者
     names = request.form.getlist("signer_name[]")
     emails = request.form.getlist("signer_email[]")
     companies = request.form.getlist("signer_company[]")
@@ -145,7 +161,7 @@ def _save_new(templates):
         )
         db.session.add(signer)
 
-    # PDF アップロード（任意）
+    # PDF アップロード
     file = request.files.get("pdf_file")
     if file and file.filename:
         if not _allowed_pdf(file.filename):
@@ -159,11 +175,15 @@ def _save_new(templates):
         contract.pdf_path = str(path)
         contract.document_hash = file_sha256(path)
     else:
+        if not body:
+            flash("本文または PDF のいずれかが必要です。", "danger")
+            db.session.rollback()
+            return redirect(url_for("contracts.new"))
         contract.document_hash = text_sha256(f"{contract.title}\n{contract.body}")
 
     _log(contract, current_user.name, "created", f"契約「{contract.title}」を作成")
     db.session.commit()
-    flash("契約を作成しました。署名者に送信できます。", "success")
+    flash("契約を作成しました。送信ボタンでメール署名依頼を送れます。", "success")
     return redirect(url_for("contracts.detail", contract_id=contract.id))
 
 
@@ -171,7 +191,7 @@ def _save_new(templates):
 @login_required
 def detail(contract_id: int):
     contract = _accessible_q().filter(Contract.id == contract_id).first_or_404()
-    return render_template("contracts/detail.html", contract=contract)
+    return render_template("contracts/detail.html", contract=contract, base_url=_base_url())
 
 
 @bp.route("/<int:contract_id>/edit", methods=["GET", "POST"])
@@ -190,7 +210,6 @@ def edit(contract_id: int):
         contract.expires_at = (
             datetime.strptime(expires_at_raw, "%Y-%m-%d") if expires_at_raw else None
         )
-        # 署名者を再構築
         contract.signers.clear()
         db.session.flush()
         names = request.form.getlist("signer_name[]")
@@ -217,37 +236,102 @@ def edit(contract_id: int):
     return render_template("contracts/edit.html", contract=contract)
 
 
+# ---------- 送信 / 再送 / URL ----------
+
+def _ensure_pdf(contract: Contract) -> Path:
+    if contract.pdf_path and Path(contract.pdf_path).exists():
+        return Path(contract.pdf_path)
+    path = Path(current_app.config["CONTRACT_PDF_DIR"]) / f"contract_{contract.id}.pdf"
+    render_contract_pdf(
+        path,
+        title=contract.title,
+        body_text=contract.body or "",
+        company_name=current_app.config["COMPANY_NAME"],
+        contract_id=contract.id,
+        creator_name=contract.creator.name,
+        signers=contract.signers,
+    )
+    contract.pdf_path = str(path)
+    contract.document_hash = file_sha256(path)
+    return path
+
+
 @bp.route("/<int:contract_id>/send", methods=["POST"])
 @login_required
 def send(contract_id: int):
     contract = _accessible_q().filter(Contract.id == contract_id).first_or_404()
     if contract.status_enum != ContractStatus.DRAFT:
-        flash("既に送信済みです。", "info")
+        flash("既に送信済みです。再送ボタンをご利用ください。", "info")
         return redirect(url_for("contracts.detail", contract_id=contract.id))
     if not contract.signers:
         flash("署名者を1名以上追加してください。", "danger")
         return redirect(url_for("contracts.detail", contract_id=contract.id))
 
-    # 本文 PDF が無ければ自動生成
-    if not contract.pdf_path:
-        path = Path(current_app.config["CONTRACT_PDF_DIR"]) / f"contract_{contract.id}.pdf"
-        render_contract_pdf(
-            path,
-            title=contract.title,
-            body_text=contract.body or "",
-            company_name=current_app.config["COMPANY_NAME"],
-            contract_id=contract.id,
-            creator_name=contract.creator.name,
-            signers=contract.signers,
-        )
-        contract.pdf_path = str(path)
-        contract.document_hash = file_sha256(path)
-
+    _ensure_pdf(contract)
     contract.status = ContractStatus.SENT.value
-    _log(contract, current_user.name, "sent", f"{len(contract.signers)} 名に署名依頼を送信")
+    contract.sent_at = datetime.utcnow()
+
+    base = _base_url()
+    sent_count, failed = 0, []
+    for s in contract.signers:
+        ok = send_signature_request(s, contract, base, sender_name=current_user.name)
+        if ok:
+            sent_count += 1
+            s.last_reminded_at = datetime.utcnow()
+            s.notification_count = (s.notification_count or 0) + 1
+        else:
+            failed.append(s.email)
+
+    _log(
+        contract, current_user.name, "sent",
+        f"{sent_count}/{len(contract.signers)} 名にメール送信" + (f" (失敗: {', '.join(failed)})" if failed else ""),
+    )
     db.session.commit()
-    flash("署名依頼を送信しました。署名URLを各担当者に共有してください。", "success")
+
+    if failed:
+        flash(f"一部メール送信に失敗: {', '.join(failed)}。詳細画面でURLを直接共有することもできます。", "warning")
+    else:
+        flash(f"署名依頼メールを {sent_count} 件送信しました。", "success")
     return redirect(url_for("contracts.detail", contract_id=contract.id))
+
+
+@bp.route("/<int:contract_id>/signers/<int:signer_id>/resend", methods=["POST"])
+@login_required
+def resend(contract_id: int, signer_id: int):
+    contract = _accessible_q().filter(Contract.id == contract_id).first_or_404()
+    signer = next((s for s in contract.signers if s.id == signer_id), None)
+    if not signer:
+        abort(404)
+    if signer.status != SignerStatus.PENDING.value:
+        flash("既に対応済みの署名者です。", "info")
+        return redirect(url_for("contracts.detail", contract_id=contract.id))
+
+    base = _base_url()
+    ok = send_reminder(signer, contract, base)
+    if ok:
+        signer.last_reminded_at = datetime.utcnow()
+        signer.notification_count = (signer.notification_count or 0) + 1
+        _log(contract, current_user.name, "reminded", f"{signer.email} にリマインドメール送信")
+        db.session.commit()
+        flash(f"{signer.email} にリマインドメールを送信しました。", "success")
+    else:
+        flash(f"{signer.email} へのメール送信に失敗しました。", "danger")
+    return redirect(url_for("contracts.detail", contract_id=contract.id))
+
+
+@bp.route("/<int:contract_id>/signers/<int:signer_id>/url")
+@login_required
+def signer_url(contract_id: int, signer_id: int):
+    """JSON API: 署名URLを返す (UI でコピーボタンに使用)."""
+    contract = _accessible_q().filter(Contract.id == contract_id).first_or_404()
+    signer = next((s for s in contract.signers if s.id == signer_id), None)
+    if not signer:
+        abort(404)
+    base = _base_url()
+    return jsonify({
+        "url": f"{base}/sign/{signer.access_token}",
+        "signer": {"name": signer.name, "email": signer.email},
+    })
 
 
 @bp.route("/<int:contract_id>/cancel", methods=["POST"])
@@ -264,26 +348,16 @@ def cancel(contract_id: int):
     return redirect(url_for("contracts.detail", contract_id=contract.id))
 
 
+# ---------- ダウンロード ----------
+
 @bp.route("/<int:contract_id>/pdf")
 @login_required
 def download_pdf(contract_id: int):
     contract = _accessible_q().filter(Contract.id == contract_id).first_or_404()
     path = contract.sealed_pdf_path or contract.pdf_path
     if not path or not Path(path).exists():
-        # 動的生成
-        gen = Path(current_app.config["CONTRACT_PDF_DIR"]) / f"contract_{contract.id}.pdf"
-        render_contract_pdf(
-            gen,
-            title=contract.title,
-            body_text=contract.body or "",
-            company_name=current_app.config["COMPANY_NAME"],
-            contract_id=contract.id,
-            creator_name=contract.creator.name,
-            signers=contract.signers,
-        )
-        contract.pdf_path = str(gen)
+        path = str(_ensure_pdf(contract))
         db.session.commit()
-        path = str(gen)
     return send_file(path, as_attachment=True, download_name=f"contract_{contract.id}.pdf")
 
 
@@ -304,6 +378,8 @@ def download_certificate(contract_id: int):
     return send_file(path, as_attachment=True, download_name=f"certificate_{contract.id}.pdf")
 
 
+# ---------- テンプレート ----------
+
 @bp.route("/templates")
 @login_required
 def template_list():
@@ -322,14 +398,12 @@ def template_detail(template_id: int):
 @bp.route("/templates/<int:template_id>/use", methods=["POST"])
 @login_required
 def template_use(template_id: int):
-    """テンプレートに変数を注入して新規作成画面に遷移."""
     tpl = Template.query.get_or_404(template_id)
     body = tpl.body
     for key, value in request.form.items():
         if key.startswith("var_"):
             var_name = key[4:]
             body = body.replace("{{" + var_name + "}}", value or "")
-    # 残った {{...}} を空欄にしておく
     body = re.sub(r"\{\{[^}]+\}\}", "____", body)
     return render_template(
         "contracts/new.html",

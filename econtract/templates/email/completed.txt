@@ -1,0 +1,14 @@
+{{ recipient_name }} 様
+
+契約書「{{ contract.title }}」の電子締結が完了しましたのでお知らせいたします。
+
+契約番号: C-{{ "%06d"|format(contract.id) }}
+締結日時: {{ contract.completed_at.strftime('%Y-%m-%d %H:%M') if contract.completed_at else '-' }} (UTC)
+
+{% if is_internal and download_url %}
+▼ 締結済PDFのダウンロード (社内ログイン必要)
+{{ download_url }}
+{% endif %}
+締結証明書は社内システムからダウンロードいただけます。
+
+― {{ company_name }} 電子契約システム

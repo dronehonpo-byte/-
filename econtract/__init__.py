@@ -1,25 +1,38 @@
-"""電子契約管理アプリ."""
+"""電子契約管理アプリ — application factory."""
 from __future__ import annotations
 
+import logging
+import os
 from pathlib import Path
 
 from flask import Flask
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 from .config import Config
-from .extensions import db, login_manager
+from .extensions import db, login_manager, migrate, oauth
 
 
-def create_app(config_class: type = Config) -> Flask:
+def create_app(config_class: type | object = Config) -> Flask:
     app = Flask(__name__, instance_relative_config=False)
     app.config.from_object(config_class)
+
+    # Render/Heroku のような proxy 配下では X-Forwarded-* を信頼
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
 
     # ストレージ・instance ディレクトリ準備
     Path(app.instance_path).mkdir(parents=True, exist_ok=True)
     Path(app.config["CONTRACT_PDF_DIR"]).mkdir(parents=True, exist_ok=True)
     Path(app.config["SIGNATURE_DIR"]).mkdir(parents=True, exist_ok=True)
 
+    # 本番では SECRET_KEY が dev デフォルトのままだと拒否
+    _validate_secret(app)
+
+    # 拡張初期化
     db.init_app(app)
+    migrate.init_app(app, db)
     login_manager.init_app(app)
+    oauth.init_app(app)
+    _register_oauth_clients(app)
 
     from .models import User
 
@@ -38,6 +51,11 @@ def create_app(config_class: type = Config) -> Flask:
     app.register_blueprint(contracts_bp)
     app.register_blueprint(sign_bp)
 
+    # ヘルスチェック
+    @app.route("/healthz")
+    def _healthz():
+        return {"status": "ok"}, 200
+
     # テンプレートグローバル
     from .models import ContractStatus, SignerStatus
 
@@ -47,6 +65,9 @@ def create_app(config_class: type = Config) -> Flask:
             "ContractStatus": ContractStatus,
             "SignerStatus": SignerStatus,
             "company_name": app.config["COMPANY_NAME"],
+            "oauth_enabled": bool(app.config.get("GOOGLE_CLIENT_ID") and app.config.get("GOOGLE_CLIENT_SECRET")),
+            "allow_password_login": app.config.get("ALLOW_PASSWORD_LOGIN", True),
+            "allow_registration": not app.config.get("DISABLE_REGISTRATION", False),
         }
 
     @app.template_filter("dt")
@@ -55,11 +76,55 @@ def create_app(config_class: type = Config) -> Flask:
             return "—"
         return value.strftime(fmt)
 
-    # CLI コマンド
+    # CLI
     from .cli import register_cli
     register_cli(app)
 
-    with app.app_context():
-        db.create_all()
+    # SQLite + dev 環境のみ create_all で初期化補助 (本番は flask db upgrade)
+    if app.config["SQLALCHEMY_DATABASE_URI"].startswith("sqlite:") and not app.config.get("TESTING"):
+        with app.app_context():
+            db.create_all()
+
+    # ロギング (gunicorn で動くときは gunicorn のロガーに合わせる)
+    if not app.debug:
+        gunicorn_logger = logging.getLogger("gunicorn.error")
+        if gunicorn_logger.handlers:
+            app.logger.handlers = gunicorn_logger.handlers
+            app.logger.setLevel(gunicorn_logger.level)
 
     return app
+
+
+def _validate_secret(app: Flask) -> None:
+    if app.config.get("TESTING"):
+        return
+    if (
+        os.environ.get("FLASK_ENV", "production").lower() == "production"
+        and app.config["SECRET_KEY"] == "dev-secret-key-change-in-production"
+        and not app.debug
+    ):
+        # dev 用のキーで本番起動しないようにブロック
+        raise RuntimeError(
+            "ECONTRACT_SECRET_KEY (or SECRET_KEY) を本番用の値に設定してください。"
+            " 例: python -c 'import secrets; print(secrets.token_hex(32))'"
+        )
+
+
+def _register_oauth_clients(app: Flask) -> None:
+    """Google OAuth クライアントを必要なら登録."""
+    if not (app.config.get("GOOGLE_CLIENT_ID") and app.config.get("GOOGLE_CLIENT_SECRET")):
+        return
+
+    # Workspace ドメイン制限を hd パラメータでサーバーサイドにヒント
+    authorize_params = {}
+    if app.config.get("GOOGLE_HOSTED_DOMAIN"):
+        authorize_params["hd"] = app.config["GOOGLE_HOSTED_DOMAIN"]
+
+    oauth.register(
+        name="google",
+        client_id=app.config["GOOGLE_CLIENT_ID"],
+        client_secret=app.config["GOOGLE_CLIENT_SECRET"],
+        server_metadata_url="https://accounts.google.com/.well-known/openid-configuration",
+        client_kwargs={"scope": "openid email profile"},
+        authorize_params=authorize_params or None,
+    )

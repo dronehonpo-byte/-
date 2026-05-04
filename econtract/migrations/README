@@ -1,0 +1,7 @@
+Single-database configuration for Flask-Migrate / Alembic.
+
+Generate new revisions with:
+  flask --app econtract.wsgi db migrate -m "description"
+
+Apply with:
+  flask --app econtract.wsgi db upgrade

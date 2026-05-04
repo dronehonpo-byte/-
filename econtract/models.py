@@ -12,13 +12,13 @@ from .extensions import db
 
 
 class ContractStatus(str, enum.Enum):
-    DRAFT = "draft"             # 下書き
-    SENT = "sent"               # 送信済み（署名待ち）
-    PARTIALLY_SIGNED = "partial"  # 一部署名済み
-    COMPLETED = "completed"     # 完了
-    DECLINED = "declined"       # 拒否
-    CANCELLED = "cancelled"     # 取り消し
-    EXPIRED = "expired"         # 期限切れ
+    DRAFT = "draft"
+    SENT = "sent"
+    PARTIALLY_SIGNED = "partial"
+    COMPLETED = "completed"
+    DECLINED = "declined"
+    CANCELLED = "cancelled"
+    EXPIRED = "expired"
 
     @property
     def label(self) -> str:
@@ -61,9 +61,13 @@ class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(255), unique=True, nullable=False, index=True)
     name = db.Column(db.String(120), nullable=False)
-    password_hash = db.Column(db.String(255), nullable=False)
+    password_hash = db.Column(db.String(255), nullable=True)  # OAuth-only ユーザーは null
+    google_sub = db.Column(db.String(64), unique=True, nullable=True, index=True)  # Google の sub クレーム
+    avatar_url = db.Column(db.String(500), nullable=True)
     department = db.Column(db.String(120))
     is_admin = db.Column(db.Boolean, default=False, nullable=False)
+    is_active_flag = db.Column(db.Boolean, default=True, nullable=False)
+    last_login_at = db.Column(db.DateTime)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
     contracts = db.relationship("Contract", back_populates="creator", lazy="dynamic")
@@ -72,7 +76,13 @@ class User(UserMixin, db.Model):
         self.password_hash = generate_password_hash(password)
 
     def check_password(self, password: str) -> bool:
+        if not self.password_hash:
+            return False
         return check_password_hash(self.password_hash, password)
+
+    @property
+    def is_active(self) -> bool:  # type: ignore[override]
+        return bool(self.is_active_flag)
 
     def __repr__(self) -> str:  # pragma: no cover
         return f"<User {self.email}>"
@@ -85,8 +95,8 @@ class Template(db.Model):
     name = db.Column(db.String(160), nullable=False)
     category = db.Column(db.String(60), nullable=False)
     description = db.Column(db.Text)
-    body = db.Column(db.Text, nullable=False)  # プレースホルダ {{変数}} 入り本文
-    variables_json = db.Column(db.Text, default="[]")  # 変数名のJSON配列
+    body = db.Column(db.Text, nullable=False)
+    variables_json = db.Column(db.Text, default="[]")
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
 
@@ -97,12 +107,13 @@ class Contract(db.Model):
     title = db.Column(db.String(200), nullable=False)
     description = db.Column(db.Text)
     status = db.Column(db.String(20), default=ContractStatus.DRAFT.value, nullable=False, index=True)
-    body = db.Column(db.Text)  # 本文（テンプレートから生成）
-    pdf_path = db.Column(db.String(500))  # アップロード済みPDFのパス
-    sealed_pdf_path = db.Column(db.String(500))  # 署名済みPDFのパス
-    document_hash = db.Column(db.String(128))  # SHA-256
+    body = db.Column(db.Text)
+    pdf_path = db.Column(db.String(500))
+    sealed_pdf_path = db.Column(db.String(500))
+    document_hash = db.Column(db.String(128))
     expires_at = db.Column(db.DateTime)
     completed_at = db.Column(db.DateTime)
+    sent_at = db.Column(db.DateTime)
 
     creator_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
     template_id = db.Column(db.Integer, db.ForeignKey("templates.id"))
@@ -144,7 +155,7 @@ class Contract(db.Model):
         return int(self.signed_count / self.total_signers * 100)
 
     def is_fully_signed(self) -> bool:
-        return self.signers and all(s.status == SignerStatus.SIGNED.value for s in self.signers)
+        return bool(self.signers) and all(s.status == SignerStatus.SIGNED.value for s in self.signers)
 
 
 class Signer(db.Model):
@@ -155,17 +166,23 @@ class Signer(db.Model):
     name = db.Column(db.String(120), nullable=False)
     email = db.Column(db.String(255), nullable=False)
     company = db.Column(db.String(160))
-    role = db.Column(db.String(60), default="counterparty")  # internal / counterparty / witness
+    role = db.Column(db.String(60), default="counterparty")
     order = db.Column(db.Integer, default=1, nullable=False)
     status = db.Column(db.String(20), default=SignerStatus.PENDING.value, nullable=False)
-    access_token = db.Column(db.String(64), unique=True, nullable=False, default=lambda: secrets.token_urlsafe(32))
+    access_token = db.Column(
+        db.String(64), unique=True, nullable=False,
+        default=lambda: secrets.token_urlsafe(32),
+    )
+
+    last_reminded_at = db.Column(db.DateTime)
+    notification_count = db.Column(db.Integer, default=0, nullable=False)
 
     signed_at = db.Column(db.DateTime)
     signature_image_path = db.Column(db.String(500))
     signature_text = db.Column(db.String(120))
     signed_ip = db.Column(db.String(64))
     signed_user_agent = db.Column(db.String(255))
-    signature_hash = db.Column(db.String(128))  # 署名値（HMAC）
+    signature_hash = db.Column(db.String(128))
 
     contract = db.relationship("Contract", back_populates="signers")
 
@@ -179,8 +196,8 @@ class AuditLog(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     contract_id = db.Column(db.Integer, db.ForeignKey("contracts.id"), nullable=False, index=True)
-    actor = db.Column(db.String(160), nullable=False)  # ユーザー名または署名者メール
-    action = db.Column(db.String(80), nullable=False)  # created / sent / signed / declined / completed ...
+    actor = db.Column(db.String(160), nullable=False)
+    action = db.Column(db.String(80), nullable=False)
     detail = db.Column(db.Text)
     ip_address = db.Column(db.String(64))
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False, index=True)

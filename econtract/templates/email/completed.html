@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="ja">
+<head><meta charset="utf-8"><title>締結完了</title></head>
+<body style="margin:0;padding:0;background:#f1f5f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Hiragino Sans','Noto Sans JP',sans-serif;color:#0f172a;">
+  <div style="max-width:600px;margin:0 auto;padding:24px;">
+    <div style="background:#0f766e;color:#fff;padding:18px 24px;border-radius:8px 8px 0 0;">
+      <div style="font-size:13px;opacity:.85;">{{ company_name }} 電子契約</div>
+      <div style="font-size:20px;font-weight:700;margin-top:4px;">締結完了のお知らせ</div>
+    </div>
+    <div style="background:#fff;padding:24px;border-radius:0 0 8px 8px;border:1px solid #e2e8f0;border-top:none;line-height:1.7;">
+      <p>{{ recipient_name }} 様</p>
+      <p>契約書「<strong>{{ contract.title }}</strong>」の電子締結が完了しました。</p>
+      <table style="width:100%;border-collapse:collapse;margin:16px 0;font-size:14px;">
+        <tr><td style="padding:6px 0;color:#64748b;width:120px;">契約番号</td><td>C-{{ "%06d"|format(contract.id) }}</td></tr>
+        <tr><td style="padding:6px 0;color:#64748b;">締結日時</td><td>{{ contract.completed_at.strftime('%Y-%m-%d %H:%M') if contract.completed_at else '—' }} UTC</td></tr>
+      </table>
+      {% if is_internal and download_url %}
+      <p style="text-align:center;margin:24px 0;">
+        <a href="{{ download_url }}" style="display:inline-block;background:#0f766e;color:#fff;text-decoration:none;padding:12px 24px;border-radius:6px;font-weight:600;">
+          締結済PDFをダウンロード
+        </a>
+      </p>
+      {% else %}
+      <p style="font-size:13px;color:#475569;">締結証明付きPDFは送信元担当者へお問い合わせください。</p>
+      {% endif %}
+    </div>
+    <div style="text-align:center;color:#94a3b8;font-size:11px;padding:16px 0;">
+      &copy; {{ company_name }} — 電子契約システム
+    </div>
+  </div>
+</body>
+</html>
