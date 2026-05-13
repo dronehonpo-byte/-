@@ -23,7 +23,29 @@ Formspree のような **HTMLフォーム受付サービス** と、シンプル
 - 全メールに**配信停止リンクと `List-Unsubscribe` ヘッダ**を自動付与
 - 配信停止トークンは HMAC で署名 (DB ルックアップ不要、改ざん検知)
 
-## ローカル起動
+## 最速で使い始める
+
+リポジトリのルートで:
+
+```bash
+./formmail/run.sh
+```
+
+これだけで venv 作成・依存導入・DB 初期化・開発サーバ起動まで実行されます。
+`http://localhost:5000` を開いて新規登録 → フォーム作成 → メルマガリスト作成、
+の流れで全機能を使えます。デフォルトは `MAIL_DEBUG_LOG=true` でメール送信はログに出力されるだけです。
+
+実SMTPで送りたい場合は環境変数を渡してから実行:
+
+```bash
+SMTP_HOST=smtp.sendgrid.net SMTP_PORT=587 \
+SMTP_USER=apikey SMTP_PASSWORD=SG.xxxx SMTP_USE_TLS=true \
+MAIL_DEFAULT_FROM="Acme <noreply@acme.example>" \
+MAIL_DEBUG_LOG=false \
+./formmail/run.sh
+```
+
+## マニュアル起動
 
 ```bash
 python3 -m venv .venv
@@ -33,8 +55,6 @@ python3 -m venv .venv
 export SECRET_KEY=$(python -c "import secrets;print(secrets.token_urlsafe(32))")
 export DATABASE_URL=sqlite:///formmail.db
 export APP_BASE_URL=http://localhost:5000
-
-# 開発時はSMTP接続せずログに出すモード
 export MAIL_DEBUG_LOG=true
 
 # DBテーブル作成
@@ -44,6 +64,25 @@ export MAIL_DEBUG_LOG=true
 .venv/bin/python -m formmail.wsgi
 # → http://localhost:5000
 ```
+
+## Render へのデプロイ (ワンクリック)
+
+リポジトリ root の `render.yaml` に `formmail` サービスと専用 Postgres が定義済みです。
+Render の Dashboard → New → Blueprint からリポジトリを選ぶだけで、
+Postgres + Web サービス + DB 初期化 (`flask init-db`) がプロビジョニングされます。
+
+デプロイ後、Dashboard で以下の env を設定してください:
+
+| Key | 例 |
+| --- | --- |
+| `APP_BASE_URL` | `https://formmail-xxxx.onrender.com` |
+| `MAIL_DEFAULT_FROM` | `Acme <noreply@acme.example>` |
+| `SMTP_HOST` | `smtp.sendgrid.net` |
+| `SMTP_USER` | `apikey` (SendGrid なら) |
+| `SMTP_PASSWORD` | `SG.xxxxxxxxxxxxxxxx` |
+
+`SMTP_PORT=587` / `SMTP_USE_TLS=true` / `MAIL_DEBUG_LOG=false` はデフォルト設定済み。
+`/healthz` が `{"status":"ok"}` を返せば成功です。
 
 ## 本番設定 (SMTP)
 

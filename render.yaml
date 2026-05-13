@@ -56,8 +56,53 @@ services:
       mountPath: /var/data/econtract
       sizeGB: 5
 
+  - type: web
+    name: formmail
+    runtime: python
+    plan: starter
+    rootDir: .
+    region: singapore
+    buildCommand: |
+      pip install --upgrade pip
+      pip install -r formmail/requirements.txt
+    preDeployCommand: |
+      flask --app formmail.wsgi init-db
+    startCommand: |
+      gunicorn -b 0.0.0.0:$PORT formmail.wsgi:app
+    healthCheckPath: /healthz
+    autoDeploy: true
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.4
+      - key: SECRET_KEY
+        generateValue: true
+      - key: APP_BASE_URL
+        sync: false                      # ← デプロイ後に Render が割り当てた URL を入れる
+      - key: MAIL_DEFAULT_FROM
+        sync: false                      # 例: "Acme <noreply@acme.example>"
+      - key: SMTP_HOST
+        sync: false                      # 例: smtp.sendgrid.net
+      - key: SMTP_PORT
+        value: "587"
+      - key: SMTP_USER
+        sync: false                      # SendGrid なら "apikey"
+      - key: SMTP_PASSWORD
+        sync: false
+      - key: SMTP_USE_TLS
+        value: "true"
+      - key: MAIL_DEBUG_LOG
+        value: "false"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: formmail-db
+          property: connectionString
+
 databases:
   - name: econtract-db
+    plan: free
+    region: singapore
+    postgresMajorVersion: "16"
+  - name: formmail-db
     plan: free
     region: singapore
     postgresMajorVersion: "16"
