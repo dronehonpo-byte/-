@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}登録完了{% endblock %}
+{% block content %}
+<div class="card" style="max-width:480px;margin:40px auto;text-align:center">
+  {% if already %}
+    <h1>すでに登録されています</h1>
+    <p class="muted">「{{ sl.name }}」に既にご登録いただいております。</p>
+  {% else %}
+    <h1>ご登録ありがとうございました</h1>
+    {% if sl.confirm_required %}
+    <p class="muted">確認メールを送信しました。メール内のリンクをクリックして登録を確定してください。</p>
+    {% else %}
+    <p class="muted">「{{ sl.name }}」への登録を受け付けました。</p>
+    {% endif %}
+  {% endif %}
+</div>
+{% endblock %}

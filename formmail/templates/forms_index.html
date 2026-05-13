@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}フォーム一覧{% endblock %}
+{% block content %}
+<div class="row" style="justify-content:space-between">
+  <h1>フォーム</h1>
+  <a class="btn" href="{{ url_for('forms.new') }}">＋ 新しいフォーム</a>
+</div>
+
+{% if forms %}
+<table class="card" style="padding:0">
+  <thead>
+    <tr><th>名前</th><th>転送先</th><th>送信数</th><th>状態</th><th>作成日</th></tr>
+  </thead>
+  <tbody>
+    {% for f in forms %}
+    <tr>
+      <td><a href="{{ url_for('forms.detail', form_id=f.id) }}">{{ f.name }}</a></td>
+      <td class="muted">{{ f.target_email }}</td>
+      <td>{{ f.submissions|length }}</td>
+      <td>
+        {% if f.enabled %}<span class="badge on">有効</span>
+        {% else %}<span class="badge off">無効</span>{% endif %}
+      </td>
+      <td class="muted">{{ f.created_at.strftime('%Y-%m-%d') }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<div class="card"><p>まだフォームがありません。<a href="{{ url_for('forms.new') }}">作成しましょう</a>。</p></div>
+{% endif %}
+{% endblock %}

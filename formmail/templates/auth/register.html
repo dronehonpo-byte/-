@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}新規登録{% endblock %}
+{% block content %}
+<h1>新規登録</h1>
+<div class="card" style="max-width:420px">
+  <form method="post">
+    <div class="field"><label>メールアドレス</label><input type="email" name="email" required></div>
+    <div class="field"><label>パスワード (8文字以上)</label><input type="password" name="password" minlength="8" required></div>
+    <button class="btn" type="submit">登録</button>
+    <a class="muted" href="{{ url_for('auth.login') }}" style="margin-left:12px">ログイン</a>
+  </form>
+</div>
+{% endblock %}

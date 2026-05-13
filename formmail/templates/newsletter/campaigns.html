@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}キャンペーン{% endblock %}
+{% block content %}
+<div class="row" style="justify-content:space-between">
+  <h1>配信キャンペーン</h1>
+  <a class="btn" href="{{ url_for('newsletter.campaign_new') }}">＋ 新規キャンペーン</a>
+</div>
+
+{% if campaigns %}
+<table class="card" style="padding:0">
+  <thead><tr><th>件名</th><th>リスト</th><th>状態</th><th>送信/失敗</th><th>送信日</th></tr></thead>
+  <tbody>
+    {% for c in campaigns %}
+    <tr>
+      <td><a href="{{ url_for('newsletter.campaign_detail', campaign_id=c.id) }}">{{ c.subject }}</a></td>
+      <td class="muted">{{ c.list.name }}</td>
+      <td>
+        {% if c.status == 'draft' %}<span class="badge draft">下書き</span>
+        {% elif c.status == 'sent' %}<span class="badge sent">送信済</span>
+        {% elif c.status == 'failed' %}<span class="badge off">失敗</span>
+        {% else %}<span class="badge draft">{{ c.status }}</span>{% endif %}
+      </td>
+      <td>{{ c.sent_count }} / {{ c.failed_count }}</td>
+      <td class="muted">{{ c.sent_at.strftime('%Y-%m-%d %H:%M') if c.sent_at else '-' }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<div class="card"><p>キャンペーンはまだありません。</p></div>
+{% endif %}
+{% endblock %}

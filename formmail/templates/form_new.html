@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}新しいフォーム{% endblock %}
+{% block content %}
+<h1>新しいフォーム</h1>
+<div class="card" style="max-width:560px">
+  <form method="post">
+    <div class="field"><label>フォーム名</label><input type="text" name="name" placeholder="お問い合わせ" required></div>
+    <div class="field"><label>転送先メールアドレス</label><input type="email" name="target_email" required></div>
+    <div class="field"><label>送信成功後のリダイレクトURL (任意)</label><input type="url" name="redirect_url" placeholder="https://example.com/thanks"></div>
+    <button class="btn" type="submit">作成</button>
+    <a class="muted" href="{{ url_for('forms.index') }}" style="margin-left:12px">キャンセル</a>
+  </form>
+</div>
+{% endblock %}

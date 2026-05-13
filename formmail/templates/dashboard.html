@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}ダッシュボード | Formmail{% endblock %}
+{% block content %}
+<h1>ダッシュボード</h1>
+<div class="stat-grid">
+  <div class="stat"><div class="num">{{ forms_count }}</div><div class="label">フォーム</div></div>
+  <div class="stat"><div class="num">{{ submissions_count }}</div><div class="label">フォーム送信</div></div>
+  <div class="stat"><div class="num">{{ lists_count }}</div><div class="label">メルマガリスト</div></div>
+  <div class="stat"><div class="num">{{ subs_count }}</div><div class="label">購読者 (active)</div></div>
+  <div class="stat"><div class="num">{{ campaigns_count }}</div><div class="label">キャンペーン</div></div>
+</div>
+
+<div class="card" style="margin-top:24px">
+  <h2>クイックスタート</h2>
+  <p><a class="btn" href="{{ url_for('forms.new') }}">＋ 新しいフォーム</a>
+     <a class="btn secondary" href="{{ url_for('newsletter.list_new') }}">＋ 新しいメルマガリスト</a>
+     <a class="btn secondary" href="{{ url_for('newsletter.campaign_new') }}">＋ 新しいキャンペーン</a></p>
+</div>
+{% endblock %}

@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}Formmail{% endblock %}</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<header class="topbar">
+  <div class="container">
+    <a class="brand" href="{{ url_for('dashboard.index') }}">Formmail</a>
+    <nav>
+      {% if current_user.is_authenticated %}
+        <a href="{{ url_for('dashboard.index') }}">ダッシュボード</a>
+        <a href="{{ url_for('forms.index') }}">フォーム</a>
+        <a href="{{ url_for('newsletter.index') }}">メルマガ</a>
+        <a href="{{ url_for('newsletter.campaigns') }}">配信</a>
+        <form method="post" action="{{ url_for('auth.logout') }}" style="display:inline">
+          <button class="link" type="submit">ログアウト ({{ current_user.email }})</button>
+        </form>
+      {% else %}
+        <a href="{{ url_for('auth.login') }}">ログイン</a>
+        <a href="{{ url_for('auth.register') }}">新規登録</a>
+      {% endif %}
+    </nav>
+  </div>
+</header>
+<main class="container">
+  {% with msgs = get_flashed_messages(with_categories=true) %}
+    {% if msgs %}
+      <div class="flashes">
+        {% for cat, msg in msgs %}
+          <div class="flash {{ cat }}">{{ msg }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+  {% block content %}{% endblock %}
+</main>
+</body>
+</html>

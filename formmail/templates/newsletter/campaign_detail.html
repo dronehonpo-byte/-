@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}{{ campaign.subject }} | キャンペーン{% endblock %}
+{% block content %}
+<div class="row" style="justify-content:space-between">
+  <h1>{{ campaign.subject }}</h1>
+  <div class="row">
+    {% if campaign.status == 'draft' %}
+      <form method="post" action="{{ url_for('newsletter.campaign_send', campaign_id=campaign.id) }}" onsubmit="return confirm('{{ active_count }} 人に配信します。よろしいですか？')">
+        <button class="btn" type="submit">{{ active_count }} 人に配信</button>
+      </form>
+    {% endif %}
+    <form method="post" action="{{ url_for('newsletter.campaign_delete', campaign_id=campaign.id) }}" onsubmit="return confirm('削除しますか？')">
+      <button class="btn danger small" type="submit">削除</button>
+    </form>
+  </div>
+</div>
+
+<div class="card">
+  <p><strong>リスト:</strong> {{ campaign.list.name }}</p>
+  <p><strong>状態:</strong>
+    {% if campaign.status == 'draft' %}<span class="badge draft">下書き</span>
+    {% elif campaign.status == 'sent' %}<span class="badge sent">送信済</span>
+    {% elif campaign.status == 'failed' %}<span class="badge off">一部失敗</span>
+    {% else %}<span class="badge draft">{{ campaign.status }}</span>{% endif %}
+  </p>
+  <p><strong>送信:</strong> {{ campaign.sent_count }} / 失敗: {{ campaign.failed_count }}
+     {% if campaign.sent_at %} / 送信日時: {{ campaign.sent_at.strftime('%Y-%m-%d %H:%M') }}{% endif %}</p>
+</div>
+
+{% if campaign.body_text %}
+<div class="card">
+  <h2>本文 (テキスト)</h2>
+  <pre style="white-space:pre-wrap;background:#f3f4f6;color:#1c2230">{{ campaign.body_text }}</pre>
+</div>
+{% endif %}
+
+{% if campaign.body_html %}
+<div class="card">
+  <h2>本文 (HTML プレビュー)</h2>
+  <div style="border:1px solid var(--border);padding:16px;border-radius:6px;background:#fff">
+    {{ campaign.body_html|safe }}
+  </div>
+</div>
+{% endif %}
+{% endblock %}

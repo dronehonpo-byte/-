@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}メルマガリスト{% endblock %}
+{% block content %}
+<div class="row" style="justify-content:space-between">
+  <h1>メルマガリスト</h1>
+  <a class="btn" href="{{ url_for('newsletter.list_new') }}">＋ 新規リスト</a>
+</div>
+
+{% if lists %}
+<table class="card" style="padding:0">
+  <thead><tr><th>名前</th><th>差出人</th><th>購読者</th><th>確認制</th><th>作成日</th></tr></thead>
+  <tbody>
+    {% for sl in lists %}
+    <tr>
+      <td><a href="{{ url_for('newsletter.list_detail', list_id=sl.id) }}">{{ sl.name }}</a></td>
+      <td class="muted">{% if sl.from_email %}{{ sl.from_name or '' }} &lt;{{ sl.from_email }}&gt;{% else %}-{% endif %}</td>
+      <td>{{ sl.subscribers|length }}</td>
+      <td>{{ 'はい' if sl.confirm_required else 'いいえ' }}</td>
+      <td class="muted">{{ sl.created_at.strftime('%Y-%m-%d') }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<div class="card"><p>まだリストがありません。<a href="{{ url_for('newsletter.list_new') }}">作成しましょう</a>。</p></div>
+{% endif %}
+{% endblock %}
