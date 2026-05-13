@@ -1,0 +1,7 @@
+{
+  "version": 2,
+  "framework": null,
+  "buildCommand": "mkdir -p public && cp vercel-placeholder.html public/index.html",
+  "installCommand": "echo skip",
+  "outputDirectory": "public"
+}
