@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}新規キャンペーン{% endblock %}
+{% block content %}
+<h1>新規キャンペーン</h1>
+{% if not lists %}
+<div class="card"><p>先に<a href="{{ url_for('newsletter.list_new') }}">メルマガリストを作成</a>してください。</p></div>
+{% else %}
+<div class="card">
+  <form method="post">
+    <div class="field">
+      <label>配信先リスト</label>
+      <select name="list_id" required>
+        {% for sl in lists %}
+        <option value="{{ sl.id }}">{{ sl.name }} ({{ sl.subscribers|length }} 人)</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="field"><label>件名</label><input type="text" name="subject" required></div>
+    <div class="field">
+      <label>本文 (テキスト)</label>
+      <textarea name="body_text" placeholder="プレーンテキストの本文"></textarea>
+    </div>
+    <div class="field">
+      <label>本文 (HTML, 任意)</label>
+      <textarea name="body_html" placeholder="&lt;p&gt;HTML形式の本文&lt;/p&gt;"></textarea>
+    </div>
+    <button class="btn" type="submit">下書き保存</button>
+    <a class="muted" href="{{ url_for('newsletter.campaigns') }}" style="margin-left:12px">キャンセル</a>
+  </form>
+  <p class="muted" style="margin-top:16px">※ 配信停止リンクは送信時に自動付与されます。</p>
+</div>
+{% endif %}
+{% endblock %}

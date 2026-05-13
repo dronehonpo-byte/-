@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}{{ form.name }} | フォーム{% endblock %}
+{% block content %}
+<div class="row" style="justify-content:space-between">
+  <h1>{{ form.name }}
+    {% if form.enabled %}<span class="badge on">有効</span>{% else %}<span class="badge off">無効</span>{% endif %}
+  </h1>
+  <div class="row">
+    <form method="post" action="{{ url_for('forms.toggle', form_id=form.id) }}">
+      <button class="btn secondary small" type="submit">{{ '無効化' if form.enabled else '有効化' }}</button>
+    </form>
+    <form method="post" action="{{ url_for('forms.delete', form_id=form.id) }}" onsubmit="return confirm('本当に削除しますか？')">
+      <button class="btn danger small" type="submit">削除</button>
+    </form>
+  </div>
+</div>
+
+<div class="card">
+  <h2>エンドポイント</h2>
+  <p>このURLにフォームをPOSTしてください:</p>
+  <pre>{{ form.endpoint_url }}</pre>
+  <p>転送先: <code>{{ form.target_email }}</code></p>
+  {% if form.redirect_url %}<p>送信後リダイレクト: <code>{{ form.redirect_url }}</code></p>{% endif %}
+  <h2>HTML サンプル</h2>
+<pre>&lt;form action="{{ form.endpoint_url }}" method="POST"&gt;
+  &lt;input type="email" name="email" placeholder="メール"&gt;
+  &lt;textarea name="message" placeholder="メッセージ"&gt;&lt;/textarea&gt;
+  &lt;input type="text" name="{{ form.honeypot_field }}" style="display:none" tabindex="-1" autocomplete="off"&gt;
+  &lt;button type="submit"&gt;送信&lt;/button&gt;
+&lt;/form&gt;</pre>
+  <p class="muted">隠しフィールド <code>{{ form.honeypot_field }}</code> が入力されている送信は spam として保存され、転送されません。</p>
+</div>
+
+<div class="card">
+  <h2>送信履歴 ({{ form.submissions|length }})</h2>
+  {% if form.submissions %}
+  <table>
+    <thead><tr><th>日時</th><th>送信元</th><th>内容</th><th></th></tr></thead>
+    <tbody>
+      {% for s in form.submissions %}
+      <tr>
+        <td class="muted">{{ s.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+        <td>{{ s.sender_email or '-' }}<br><span class="muted" style="font-size:11px">{{ s.ip }}</span></td>
+        <td>
+          {% for k, v in s.payload.items() %}
+            <strong>{{ k }}:</strong> {{ v }}<br>
+          {% endfor %}
+        </td>
+        <td>{% if s.is_spam %}<span class="badge off">spam</span>{% endif %}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="muted">まだ送信はありません。</p>
+  {% endif %}
+</div>
+{% endblock %}

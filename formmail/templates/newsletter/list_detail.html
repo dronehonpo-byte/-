@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}{{ sl.name }} | リスト{% endblock %}
+{% block content %}
+<div class="row" style="justify-content:space-between">
+  <h1>{{ sl.name }}</h1>
+  <form method="post" action="{{ url_for('newsletter.list_delete', list_id=sl.id) }}" onsubmit="return confirm('リストを削除しますか？購読者もすべて削除されます')">
+    <button class="btn danger small" type="submit">リスト削除</button>
+  </form>
+</div>
+
+<div class="card">
+  <h2>購読フォームURL</h2>
+  <pre>{{ request.url_root.rstrip('/') }}{{ url_for('public_newsletter.subscribe', public_key=sl.public_key) }}</pre>
+  <p class="muted">このURLをWebサイトのリンク等で公開すれば、誰でも購読できます。{% if sl.confirm_required %}確認メールが必須です。{% endif %}</p>
+</div>
+
+<div class="card">
+  <h2>購読者を追加</h2>
+  <form method="post" action="{{ url_for('newsletter.subscriber_add', list_id=sl.id) }}" class="row">
+    <input type="email" name="email" placeholder="メール" required style="flex:1;min-width:200px">
+    <input type="text" name="name" placeholder="名前 (任意)" style="flex:1;min-width:150px">
+    <button class="btn" type="submit">追加</button>
+  </form>
+  <hr>
+  <h2>CSV インポート</h2>
+  <p class="muted">1列目: メール、2列目: 名前 (任意)。1行1件。</p>
+  <form method="post" action="{{ url_for('newsletter.subscriber_import', list_id=sl.id) }}" enctype="multipart/form-data" class="row">
+    <input type="file" name="csv" accept=".csv,text/csv" required>
+    <button class="btn secondary" type="submit">インポート</button>
+  </form>
+</div>
+
+<div class="card">
+  <h2>購読者一覧 ({{ sl.subscribers|length }})</h2>
+  {% if sl.subscribers %}
+  <table>
+    <thead><tr><th>メール</th><th>名前</th><th>状態</th><th>登録日</th><th></th></tr></thead>
+    <tbody>
+      {% for s in sl.subscribers %}
+      <tr>
+        <td>{{ s.email }}</td>
+        <td>{{ s.name or '-' }}</td>
+        <td>{{ s.status }}</td>
+        <td class="muted">{{ s.created_at.strftime('%Y-%m-%d') }}</td>
+        <td>
+          <form method="post" action="{{ url_for('newsletter.subscriber_delete', list_id=sl.id, sub_id=s.id) }}" onsubmit="return confirm('削除しますか？')">
+            <button class="btn danger small" type="submit">削除</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="muted">購読者はまだいません。</p>
+  {% endif %}
+</div>
+{% endblock %}

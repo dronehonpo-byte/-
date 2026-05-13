@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}{{ sl.name }} に登録{% endblock %}
+{% block content %}
+<div class="card" style="max-width:480px;margin:40px auto">
+  <h1>{{ sl.name }} に登録</h1>
+  {% if error %}<div class="flash error">{{ error }}</div>{% endif %}
+  <form method="post">
+    <div class="field"><label>メールアドレス</label><input type="email" name="email" required></div>
+    <div class="field"><label>お名前 (任意)</label><input type="text" name="name"></div>
+    <button class="btn" type="submit">登録する</button>
+  </form>
+  {% if sl.confirm_required %}<p class="muted" style="margin-top:12px">登録後、確認メールをお送りします。</p>{% endif %}
+</div>
+{% endblock %}
