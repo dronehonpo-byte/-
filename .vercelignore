@@ -1,0 +1,9 @@
+# Static brochure deployment only — exclude the Flask app (deployed via Render)
+econtract/
+requirements.txt
+Procfile
+Dockerfile
+render.yaml
+DEPLOY.md
+setup.sh
+*.py
