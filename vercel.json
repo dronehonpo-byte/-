@@ -1,0 +1,11 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "installCommand": "echo \"static site - skip install\"",
+  "buildCommand": "echo \"static site - no build\"",
+  "outputDirectory": ".",
+  "cleanUrls": true,
+  "rewrites": [
+    { "source": "/", "destination": "/kuhaku-brochure.html" }
+  ]
+}

@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>KUHAKU A4三つ折りパンフレット</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @page {
+      size: A4 landscape;
+      margin: 0;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+
+    body {
+      margin: 0;
+      background: #e5e7eb;
+      font-family: "Noto Sans JP", "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
+      color: #111827;
+    }
+
+    .sheet {
+      width: 297mm;
+      height: 210mm;
+      margin: 12mm auto;
+      background: #ffffff;
+      display: grid;
+      grid-template-columns: repeat(3, 99mm);
+      position: relative;
+      overflow: hidden;
+      page-break-after: always;
+    }
+
+    .panel {
+      width: 99mm;
+      height: 210mm;
+      position: relative;
+      padding: 12mm 10mm;
+      overflow: hidden;
+      border-right: 0.2mm dashed rgba(37, 99, 235, 0.25);
+    }
+
+    .panel:last-child {
+      border-right: none;
+    }
+
+    .fold-guide {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 0;
+      border-left: 0.2mm dashed rgba(37, 99, 235, 0.35);
+      z-index: 50;
+      pointer-events: none;
+    }
+
+    .fold-1 { left: 99mm; }
+    .fold-2 { left: 198mm; }
+
+    .trim-mark {
+      position: absolute;
+      background: #111827;
+      z-index: 80;
+    }
+
+    .tm-h {
+      width: 8mm;
+      height: 0.2mm;
+    }
+
+    .tm-v {
+      width: 0.2mm;
+      height: 8mm;
+    }
+
+    .tm-top-left-h { top: 3mm; left: 3mm; }
+    .tm-top-left-v { top: 3mm; left: 3mm; }
+
+    .tm-top-right-h { top: 3mm; right: 3mm; }
+    .tm-top-right-v { top: 3mm; right: 3mm; }
+
+    .tm-bottom-left-h { bottom: 3mm; left: 3mm; }
+    .tm-bottom-left-v { bottom: 3mm; left: 3mm; }
+
+    .tm-bottom-right-h { bottom: 3mm; right: 3mm; }
+    .tm-bottom-right-v { bottom: 3mm; right: 3mm; }
+
+    .blue { color: #0057d9; }
+    .bg-blue-main { background: #0057d9; }
+    .bg-blue-deep { background: #003b99; }
+    .border-blue { border-color: #0057d9; }
+
+    .symbol-bg {
+      position: absolute;
+      width: 72mm;
+      height: 72mm;
+      opacity: 0.08;
+      right: -18mm;
+      bottom: 10mm;
+      object-fit: contain;
+    }
+
+    .symbol-bg-large {
+      position: absolute;
+      width: 112mm;
+      height: 112mm;
+      opacity: 0.07;
+      right: -36mm;
+      top: 18mm;
+      object-fit: contain;
+    }
+
+    .qr-box {
+      width: 48mm;
+      height: 48mm;
+      background: #fff;
+      border: 0.5mm solid #111827;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto;
+    }
+
+    .price-shadow {
+      text-shadow: 0 8px 24px rgba(0,0,0,0.18);
+    }
+
+    @media print {
+      body {
+        background: #ffffff;
+      }
+
+      .sheet {
+        margin: 0;
+        box-shadow: none;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- 外面：左=裏表紙 / 中=表紙 / 右=折り込み面 -->
+  <section class="sheet">
+
+    <div class="fold-guide fold-1"></div>
+    <div class="fold-guide fold-2"></div>
+
+    <div class="trim-mark tm-h tm-top-left-h"></div>
+    <div class="trim-mark tm-v tm-top-left-v"></div>
+    <div class="trim-mark tm-h tm-top-right-h"></div>
+    <div class="trim-mark tm-v tm-top-right-v"></div>
+    <div class="trim-mark tm-h tm-bottom-left-h"></div>
+    <div class="trim-mark tm-v tm-bottom-left-v"></div>
+    <div class="trim-mark tm-h tm-bottom-right-h"></div>
+    <div class="trim-mark tm-v tm-bottom-right-v"></div>
+
+    <!-- 面6：裏表紙 -->
+    <div class="panel bg-white">
+      <img src="logo-symbol.png" class="symbol-bg" alt="Miyabee symbol" />
+
+      <div class="h-full flex flex-col justify-between relative z-10">
+        <div>
+          <p class="text-[12px] font-bold tracking-[0.18em] blue mb-4">FREE CONSULTATION</p>
+          <h2 class="text-[27px] leading-[1.25] font-black tracking-[-0.05em]">
+            AI導入、<br>
+            まずはLINEで<br>
+            無料相談。
+          </h2>
+
+          <p class="mt-5 text-[12.5px] leading-[1.9] text-gray-700">
+            料金が分からないまま相談する必要はありません。<br>
+            KUHAKUは、月額10,000円の固定料金を最初から公開しています。
+          </p>
+        </div>
+
+        <div class="text-center">
+          <div class="qr-box">
+            <img
+              src="https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=https%3A%2F%2Fline.me%2FR%2Fti%2Fp%2F%40713njakx"
+              alt="LINE QR"
+              class="w-full h-full p-1"
+            />
+          </div>
+
+          <p class="mt-4 inline-block bg-blue-main text-white text-[14px] font-black px-5 py-3 rounded-full">
+            LINE友だち追加で無料相談
+          </p>
+
+          <p class="mt-3 text-[10.5px] text-gray-600">
+            QRコードを読み取って、KUHAKUに相談する
+          </p>
+        </div>
+
+        <div class="border-t border-gray-200 pt-4">
+          <p class="text-[13px] font-black mb-2">株式会社Miyabee</p>
+          <p class="text-[9.5px] leading-[1.7] text-gray-600">
+            〒101-0041<br>
+            東京都千代田区神田須田町一丁目7番地8<br>
+            VORT秋葉原Ⅳ 2F<br>
+            Web：https://miyabeeinc.co.jp<br>
+            TEL：070-9190-9320<br>
+            MAIL：info@dronehonpo.jp
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 面1：表紙 -->
+    <div class="panel bg-white">
+      <img src="logo-symbol.png" class="symbol-bg-large" alt="Miyabee symbol" />
+
+      <div class="h-full flex flex-col justify-between relative z-10">
+        <div>
+          <img src="logo-horizontal.png" alt="株式会社Miyabee" class="w-[54mm] mb-10" />
+
+          <p class="text-[12px] font-bold tracking-[0.18em] blue mb-3">
+            AI CONSULTING SERVICE
+          </p>
+
+          <h1 class="text-[30px] leading-[1.22] font-black tracking-[-0.08em]">
+            AIコンサルの<br>
+            料金、<br>
+            なぜ隠すんですか？
+          </h1>
+
+          <div class="mt-7 border-l-[5px] border-blue pl-4">
+            <p class="text-[24px] leading-[1.25] font-black tracking-[-0.06em]">
+              KUHAKUは<br>
+              全部書きます。
+            </p>
+            <p class="mt-2 text-[39px] leading-none font-black blue tracking-[-0.08em]">
+              月1万円。
+            </p>
+          </div>
+        </div>
+
+        <div>
+          <p class="text-[12.5px] leading-[1.8] text-gray-700 mb-5">
+            AI導入コンサル、業務自動化ツール開発、社内AI化まで。<br>
+            中小企業のための、価格を隠さないAIコンサル。
+          </p>
+
+          <div class="border-t border-gray-200 pt-5">
+            <p class="text-[31px] font-black tracking-[-0.06em]">KUHAKU</p>
+            <p class="text-[11px] tracking-[0.18em] text-gray-500 mt-1">クハク｜by 株式会社Miyabee</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 面5：ご利用の流れ＋FAQ -->
+    <div class="panel bg-gray-50">
+      <div class="relative z-10">
+        <p class="text-[11px] font-bold tracking-[0.18em] blue mb-3">FLOW & FAQ</p>
+        <h2 class="text-[25px] leading-[1.28] font-black tracking-[-0.06em] mb-6">
+          まずは無料相談から。<br>
+          無理な契約前提では<br>
+          ありません。
+        </h2>
+
+        <div class="space-y-3">
+          <div class="bg-white rounded-2xl p-4 shadow-sm">
+            <p class="text-[11px] font-black blue mb-1">STEP 1｜LINEで無料相談</p>
+            <p class="text-[10.5px] leading-[1.6] text-gray-700">
+              現在の課題や、AIで効率化したい業務をお聞かせください。
+            </p>
+          </div>
+
+          <div class="bg-white rounded-2xl p-4 shadow-sm">
+            <p class="text-[11px] font-black blue mb-1">STEP 2｜業務内容を整理</p>
+            <p class="text-[10.5px] leading-[1.6] text-gray-700">
+              どの業務からAI化すべきか、優先順位を一緒に決めます。
+            </p>
+          </div>
+
+          <div class="bg-white rounded-2xl p-4 shadow-sm">
+            <p class="text-[11px] font-black blue mb-1">STEP 3｜導入・開発・運用支援</p>
+            <p class="text-[10.5px] leading-[1.6] text-gray-700">
+              AI活用の設計から、必要なツール開発、社内利用まで進めます。
+            </p>
+          </div>
+        </div>
+
+        <div class="mt-5 border-t border-gray-300 pt-4 space-y-3">
+          <div>
+            <p class="text-[11px] font-black">Q. 追加費用はありますか？</p>
+            <p class="text-[10px] leading-[1.6] text-gray-600">A. 固定費は月額10,000円です。チップは任意です。</p>
+          </div>
+          <div>
+            <p class="text-[11px] font-black">Q. チップを払わないと対応が変わりますか？</p>
+            <p class="text-[10px] leading-[1.6] text-gray-600">A. 変わりません。成果に納得した場合のみの任意です。</p>
+          </div>
+          <div>
+            <p class="text-[11px] font-black">Q. 途中で解約できますか？</p>
+            <p class="text-[10px] leading-[1.6] text-gray-600">A. 継続が合わない場合は、無理に続ける必要はありません。</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 内面：左=問題提起 / 中=透明性宣言 / 右=料金 -->
+  <section class="sheet">
+
+    <div class="fold-guide fold-1"></div>
+    <div class="fold-guide fold-2"></div>
+
+    <div class="trim-mark tm-h tm-top-left-h"></div>
+    <div class="trim-mark tm-v tm-top-left-v"></div>
+    <div class="trim-mark tm-h tm-top-right-h"></div>
+    <div class="trim-mark tm-v tm-top-right-v"></div>
+    <div class="trim-mark tm-h tm-bottom-left-h"></div>
+    <div class="trim-mark tm-v tm-bottom-left-v"></div>
+    <div class="trim-mark tm-h tm-bottom-right-h"></div>
+    <div class="trim-mark tm-v tm-bottom-right-v"></div>
+
+    <!-- 面2：問題提起 -->
+    <div class="panel bg-white">
+      <img src="logo-symbol.png" class="symbol-bg" alt="Miyabee symbol" />
+
+      <div class="relative z-10">
+        <p class="text-[11px] font-bold tracking-[0.18em] blue mb-4">PROBLEM</p>
+        <h2 class="text-[27px] leading-[1.28] font-black tracking-[-0.06em]">
+          「お問い合わせください」<br>
+          の先に、<br>
+          本当に納得できる<br>
+          料金はありますか？
+        </h2>
+
+        <p class="mt-6 text-[12.5px] leading-[1.9] text-gray-700">
+          AI導入を相談したい。<br>
+          でも、料金表がない。<br>
+          内容も、月額も、追加費用も、問い合わせるまで分からない。
+        </p>
+
+        <div class="mt-6 space-y-3">
+          <div class="bg-gray-50 border border-gray-200 rounded-2xl p-4">
+            <p class="text-[12px] font-black">相談したら高額な契約を迫られそう</p>
+          </div>
+          <div class="bg-gray-50 border border-gray-200 rounded-2xl p-4">
+            <p class="text-[12px] font-black">見積もりが出るまで比較できない</p>
+          </div>
+          <div class="bg-gray-50 border border-gray-200 rounded-2xl p-4">
+            <p class="text-[12px] font-black">結局、AI導入が後回しになる</p>
+          </div>
+        </div>
+
+        <p class="mt-8 text-[20px] leading-[1.35] font-black blue tracking-[-0.04em]">
+          KUHAKUは、<br>
+          そこを変えます。
+        </p>
+      </div>
+    </div>
+
+    <!-- 面3：透明性宣言＋提供内容 -->
+    <div class="panel bg-gray-50">
+      <div class="relative z-10 h-full flex flex-col justify-between">
+        <div>
+          <p class="text-[11px] font-bold tracking-[0.18em] blue mb-4">WHAT WE DO</p>
+          <h2 class="text-[27px] leading-[1.28] font-black tracking-[-0.06em]">
+            料金も、<br>
+            やることも、<br>
+            最初から見える。
+          </h2>
+
+          <p class="mt-5 text-[12.3px] leading-[1.85] text-gray-700">
+            KUHAKUは、中小企業がAIを現場で使える状態にするためのAIコンサルサービスです。
+          </p>
+        </div>
+
+        <div class="space-y-3">
+          <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+            <p class="text-[14px] font-black blue mb-1">AI導入コンサル</p>
+            <p class="text-[10.5px] leading-[1.6] text-gray-700">
+              何から始めるべきかを整理し、導入の優先順位を明確にします。
+            </p>
+          </div>
+
+          <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+            <p class="text-[14px] font-black blue mb-1">業務自動化ツール開発</p>
+            <p class="text-[10.5px] leading-[1.6] text-gray-700">
+              日々の作業に合わせて、業務効率化のためのツールを設計・開発します。
+            </p>
+          </div>
+
+          <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+            <p class="text-[14px] font-black blue mb-1">社内AI化支援</p>
+            <p class="text-[10.5px] leading-[1.6] text-gray-700">
+              社内でAIを使い続けられる状態を目指します。
+            </p>
+          </div>
+        </div>
+
+        <div class="bg-blue-main text-white rounded-2xl p-5">
+          <p class="text-[17px] leading-[1.45] font-black tracking-[-0.04em]">
+            “相談して終わり”ではなく、<br>
+            “使える形”まで一緒に進めます。
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 面4：料金 -->
+    <div class="panel bg-blue-main text-white">
+      <img src="logo-symbol.png" class="absolute w-[92mm] h-[92mm] opacity-10 -right-[28mm] -top-[18mm]" alt="Miyabee symbol" />
+
+      <div class="relative z-10 h-full flex flex-col justify-between">
+        <div>
+          <p class="text-[11px] font-bold tracking-[0.18em] text-blue-100 mb-4">PRICE</p>
+
+          <h2 class="text-[29px] leading-[1.22] font-black tracking-[-0.07em]">
+            固定は、<br>
+            月額10,000円。
+          </h2>
+
+          <p class="mt-3 text-[19px] leading-[1.35] font-black text-blue-100">
+            それ以上は、あなたが決める。
+          </p>
+        </div>
+
+        <div class="my-7">
+          <p class="text-[13px] font-bold text-blue-100 mb-1">月額</p>
+          <div class="flex items-end gap-1">
+            <span class="text-[64px] leading-none font-black tracking-[-0.1em] price-shadow">10,000</span>
+            <span class="text-[24px] leading-none font-black pb-1">円</span>
+          </div>
+          <p class="text-[12px] text-blue-100 mt-2">税込・固定料金</p>
+        </div>
+
+        <div class="bg-white text-gray-900 rounded-3xl p-5 shadow-xl">
+          <p class="text-[14px] font-black blue mb-3">この月額に、全部込み。</p>
+
+          <div class="grid grid-cols-1 gap-2 text-[11px] font-bold">
+            <div class="flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-blue-main"></span>
+              AI導入コンサル
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-blue-main"></span>
+              業務自動化ツール開発
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-blue-main"></span>
+              社内AI化支援
+            </div>
+          </div>
+
+          <div class="mt-4 pt-4 border-t border-gray-200">
+            <p class="text-[12px] font-black">チップは任意です。</p>
+            <p class="text-[10.5px] leading-[1.65] text-gray-600 mt-1">
+              成果に納得いただけた場合のみ。<br>
+              お支払いがなくても、対応内容は変わりません。
+            </p>
+          </div>
+        </div>
+
+        <div class="border-t border-blue-300 pt-5">
+          <p class="text-[17px] leading-[1.45] font-black tracking-[-0.04em]">
+            安いからではありません。<br>
+            成果に自信があるから、<br>
+            評価をお客様に委ねます。
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</body>
+</html>
