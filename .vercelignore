@@ -1,0 +1,13 @@
+node_modules
+out
+src
+public
+econtract
+storage
+migrations
+*.py
+requirements.txt
+Dockerfile
+Procfile
+render.yaml
+setup.sh
