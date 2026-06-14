@@ -39,23 +39,57 @@ export const COLORS = {
   textDim: "rgba(244,245,247,0.55)",
   textFaint: "rgba(244,245,247,0.35)",
   accent: "#5b8cff",
+  accentBright: "#8fb4ff",
   accentSoft: "rgba(91,140,255,0.18)",
   green: "#46d19e",
   amber: "#f4c453",
+  pinNew: "#ff8f6b", // リード（HPなし）強調色
 };
 
-// Timeline (frames @ 30fps)
-export const SHOT_DURATION = 7 * FPS; // 210
-export const UI_DURATION = 11 * FPS; // 330
-export const END_DURATION = 3 * FPS; // 90
+// Beat grid — motion lands on an even ~120 BPM pulse (1 beat = 15 frames).
+export const BEAT = 15;
 
-export const SHOTS = [
-  { src: "shot1.mp4", text: "みんなが帰ったあとも。" },
-  { src: "shot2.mp4", text: "24時間。文句も言わない。" },
-  { src: "shot3.mp4", text: "教育もいらない。" },
-  { src: "shot4.mp4", text: "中小企業に、“はじめての”AI社員を。" },
-  { src: "shot5.mp4", text: "AI社員に特化したサービス。" },
-] as const;
+// Timeline (frames @ 30fps). Sums to 1410 frames = 47.0s.
+export const SCENES = {
+  intro: 5 * FPS, // 0:00-0:05  150
+  shot1: 7 * FPS, // 0:05-0:12  210
+  shot2: 6 * FPS, // 0:12-0:18  180
+  black2: 3 * FPS, // 0:18-0:21  90
+  dash: 14 * FPS, // 0:21-0:35  420  ← hero
+  shot4: 5 * FPS, // 0:35-0:40  150
+  shot3: 3 * FPS, // 0:40-0:43  90
+  end: 4 * FPS, // 0:43-0:47  120
+} as const;
 
-export const TOTAL_DURATION =
-  SHOTS.length * SHOT_DURATION + UI_DURATION + END_DURATION; // 1470 = 49s
+// Absolute start frame of each scene (cumulative).
+export const STARTS = (() => {
+  const order = [
+    "intro",
+    "shot1",
+    "shot2",
+    "black2",
+    "dash",
+    "shot4",
+    "shot3",
+    "end",
+  ] as const;
+  let acc = 0;
+  const out = {} as Record<(typeof order)[number], number>;
+  for (const k of order) {
+    out[k] = acc;
+    acc += SCENES[k];
+  }
+  return out;
+})();
+
+export const SHOTS = {
+  shot1: { src: "shot1.mp4", text: "採用に、時間もお金も。" },
+  shot2: { src: "shot2.mp4", text: "人手が、足りない。" },
+  shot4: { src: "shot4.mp4", text: "慶應発スタートアップが、つくる。" },
+  shot3: { src: "shot3.mp4", text: "ひとり以上、働く。" },
+} as const;
+
+export const TOTAL_DURATION = Object.values(SCENES).reduce(
+  (a, b) => a + b,
+  0
+); // 1410 = 47s

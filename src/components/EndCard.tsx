@@ -8,47 +8,50 @@ import {
   useCurrentFrame,
 } from "remotion";
 import { COLORS, FONT_FAMILY } from "../theme";
+import { KeyVisualImg } from "./KeyVisual";
 
 const hasStaticFile = (name: string) =>
   getStaticFiles().some((f) => f.name === name);
 
 const easeOut = (t: number) => 1 - Math.pow(1 - t, 3);
 
-// Optional logo slot: drop /public/logo.png (or .svg) to replace the wordmark.
+const useReveal = (start: number) => {
+  const frame = useCurrentFrame();
+  const e = easeOut(
+    interpolate(frame, [start, start + 20], [0, 1], {
+      extrapolateLeft: "clamp",
+      extrapolateRight: "clamp",
+    })
+  );
+  return { opacity: e, transform: `translateY(${(1 - e) * 16}px)` };
+};
+
 const LogoSlot: React.FC = () => {
-  const logo = ["logo.png", "logo.svg", "logo.jpg"].find(hasStaticFile);
-  if (logo) {
-    return (
-      <Img
-        src={staticFile(logo)}
-        style={{ height: 120, objectFit: "contain" }}
-      />
-    );
-  }
+  // Use a /public/logo.* override if present, otherwise the bundled
+  // 株式会社Miyabee lockup. multiply drops the white plate on the white card.
+  const override = ["logo.png", "logo.svg", "logo.jpg"].find(hasStaticFile);
+  const src = override ?? "brand/miyabee-h.png";
   return (
-    <div
+    <Img
+      src={staticFile(src)}
       style={{
-        fontFamily: FONT_FAMILY,
-        fontSize: 96,
-        fontWeight: 600,
-        color: "#0b0c0f",
-        letterSpacing: 2,
+        width: 440,
+        height: "auto",
+        objectFit: "contain",
+        mixBlendMode: "multiply",
       }}
-    >
-      Miyabee
-    </div>
+    />
   );
 };
 
-// Optional QR slot: drop /public/qr.png to fill the framed slot.
 const QrSlot: React.FC = () => {
   const qr = ["qr.png", "qr.svg", "qr.jpg"].find(hasStaticFile);
   return (
     <div
       style={{
-        width: 220,
-        height: 220,
-        borderRadius: 24,
+        width: 190,
+        height: 190,
+        borderRadius: 22,
         background: "#fff",
         border: "1px solid rgba(0,0,0,0.12)",
         display: "flex",
@@ -66,7 +69,7 @@ const QrSlot: React.FC = () => {
         <div
           style={{
             fontFamily: FONT_FAMILY,
-            fontSize: 22,
+            fontSize: 20,
             fontWeight: 400,
             color: "rgba(0,0,0,0.35)",
             letterSpacing: 1,
@@ -84,8 +87,6 @@ const QrSlot: React.FC = () => {
 
 export const EndCard: React.FC = () => {
   const frame = useCurrentFrame();
-
-  // Start white (carrying the bloom over) then settle into the card.
   const settle = easeOut(
     interpolate(frame, [0, 16], [0, 1], {
       extrapolateLeft: "clamp",
@@ -93,24 +94,11 @@ export const EndCard: React.FC = () => {
     })
   );
 
-  const line1 = easeOut(
-    interpolate(frame, [10, 30], [0, 1], {
-      extrapolateLeft: "clamp",
-      extrapolateRight: "clamp",
-    })
-  );
-  const line2 = easeOut(
-    interpolate(frame, [24, 44], [0, 1], {
-      extrapolateLeft: "clamp",
-      extrapolateRight: "clamp",
-    })
-  );
-  const line3 = easeOut(
-    interpolate(frame, [36, 56], [0, 1], {
-      extrapolateLeft: "clamp",
-      extrapolateRight: "clamp",
-    })
-  );
+  const tagline = useReveal(6);
+  const price = useReveal(20);
+  const brand = useReveal(36);
+  const date = useReveal(50);
+  const cta = useReveal(62);
 
   return (
     <AbsoluteFill
@@ -123,7 +111,7 @@ export const EndCard: React.FC = () => {
       <AbsoluteFill
         style={{
           background:
-            "radial-gradient(60% 40% at 50% 40%, rgba(91,140,255,0.08), transparent 70%)",
+            "radial-gradient(60% 40% at 50% 38%, rgba(91,140,255,0.08), transparent 70%)",
           opacity: settle,
         }}
       />
@@ -132,87 +120,74 @@ export const EndCard: React.FC = () => {
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
-          gap: 0,
+          textAlign: "center",
         }}
       >
-        <div
-          style={{
-            opacity: line1,
-            transform: `translateY(${(1 - line1) * 18}px)`,
-            fontFamily: FONT_FAMILY,
-            fontSize: 34,
-            fontWeight: 300,
-            color: "rgba(11,12,15,0.6)",
-            letterSpacing: 4,
-            marginBottom: 34,
-          }}
-        >
-          慶應発スタートアップ
+        {/* AI社員 key visual — already carries the tagline「人間1人以上の価値を。」 */}
+        <div style={{ ...tagline, marginBottom: 34 }}>
+          <KeyVisualImg variant="white" width={880} />
         </div>
 
         <div
           style={{
-            opacity: line1,
-            transform: `translateY(${(1 - line1) * 18}px)`,
-            marginBottom: 48,
+            ...price,
+            fontFamily: FONT_FAMILY,
+            fontSize: 36,
+            fontWeight: 300,
+            color: "rgba(11,12,15,0.75)",
+            letterSpacing: 1.5,
+            marginBottom: 66,
           }}
         >
+          AI社員 ── 1人 月額98,000円
+        </div>
+
+        <div
+          style={{
+            ...brand,
+            fontFamily: FONT_FAMILY,
+            fontSize: 30,
+            fontWeight: 300,
+            color: "rgba(11,12,15,0.6)",
+            letterSpacing: 4,
+            marginBottom: 22,
+          }}
+        >
+          慶應発スタートアップ
+        </div>
+        <div style={{ ...brand, marginBottom: 44 }}>
           <LogoSlot />
         </div>
 
         <div
           style={{
-            opacity: line2,
-            transform: `translateY(${(1 - line2) * 18}px)`,
+            ...date,
             fontFamily: FONT_FAMILY,
-            fontSize: 52,
+            fontSize: 46,
             fontWeight: 400,
             color: "#0b0c0f",
             letterSpacing: 3,
-            marginBottom: 18,
+            marginBottom: 14,
           }}
         >
           2026.6.21 始動
         </div>
-
         <div
           style={{
-            opacity: line2,
-            transform: `translateY(${(1 - line2) * 18}px)`,
+            ...date,
             fontFamily: FONT_FAMILY,
-            fontSize: 32,
+            fontSize: 30,
             fontWeight: 300,
             color: "rgba(11,12,15,0.7)",
             letterSpacing: 2,
-            marginBottom: 64,
+            marginBottom: 52,
           }}
         >
           先行ウェイトリスト受付中
         </div>
 
-        <div
-          style={{
-            opacity: line3,
-            transform: `translateY(${(1 - line3) * 18}px)`,
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            gap: 22,
-          }}
-        >
+        <div style={cta}>
           <QrSlot />
-          {/* URL slot — replace with your launch URL */}
-          <div
-            style={{
-              fontFamily: FONT_FAMILY,
-              fontSize: 30,
-              fontWeight: 400,
-              color: "#0b0c0f",
-              letterSpacing: 2,
-            }}
-          >
-            miyabee.example.com
-          </div>
         </div>
       </div>
     </AbsoluteFill>
