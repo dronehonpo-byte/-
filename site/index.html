@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <title>Miyabee — ローンチ・ティザー（プレビュー）</title>
+    <style>
+      :root { color-scheme: dark; }
+      * { box-sizing: border-box; }
+      html, body { height: 100%; margin: 0; }
+      body {
+        background: #08090c;
+        color: #f4f5f7;
+        font-family: -apple-system, "Hiragino Kaku Gothic ProN", "Noto Sans JP",
+          system-ui, sans-serif;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 22px;
+        padding: 24px;
+      }
+      h1 {
+        font-size: 16px;
+        font-weight: 300;
+        letter-spacing: 3px;
+        color: rgba(244, 245, 247, 0.55);
+        margin: 0;
+        text-align: center;
+      }
+      .stage {
+        background:
+          radial-gradient(60% 40% at 50% 30%, rgba(91,140,255,0.14), transparent 70%);
+        padding: 18px;
+        border-radius: 26px;
+      }
+      video {
+        height: min(82vh, 920px);
+        max-width: 92vw;
+        aspect-ratio: 9 / 16;
+        border-radius: 18px;
+        background: #000;
+        box-shadow: 0 24px 80px rgba(0, 0, 0, 0.6);
+        display: block;
+      }
+      p {
+        font-size: 13px;
+        font-weight: 300;
+        color: rgba(244, 245, 247, 0.35);
+        margin: 0;
+        text-align: center;
+        max-width: 520px;
+        line-height: 1.7;
+      }
+      a { color: #5b8cff; text-decoration: none; }
+    </style>
+  </head>
+  <body>
+    <h1>Miyabee — ローンチ・ティザー プレビュー</h1>
+    <div class="stage">
+      <video src="./teaser.mp4" controls autoplay muted loop playsinline></video>
+    </div>
+    <p>
+      1080×1920 / H.264 / 約49秒。素材未配置のプレースホルダ版です。<br />
+      <code>shot1〜5.mp4</code> / <code>music.mp3</code> / ロゴ / QR を
+      <code>public/</code> に置いて再レンダリングすると差し替わります。
+    </p>
+  </body>
+</html>
