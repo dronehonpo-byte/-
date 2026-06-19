@@ -75,6 +75,15 @@ if df is not None:
     for w in warnings:
         st.warning(w)
 
+    # 大規模データ（10万行超）の警告とサンプリング提案
+    if df.shape[0] > 100_000:
+        st.warning(
+            f"⚠️ データが大規模です（{df.shape[0]:,} 行）。"
+            "分析によってはメモリ不足や処理時間の増大が起こる可能性があります。"
+            "機械学習・クラスタリングは自動でサブサンプリングされますが、"
+            "必要に応じて事前に行数を絞ることをおすすめします。"
+        )
+
     st.subheader("データプレビュー（先頭 50 行）")
     st.dataframe(df.head(50), use_container_width=True)
 
