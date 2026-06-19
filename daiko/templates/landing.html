@@ -1,9 +1,9 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="center" style="padding-top:14px">
+<div class="center" style="padding:20px 0 6px">
   <img class="hero-logo" src="{{ url_for('static', filename='img/logo.png') }}" alt="{{ service_name }}">
-  <h1 style="margin:10px 0 2px">{{ service_name }}</h1>
-  <p class="muted">{{ area }}の運転代行を、スマホでかんたんに。<br>料金と到着時間を見くらべて選べます。</p>
+  <h1 style="margin:16px 0 4px; font-size:34px; font-weight:900; letter-spacing:-.04em; line-height:1.15">{{ service_name }}</h1>
+  <p class="muted" style="font-size:15px">{{ area }}の運転代行を、スマホでかんたんに。<br>料金と到着時間を見くらべて選べます。</p>
 </div>
 
 <div class="card">
