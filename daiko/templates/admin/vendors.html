@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}業者・ドライバー｜{{ service_name }}{% endblock %}
+{% block content %}
+<h2 class="page-title">業者・ドライバー一覧</h2>
+{% for v in vendors %}
+  <div class="card">
+    <div class="flex">
+      <div>
+        <span class="chip {% if v.status == VendorStatus.APPROVED %}chip-green{% elif v.status == VendorStatus.PENDING %}chip-orange{% else %}chip-danger{% endif %}">{{ v.status.label }}</span>
+        <div style="font-weight:700;margin-top:4px">{{ v.name }}</div>
+        <div class="small muted">📞 {{ v.phone }}{% if v.email %} ／ {{ v.email }}{% endif %}</div>
+      </div>
+      {% if v.cert_filename %}<a class="btn btn-outline small" href="{{ url_for('admin.vendor_cert', vendor_id=v.id) }}" target="_blank">認定書</a>{% endif %}
+    </div>
+    {% if v.cancellation_policy %}<p class="small muted" style="margin-top:6px">キャンセル料: {{ v.cancellation_policy }}</p>{% endif %}
+    <div class="small" style="margin-top:8px">所属ドライバー:
+      {% for d in v.drivers %}<span class="chip chip-info">{{ d.name }}（{{ d.phone }}）</span> {% else %}<span class="muted">なし</span>{% endfor %}
+    </div>
+    <div class="row" style="margin-top:10px">
+      {% if v.status != VendorStatus.APPROVED %}
+      <form method="post" action="{{ url_for('admin.approve_vendor', vendor_id=v.id) }}"><button class="btn btn-green btn-block">承認</button></form>
+      {% endif %}
+      {% if v.status != VendorStatus.SUSPENDED %}
+      <form method="post" action="{{ url_for('admin.suspend_vendor', vendor_id=v.id) }}" onsubmit="return confirm('停止しますか？')"><button class="btn btn-danger btn-block">停止</button></form>
+      {% endif %}
+    </div>
+  </div>
+{% else %}
+  <div class="card center muted">業者の登録はまだありません。</div>
+{% endfor %}
+{% endblock %}
+{% block tabbar %}
+<div class="tabbar">
+  <a href="{{ url_for('admin.dashboard') }}"><span class="ic">📊</span>概況</a>
+  <a class="active" href="{{ url_for('admin.vendors') }}"><span class="ic">🏢</span>業者</a>
+  <a href="{{ url_for('admin.customers') }}"><span class="ic">👥</span>利用者</a>
+  <a href="{{ url_for('admin.matching') }}"><span class="ic">🔀</span>マッチング</a>
+</div>
+{% endblock %}

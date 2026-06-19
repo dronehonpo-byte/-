@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}依頼履歴｜{{ service_name }}{% endblock %}
+{% block content %}
+<h2 class="page-title">依頼履歴</h2>
+{% if not reqs %}
+  <div class="card center muted">まだ依頼はありません。</div>
+{% endif %}
+{% for r in reqs %}
+  <a class="list-item" href="{{ url_for('customer.detail', request_id=r.id) }}">
+    <div class="flex">
+      <div>
+        <span class="chip {% if r.status == RequestStatus.COMPLETED %}chip-green{% elif r.status == RequestStatus.CANCELLED %}chip-gray{% else %}chip-orange{% endif %}">{{ r.status.label }}</span>
+        <div class="small" style="margin-top:4px">{{ r.origin_label or '出発地' }} → {{ r.dest_label or '目的地' }}</div>
+      </div>
+      <div class="small muted">{{ r.created_at | dt('%m/%d %H:%M') }}</div>
+    </div>
+  </a>
+{% endfor %}
+<a class="btn btn-outline btn-block" href="{{ url_for('customer.home') }}">ホームへ</a>
+{% endblock %}

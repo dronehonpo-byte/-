@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% block title %}代行を依頼｜{{ service_name }}{% endblock %}
+{% block head %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+{% endblock %}
+{% block content %}
+<h2 class="page-title">代行を依頼する</h2>
+
+<form method="post" action="{{ url_for('customer.new_request') }}" id="req-form">
+  <div class="card">
+    <h3>① 出発地・目的地</h3>
+    <div class="row" style="margin-bottom:8px">
+      <input type="text" id="search-origin" placeholder="出発地を住所で検索">
+      <button type="button" class="btn btn-outline" id="btn-locate" style="flex:0 0 auto">現在地</button>
+    </div>
+    <input type="text" id="search-dest" placeholder="目的地を住所で検索" style="margin-bottom:8px">
+    <div id="map"></div>
+    <p class="hint">地図をタップしてピンを置けます（🟠出発地 → 🟢目的地）。ピンはドラッグで微調整できます。</p>
+    <div class="small">🟠 出発地：<span id="lbl-origin" class="muted">未設定</span></div>
+    <div class="small">🟢 目的地：<span id="lbl-dest" class="muted">未設定</span></div>
+    <input type="hidden" name="origin_lat" id="origin_lat"><input type="hidden" name="origin_lng" id="origin_lng">
+    <input type="hidden" name="origin_label" id="origin_label">
+    <input type="hidden" name="dest_lat" id="dest_lat"><input type="hidden" name="dest_lng" id="dest_lng">
+    <input type="hidden" name="dest_label" id="dest_label">
+  </div>
+
+  <div class="card">
+    <h3>② お車の情報</h3>
+    <p class="hint">運転代行はお客様のお車を運転するため、ドライバーの対応可否に直結します。</p>
+    <label>車種</label>
+    <select name="car_type">
+      <option value="軽">軽自動車</option>
+      <option value="普通" selected>普通車</option>
+      <option value="ワンボックス">ワンボックス / ミニバン</option>
+      <option value="大型・その他">大型・その他</option>
+    </select>
+    <label>ミッション <span class="req">*</span></label>
+    <div class="seg">
+      <label><input type="radio" name="transmission" value="AT" checked><span>AT</span></label>
+      <label><input type="radio" name="transmission" value="MT"><span>MT</span></label>
+    </div>
+    <label>ハンドル位置 <span class="req">*</span></label>
+    <div class="seg">
+      <label><input type="radio" name="handle" value="right" checked><span>右ハンドル</span></label>
+      <label><input type="radio" name="handle" value="left"><span>左ハンドル（輸入車）</span></label>
+    </div>
+    <label>経由回数</label>
+    <select name="via_count">
+      <option value="0">0回（直行）</option><option value="1">1回</option>
+      <option value="2">2回</option><option value="3">3回以上</option>
+    </select>
+  </div>
+
+  <div class="card">
+    <h3>③ 到着希望時間</h3>
+    <div class="seg" id="time-seg">
+      <label><input type="radio" name="asap" value="1" checked><span>今すぐ</span></label>
+      <label><input type="radio" name="asap" value="0"><span>時刻指定</span></label>
+    </div>
+    <div id="sched-wrap" style="display:none">
+      <label>希望時刻</label>
+      <input type="datetime-local" name="scheduled_time">
+    </div>
+    <label>ドライバーへの連絡（任意）</label>
+    <textarea name="note" placeholder="例：店の前で待っています"></textarea>
+  </div>
+
+  <button class="btn btn-primary btn-block btn-lg" type="submit" id="submit-btn" disabled>この内容で代行を呼ぶ</button>
+  <p class="hint center">送信すると近くのドライバーへ通知され、料金・到着時間の提示が届きます。</p>
+</form>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/map.js') }}"></script>
+<script>
+const cfg = { lat: {{ default_lat }}, lng: {{ default_lng }}, tileUrl: "{{ map_tile_url }}",
+  nominatimUrl: "{{ nominatim_url }}", osrmUrl: "{{ osrm_url }}" };
+function setVal(which, ll, label) {
+  document.getElementById(which + '_lat').value = ll.lat;
+  document.getElementById(which + '_lng').value = ll.lng;
+  document.getElementById(which + '_label').value = label;
+  document.getElementById('lbl-' + which).textContent = label;
+  document.getElementById('lbl-' + which).classList.remove('muted');
+  const ok = document.getElementById('origin_lat').value && document.getElementById('dest_lat').value;
+  document.getElementById('submit-btn').disabled = !ok;
+}
+const picker = DaikoMap.picker('map', cfg, setVal);
+document.getElementById('btn-locate').onclick = () => { picker.setMode('origin'); picker.locate(); };
+document.getElementById('search-origin').addEventListener('change', (e) => picker.search(e.target.value, 'origin'));
+document.getElementById('search-dest').addEventListener('change', (e) => picker.search(e.target.value, 'dest'));
+// 時刻指定の表示切替
+document.querySelectorAll('input[name=asap]').forEach((el) => el.addEventListener('change', () => {
+  document.getElementById('sched-wrap').style.display =
+    document.querySelector('input[name=asap]:checked').value === '0' ? 'block' : 'none';
+}));
+</script>
+{% endblock %}

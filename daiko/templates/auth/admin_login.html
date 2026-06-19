@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}管理者ログイン｜{{ service_name }}{% endblock %}
+{% block content %}
+<h2 class="page-title">管理者ログイン</h2>
+<div class="card">
+  <form method="post" action="{{ url_for('auth.admin_login') }}">
+    <label>ログインID <span class="req">*</span></label>
+    <input type="text" name="login_id" required autofocus>
+    <label>パスワード <span class="req">*</span></label>
+    <input type="password" name="password" required>
+    <br><br>
+    <button class="btn btn-outline btn-block btn-lg" type="submit">ログイン</button>
+  </form>
+</div>
+<p class="center small"><a href="{{ url_for('main.index') }}">← 戻る</a></p>
+{% endblock %}

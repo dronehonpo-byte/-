@@ -1,0 +1,13 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+
+# ローカルデータ
+daiko/instance/
+daiko/storage/certs/*
+!daiko/storage/certs/.gitkeep
+*.db
+.env

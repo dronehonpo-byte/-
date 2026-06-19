@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}ログイン｜{{ service_name }}{% endblock %}
+{% block content %}
+<h2 class="page-title">電話番号でログイン</h2>
+<div class="card">
+  <form method="post" action="{{ url_for('auth.customer_login') }}">
+    <label>携帯電話番号 <span class="req">*</span></label>
+    <input type="tel" name="phone" placeholder="09012345678" inputmode="numeric" required autofocus>
+    <div class="hint">入力された番号にSMSで認証コードをお送りします（パスワード不要）。</div>
+    <br>
+    <button class="btn btn-primary btn-block btn-lg" type="submit">認証コードを送る</button>
+  </form>
+</div>
+<p class="center small"><a href="{{ url_for('main.index') }}">← 戻る</a></p>
+{% endblock %}

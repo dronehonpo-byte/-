@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}ホーム｜{{ service_name }}{% endblock %}
+{% block content %}
+<div class="center" style="padding:8px 0">
+  <img src="{{ url_for('static', filename='img/logo.png') }}" style="width:84px;height:84px" alt="">
+  <h2 style="margin:6px 0">代行を呼ぶ</h2>
+  <p class="muted small">{{ area }}対応 ／ ようこそ{% if cur_customer.display_name %}、{{ cur_customer.display_name }}さん{% endif %}</p>
+</div>
+
+{% if active %}
+  <div class="card">
+    <div class="flex">
+      <div>
+        <span class="chip chip-orange">{{ active.status.label }}</span>
+        <div class="small muted" style="margin-top:6px">{{ active.origin_label or '出発地' }} → {{ active.dest_label or '目的地' }}</div>
+      </div>
+    </div>
+    {% if active.status.is_open %}
+      <a class="btn btn-primary btn-block" style="margin-top:10px" href="{{ url_for('customer.wait', request_id=active.id) }}">エントリー状況を見る</a>
+    {% else %}
+      <a class="btn btn-green btn-block" style="margin-top:10px" href="{{ url_for('customer.detail', request_id=active.id) }}">依頼の詳細を見る</a>
+    {% endif %}
+  </div>
+{% else %}
+  <a class="btn btn-primary btn-block btn-lg" href="{{ url_for('customer.new_request') }}">＋ 代行を依頼する</a>
+{% endif %}
+
+<div class="card" style="margin-top:14px">
+  <a class="list-item" href="{{ url_for('customer.history') }}">📋 依頼履歴</a>
+  <a class="list-item" href="{{ url_for('customer.profile') }}">👤 プロフィール</a>
+</div>
+{% endblock %}
+{% block tabbar %}
+<div class="tabbar">
+  <a class="active" href="{{ url_for('customer.home') }}"><span class="ic">🏠</span>ホーム</a>
+  <a href="{{ url_for('customer.new_request') }}"><span class="ic">🚗</span>依頼</a>
+  <a href="{{ url_for('customer.history') }}"><span class="ic">📋</span>履歴</a>
+</div>
+{% endblock %}

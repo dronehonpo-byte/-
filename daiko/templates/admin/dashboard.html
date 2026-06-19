@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}管理ダッシュボード｜{{ service_name }}{% endblock %}
+{% block content %}
+<h2 class="page-title">ダッシュボード</h2>
+<div class="stats">
+  <div class="stat"><div class="n">{{ stats.today_requests }}</div><div class="l">24時間のリクエスト</div></div>
+  <div class="stat"><div class="n">{{ stats.open }}</div><div class="l">募集中・提示中</div></div>
+  <div class="stat"><div class="n">{{ stats.in_progress }}</div><div class="l">確定・対応中</div></div>
+  <div class="stat"><div class="n">{{ stats.completed }}</div><div class="l">完了（累計）</div></div>
+  <div class="stat"><div class="n">{{ stats.customers }}</div><div class="l">利用者</div></div>
+  <div class="stat"><div class="n">{{ stats.vendors }}</div><div class="l">業者{% if stats.pending_vendors %}（承認待ち{{ stats.pending_vendors }}）{% endif %}</div></div>
+</div>
+
+<div class="card" style="margin-top:14px">
+  <h3>最近のリクエスト</h3>
+  <table>
+    <tr><th>#</th><th>状態</th><th>区間</th><th>日時</th></tr>
+    {% for r in recent %}
+    <tr>
+      <td>{{ r.id }}</td>
+      <td><span class="chip chip-gray">{{ r.status.label }}</span></td>
+      <td class="small">{{ r.origin_label or '—' }} → {{ r.dest_label or '—' }}</td>
+      <td class="small muted">{{ r.created_at | dt('%m/%d %H:%M') }}</td>
+    </tr>
+    {% else %}<tr><td colspan="4" class="muted center">データなし</td></tr>{% endfor %}
+  </table>
+</div>
+{% endblock %}
+{% block tabbar %}
+<div class="tabbar">
+  <a class="active" href="{{ url_for('admin.dashboard') }}"><span class="ic">📊</span>概況</a>
+  <a href="{{ url_for('admin.vendors') }}"><span class="ic">🏢</span>業者</a>
+  <a href="{{ url_for('admin.customers') }}"><span class="ic">👥</span>利用者</a>
+  <a href="{{ url_for('admin.matching') }}"><span class="ic">🔀</span>マッチング</a>
+</div>
+{% endblock %}

@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}ドライバーを探しています｜{{ service_name }}{% endblock %}
+{% block content %}
+<h2 class="page-title">ドライバーを選ぶ</h2>
+<div class="card">
+  <div class="small muted">{{ req.origin_label or '出発地' }} → {{ req.dest_label or '目的地' }}</div>
+  <div class="small muted">{{ req.car_type }} ／ {{ req.transmission.value }} ／ {{ req.handle.label }} ／ {{ req.time_label }}</div>
+</div>
+
+<div id="waiting" class="waiting">
+  <div class="spin"></div>
+  <p class="muted">ドライバーを探しています…<br>料金・到着時間の提示が届くと、ここに表示されます。</p>
+</div>
+
+<div id="entries"></div>
+
+<form method="post" id="confirm-form" action="{{ url_for('customer.confirm', request_id=req.id) }}" style="display:none">
+  <input type="hidden" name="entry_id" id="entry_id">
+</form>
+
+<form method="post" action="{{ url_for('customer.cancel', request_id=req.id) }}" onsubmit="return confirm('このリクエストをキャンセルしますか？')" style="margin-top:14px">
+  <button class="btn btn-danger btn-block" type="submit">依頼をキャンセル</button>
+</form>
+{% endblock %}
+{% block scripts %}
+<script>
+const reqId = {{ req.id }};
+function selectEntry(id, vendor, price) {
+  if (!confirm(vendor + ' / ' + price.toLocaleString() + '円 で確定しますか？\n確定後は連絡先が表示されます。')) return;
+  document.getElementById('entry_id').value = id;
+  document.getElementById('confirm-form').submit();
+}
+function render(data) {
+  if (data.status === 'confirmed' || data.status === 'in_progress' || data.status === 'completed') {
+    location.href = "{{ url_for('customer.detail', request_id=req.id) }}"; return;
+  }
+  if (data.status === 'cancelled') { location.href = "{{ url_for('customer.home') }}"; return; }
+  const box = document.getElementById('entries');
+  const entries = data.entries.filter((e) => e.status === 'offered');
+  document.getElementById('waiting').style.display = entries.length ? 'none' : 'block';
+  box.innerHTML = entries.map((e, i) => `
+    <div class="entry ${i === 0 ? 'best' : ''}">
+      ${i === 0 ? '<span class="chip chip-orange">最安</span>' : ''}
+      <div class="flex">
+        <div><div class="vendor">${e.vendor_name}</div>
+          <div class="small muted">到着 約 ${e.eta_minutes} 分</div>
+          ${e.cancellation_fee ? `<div class="small muted">キャンセル料: ${e.cancellation_fee}</div>` : ''}
+        </div>
+        <div class="price">${e.price.toLocaleString()}<span style="font-size:13px">円</span></div>
+      </div>
+      <button class="btn btn-green btn-block" style="margin-top:10px"
+        onclick="selectEntry(${e.id}, '${e.vendor_name.replace(/'/g, '')}', ${e.price})">このドライバーに決める</button>
+    </div>`).join('');
+}
+function poll() {
+  fetch("{{ url_for('customer.entries_json', request_id=req.id) }}")
+    .then((r) => r.json()).then(render).catch(() => {});
+}
+poll(); setInterval(poll, 5000);
+</script>
+{% endblock %}
