@@ -117,6 +117,18 @@ if result is not None and result.target == target:
         except Exception as e:  # noqa: BLE001
             st.error(f"ROC 曲線の作図に失敗しました: {e}")
 
+    # ---- 混同行列（最優秀分類モデル）----
+    if result.mode == "classification" and result.confusion_matrix is not None:
+        st.subheader(f"混同行列（{result.best_model_name}）")
+        st.caption("行＝実際のクラス、列＝予測クラス（ホールドアウト 30% で評価）。")
+        labels = result.confusion_labels
+        cm_df = pd.DataFrame(
+            result.confusion_matrix,
+            index=[f"実際: {l}" for l in labels],
+            columns=[f"予測: {l}" for l in labels],
+        )
+        st.dataframe(cm_df, use_container_width=True)
+
     # ---- 表のエクスポート ----
     st.subheader("レポート出力")
     tables = {"モデル比較": result.comparison}

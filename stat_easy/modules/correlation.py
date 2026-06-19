@@ -223,6 +223,13 @@ def add_transformations(df: pd.DataFrame, col: str, kinds: list[str]) -> pd.Data
     return out
 
 
+def add_interaction(df: pd.DataFrame, col1: str, col2: str) -> pd.DataFrame:
+    """2 つの数値列の交互作用項（積）を追加した DataFrame を返す。"""
+    out = df.copy()
+    out[f"{col1}×{col2}"] = out[col1].astype(float) * out[col2].astype(float)
+    return out
+
+
 def compare_models_fit(results: dict) -> pd.DataFrame:
     """複数モデルの AIC/BIC/R² 比較表（変換前後比較用）。"""
     rows = []

@@ -104,6 +104,20 @@ def test_ml_compare(experiment):
                              features=["pre_score", "post_score", "age"], k=3)
     assert res.mode == "classification"
     assert len(res.comparison) >= 2
+    # 混同行列（最優秀分類モデル）が算出される
+    assert res.confusion_matrix is not None
+    assert len(res.confusion_labels) == 2
+
+
+def test_partial_eta_squared():
+    groups = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+    pe = effect_size.partial_eta_squared(groups)
+    assert 0 <= pe <= 1
+
+
+def test_add_interaction(experiment):
+    out = correlation.add_interaction(experiment, "age", "pre_score")
+    assert "age×pre_score" in out.columns
 
 
 def test_clustering(experiment):

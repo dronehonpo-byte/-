@@ -273,7 +273,7 @@ with tab_logit:
 with tab_trans:
     st.subheader("変数変換とモデル比較")
     st.markdown(
-        "説明変数に変換（対数・二乗・平方根）を施し、元のモデルと"
+        "説明変数に変換（対数・二乗・平方根・交互作用項）を施し、元のモデルと"
         "当てはまり（AIC/BIC/R²）を比較できます。"
     )
     if len(numeric_cols) < 2:
@@ -297,9 +297,23 @@ with tab_trans:
         y_candidates = [c for c in numeric_cols if c != target_x]
         y_col = st.selectbox("目的変数 y（数値）", y_candidates, key="trans_y")
 
+        # 交互作用項
+        use_interaction = st.checkbox(
+            "交互作用項を追加する（2つの説明変数の積）", key="trans_interaction"
+        )
+        inter_col = None
+        if use_interaction:
+            inter_candidates = [c for c in numeric_cols if c not in (target_x, y_col)]
+            if inter_candidates:
+                inter_col = st.selectbox(
+                    f"{target_x} と掛け合わせる列", inter_candidates, key="trans_inter_col"
+                )
+            else:
+                st.info("交互作用に使える数値列が不足しています。")
+
         if st.button("変換してモデルを比較", key="run_trans"):
-            if not kinds:
-                st.warning("変換を 1 つ以上選択してください。")
+            if not kinds and not (use_interaction and inter_col):
+                st.warning("変換または交互作用項を 1 つ以上選択してください。")
             else:
                 try:
                     tdf = correlation.add_transformations(df, target_x, kinds)
@@ -317,6 +331,14 @@ with tab_trans:
                             models[label] = correlation.linear_regression(
                                 tdf, y_col, [col_name]
                             )
+                    if use_interaction and inter_col:
+                        tdf = correlation.add_interaction(tdf, target_x, inter_col)
+                        inter_name = f"{target_x}×{inter_col}"
+                        models[f"交互作用（{target_x}×{inter_col}）"] = (
+                            correlation.linear_regression(
+                                tdf, y_col, [target_x, inter_col, inter_name]
+                            )
+                        )
                     comp = correlation.compare_models_fit(models)
                 except Exception as e:  # noqa: BLE001
                     st.error(f"変換・モデル比較に失敗しました: {e}")

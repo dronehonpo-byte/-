@@ -25,6 +25,8 @@ class MLResult:
     roc_data: dict = field(default_factory=dict)  # model_name -> (fpr, tpr, auc)
     warnings: list = field(default_factory=list)
     target: str = ""
+    confusion_matrix: object = None  # 最優秀モデルの混同行列 (ndarray)
+    confusion_labels: list = field(default_factory=list)
 
 
 def detect_mode(y: pd.Series) -> str:
@@ -161,13 +163,44 @@ def compare(
 
     # ROC（分類のみ、各モデルを 1 回 train/test split で）
     roc_data = {}
-    if mode == "classification" and len(np.unique(y_enc)) == 2:
-        roc_data = _roc_curves(models, X, y_enc)
+    cm, cm_labels = None, []
+    if mode == "classification":
+        if len(np.unique(y_enc)) == 2:
+            roc_data = _roc_curves(models, X, y_enc)
+        cm, cm_labels = _confusion_for_best(
+            models[best_name], X, y, y_enc)
 
     return MLResult(
         mode=mode, comparison=comp_display, best_model_name=best_name,
         feature_importance=fi, roc_data=roc_data, warnings=warnings, target=target,
+        confusion_matrix=cm, confusion_labels=cm_labels,
     )
+
+
+def _confusion_for_best(estimator, X, y_raw, y_enc):
+    """最優秀分類モデルの混同行列を train/test split で算出する。"""
+    from sklearn.model_selection import train_test_split
+    from sklearn.metrics import confusion_matrix
+    from sklearn.preprocessing import StandardScaler
+    from sklearn.pipeline import Pipeline
+
+    try:
+        labels = sorted(np.unique(y_enc).tolist())
+        # 元のクラス名（ラベルエンコード前）を順序通りに対応づける
+        uniq_raw = pd.Series(y_raw).astype(str)
+        name_map = {}
+        for code in labels:
+            mask = y_enc == code
+            name_map[code] = uniq_raw[mask].iloc[0] if mask.any() else str(code)
+        X_tr, X_te, y_tr, y_te = train_test_split(
+            X, y_enc, test_size=0.3, random_state=42, stratify=y_enc)
+        pipe = Pipeline([("scaler", StandardScaler()), ("model", estimator)])
+        pipe.fit(X_tr, y_tr)
+        pred = pipe.predict(X_te)
+        cm = confusion_matrix(y_te, pred, labels=labels)
+        return cm, [name_map[c] for c in labels]
+    except Exception:
+        return None, []
 
 
 def _feature_importance(estimator, X, y, features, mode) -> pd.DataFrame:

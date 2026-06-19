@@ -75,6 +75,25 @@ def eta_squared(groups: list) -> float:
     return ss_between / ss_total
 
 
+def partial_eta_squared(groups: list) -> float:
+    """一元配置 ANOVA の partial η²（偏イータ二乗）。
+
+    partial η² = SS_between / (SS_between + SS_within)。
+    一元配置では SS_total = SS_between + SS_within のため η² と一致するが、
+    多元配置への一般化を見据えて別関数として提供する。
+    """
+    arrays = [np.asarray(g, dtype=float) for g in groups]
+    arrays = [a[~np.isnan(a)] for a in arrays]
+    grand = np.concatenate(arrays)
+    grand_mean = grand.mean()
+    ss_between = sum(len(a) * (a.mean() - grand_mean) ** 2 for a in arrays)
+    ss_within = sum(((a - a.mean()) ** 2).sum() for a in arrays)
+    denom = ss_between + ss_within
+    if denom == 0:
+        return np.nan
+    return ss_between / denom
+
+
 def cramers_v(confusion: np.ndarray) -> float:
     """カテゴリ変数の Cramer's V（バイアス補正版）。"""
     confusion = np.asarray(confusion, dtype=float)
@@ -145,9 +164,13 @@ def two_group_effect(a, b, paired: bool = False, use_bootstrap: bool = False) ->
 
 def anova_effect(groups: list) -> EffectResult:
     eta = eta_squared(groups)
+    p_eta = partial_eta_squared(groups)
     interp = interpret_effect(eta, "eta2")
-    return EffectResult("η² (イータ二乗)", eta, np.nan, np.nan, interp,
-                        _pval_effect_comment(interp))
+    comment = _pval_effect_comment(interp)
+    comment += f"（partial η² = {p_eta:.3f}）" if not np.isnan(p_eta) else ""
+    res = EffectResult("η² (イータ二乗)", eta, np.nan, np.nan, interp, comment)
+    res.partial_eta2 = p_eta
+    return res
 
 
 def chi2_effect(confusion: np.ndarray) -> EffectResult:
