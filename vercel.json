@@ -9,6 +9,7 @@
   "env": {
     "DAIKO_DATABASE_URI": "sqlite:////tmp/daiko.db",
     "DAIKO_STORAGE_DIR": "/tmp/daiko-storage",
+    "DAIKO_INSTANCE_DIR": "/tmp/daiko-instance",
     "DAIKO_SECRET_KEY": "preview-only-not-a-real-secret",
     "DAIKO_ADMIN_PASSWORD": "adminpass",
     "FLASK_ENV": "production"

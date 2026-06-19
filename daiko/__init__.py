@@ -12,19 +12,34 @@ from .config import Config
 from .extensions import db
 
 
+def _safe_mkdir(path) -> None:
+    """ディレクトリを作成する。読み取り専用FS(サーバーレス)では失敗を無視する。"""
+    try:
+        Path(path).mkdir(parents=True, exist_ok=True)
+    except OSError:
+        pass
+
+
 def create_app(config_class: type | object = Config) -> Flask:
-    app = Flask(__name__, instance_relative_config=False)
+    # サーバーレス(Vercel 等)では /tmp 以外が読み取り専用のため instance_path を上書き可能にする
+    instance_dir = os.environ.get("DAIKO_INSTANCE_DIR")
+    app = Flask(
+        __name__,
+        instance_relative_config=False,
+        instance_path=str(Path(instance_dir).resolve()) if instance_dir else None,
+    )
     app.config.from_object(config_class)
 
     # Render/Heroku のような proxy 配下では X-Forwarded-* を信頼
     app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
 
-    Path(app.instance_path).mkdir(parents=True, exist_ok=True)
-    Path(app.config["CERT_DIR"]).mkdir(parents=True, exist_ok=True)
+    # 読み取り専用FS(サーバーレス)では作成に失敗しても致命的ではないので握り潰す
+    _safe_mkdir(app.instance_path)
+    _safe_mkdir(app.config["CERT_DIR"])
     # SQLite 利用時は DB ファイルの親ディレクトリを用意
     uri = app.config["SQLALCHEMY_DATABASE_URI"]
     if uri.startswith("sqlite:///") and ":memory:" not in uri:
-        Path(uri[len("sqlite:///"):]).parent.mkdir(parents=True, exist_ok=True)
+        _safe_mkdir(Path(uri[len("sqlite:///"):]).parent)
 
     _validate_secret(app)
 

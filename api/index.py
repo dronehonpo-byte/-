@@ -13,6 +13,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 # Vercel では /tmp だけが書き込み可能
 os.environ.setdefault("DAIKO_DATABASE_URI", "sqlite:////tmp/daiko.db")
 os.environ.setdefault("DAIKO_STORAGE_DIR", "/tmp/daiko-storage")
+os.environ.setdefault("DAIKO_INSTANCE_DIR", "/tmp/daiko-instance")
 # プレビュー専用キー（本番では Vercel の環境変数で上書きすること）
 os.environ.setdefault("DAIKO_SECRET_KEY", "preview-only-not-a-real-secret")
 os.environ.setdefault("DAIKO_ADMIN_PASSWORD", "adminpass")
