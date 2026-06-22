@@ -43,8 +43,8 @@ a { color: var(--green-dd); }
   border-bottom: 1px solid var(--line);
   color: var(--ink);
 }
-.appbar .brand { display: flex; align-items: center; gap: 10px; font-weight: 800; letter-spacing: -.02em; color: var(--ink); text-decoration: none; font-size: 17px; }
-.appbar .brand img { width: 32px; height: 32px; border-radius: 9px; background: var(--green); padding: 2px; }
+.appbar .brand { display: flex; align-items: center; gap: 11px; font-weight: 900; letter-spacing: -.03em; color: var(--ink); text-decoration: none; font-size: 21px; }
+.appbar .brand img { width: 38px; height: 38px; }
 .appbar .spacer { flex: 1; }
 .appbar a.iconbtn { color: var(--ink-2); text-decoration: none; font-size: 13px; font-weight: 600; opacity: .9; position: relative; }
 .badge-dot { position: absolute; top: -6px; right: -8px; background: var(--danger); color: #fff;

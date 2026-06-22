@@ -2,7 +2,7 @@
 {% block title %}ホーム｜{{ service_name }}{% endblock %}
 {% block content %}
 <div class="center" style="padding:8px 0">
-  <img src="{{ url_for('static', filename='img/logo.png') }}" style="width:84px;height:84px" alt="">
+  <img src="{{ url_for('static', filename='img/logo.svg') }}" style="width:84px;height:84px;border-radius:20px" alt="">
   <h2 style="margin:6px 0">代行を呼ぶ</h2>
   <p class="muted small">{{ area }}対応 ／ ようこそ{% if cur_customer.display_name %}、{{ cur_customer.display_name }}さん{% endif %}</p>
 </div>
