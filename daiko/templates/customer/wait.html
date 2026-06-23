@@ -7,9 +7,14 @@
   <div class="small muted">{{ req.car_type }} ／ {{ req.transmission.value }} ／ {{ req.handle.label }} ／ {{ req.time_label }}</div>
 </div>
 
+<div class="center small muted" style="margin:2px 0 12px">
+  <span id="elapsed">募集開始から 0:00</span>
+  ・<span style="color:var(--green-dd);font-weight:700">自動更新中（5秒ごと）</span>
+</div>
+
 <div id="waiting" class="waiting">
   <div class="spin"></div>
-  <p class="muted">ドライバーを探しています…<br>料金・到着時間の提示が届くと、ここに表示されます。</p>
+  <p class="muted">ドライバーを探しています…<br>料金・到着時間の提示が届くと、ここに自動で表示されます。</p>
 </div>
 
 <div id="entries"></div>
@@ -30,7 +35,14 @@ function selectEntry(id, vendor, price) {
   document.getElementById('entry_id').value = id;
   document.getElementById('confirm-form').submit();
 }
+let elapsed = 0;
+function fmt(s) { const m = Math.floor(s / 60); return m + ':' + String(s % 60).padStart(2, '0'); }
+function tick() { elapsed += 1; document.getElementById('elapsed').textContent = '募集開始から ' + fmt(elapsed); }
 function render(data) {
+  if (typeof data.elapsed_seconds === 'number') {
+    elapsed = data.elapsed_seconds;
+    document.getElementById('elapsed').textContent = '募集開始から ' + fmt(elapsed);
+  }
   if (data.status === 'confirmed' || data.status === 'in_progress' || data.status === 'completed') {
     location.href = "{{ url_for('customer.detail', request_id=req.id) }}"; return;
   }
@@ -56,6 +68,6 @@ function poll() {
   fetch("{{ url_for('customer.entries_json', request_id=req.id) }}")
     .then((r) => r.json()).then(render).catch(() => {});
 }
-poll(); setInterval(poll, 5000);
+poll(); setInterval(poll, 5000); setInterval(tick, 1000);
 </script>
 {% endblock %}

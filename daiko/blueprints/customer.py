@@ -101,6 +101,7 @@ def entries_json(request_id: int):
             "status": req.status.value,
             "status_label": req.status.label,
             "confirmed_entry_id": req.confirmed_entry_id,
+            "elapsed_seconds": max(0, int((datetime.utcnow() - req.created_at).total_seconds())),
             "entries": [
                 {
                     "id": e.id,
