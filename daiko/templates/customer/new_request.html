@@ -28,13 +28,9 @@
   <div class="card">
     <h3>② お車の情報</h3>
     <p class="hint">運転代行はお客様のお車を運転するため、ドライバーの対応可否に直結します。</p>
-    <label>車種</label>
-    <select name="car_type">
-      <option value="軽">軽自動車</option>
-      <option value="普通" selected>普通車</option>
-      <option value="ワンボックス">ワンボックス / ミニバン</option>
-      <option value="大型・その他">大型・その他</option>
-    </select>
+    <label>車種・車名 <span class="req">*</span></label>
+    <input type="text" name="car_type" placeholder="例：トヨタ アルファード（普通車）" required>
+    <p class="hint">お客様のお車を運転するため、できるだけ具体的な車名をご記入ください。</p>
     <label>ミッション <span class="req">*</span></label>
     <div class="seg">
       <label><input type="radio" name="transmission" value="AT" checked><span>AT</span></label>
