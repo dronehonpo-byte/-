@@ -127,6 +127,19 @@ export default function UploadPage() {
         </p>
       </header>
 
+      {/* APIを使わない「曲を選ぶだけ」モードへの導線 */}
+      <a
+        href="/songs"
+        className="mb-6 block rounded-2xl border-2 border-emerald-500 bg-emerald-50 p-4 text-center transition hover:bg-emerald-100"
+      >
+        <div className="font-semibold text-emerald-800">
+          🎵 曲を選ぶだけモード（写真・AI不要）
+        </div>
+        <div className="text-sm text-emerald-700">
+          内蔵曲をタップすると、すぐに色付き楽譜が表示されます
+        </div>
+      </a>
+
       {/* 解析モード選択 */}
       <section className="mb-6">
         <h2 className="mb-2 text-sm font-semibold text-slate-700">解析モード</h2>
