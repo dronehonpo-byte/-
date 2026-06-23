@@ -7,39 +7,24 @@
 </div>
 
 <div class="card">
-  <h3>🚗 ご利用のお客様</h3>
-  <p class="small muted">代行を呼びたい方はこちら。電話番号だけで始められます。</p>
+  <h3>🚗 代行を呼ぶ</h3>
+  <p class="small muted">電話番号だけで始められます。出発地・目的地と車種を入れて、近くのドライバーからの料金・到着時間の提示を見くらべて選べます。</p>
   {% if customer %}
-    <a class="btn btn-primary btn-block" href="{{ url_for('customer.home') }}">アプリを開く</a>
+    <a class="btn btn-primary btn-block btn-lg" href="{{ url_for('customer.home') }}">アプリを開く</a>
   {% else %}
-    <a class="btn btn-primary btn-block" href="{{ url_for('auth.customer_login') }}">はじめる / ログイン</a>
+    <a class="btn btn-primary btn-block btn-lg" href="{{ url_for('auth.customer_login') }}">はじめる / ログイン</a>
   {% endif %}
 </div>
 
-<div class="card">
-  <h3>🧑‍✈️ ドライバー・代行業者の方</h3>
-  <p class="small muted">近くの依頼に料金・到着時間を提示してエントリーできます。</p>
-  {% if driver %}
-    <a class="btn btn-green btn-block" href="{{ url_for('driver.dashboard') }}">ドライバー画面へ</a>
-  {% else %}
-    <div class="row">
-      <a class="btn btn-green" href="{{ url_for('auth.driver_login') }}">ログイン</a>
-      <a class="btn btn-outline" href="{{ url_for('auth.vendor_register') }}">業者登録</a>
-    </div>
-  {% endif %}
-</div>
-
-<div class="card">
-  <h3>⚙️ 管理者</h3>
-  {% if admin %}
-    <a class="btn btn-outline btn-block" href="{{ url_for('admin.dashboard') }}">管理画面へ</a>
-  {% else %}
-    <a class="btn btn-outline btn-block" href="{{ url_for('auth.admin_login') }}">管理者ログイン</a>
-  {% endif %}
-</div>
-
-<p class="center small muted">
+<p class="center small muted" style="margin-top:8px">
   運営: {{ operator_name }} ／ お問い合わせ: <a href="mailto:{{ contact_email }}">{{ contact_email }}</a><br>
   対応エリア: {{ area }}
+</p>
+
+<hr class="sep">
+<p class="center small muted">
+  <a href="{{ url_for('main.driver_entry') }}">ドライバー・代行業者の方はこちら</a>
+  ／
+  <a href="{{ url_for('main.staff_entry') }}">管理者</a>
 </p>
 {% endblock %}

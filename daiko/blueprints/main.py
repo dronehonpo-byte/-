@@ -12,12 +12,20 @@ bp = Blueprint("main", __name__)
 
 @bp.route("/")
 def index():
-    return render_template(
-        "landing.html",
-        customer=current_customer(),
-        driver=current_driver(),
-        admin=current_admin(),
-    )
+    """お客様専用トップ（入口を分離）."""
+    return render_template("landing.html", customer=current_customer())
+
+
+@bp.route("/driver")
+def driver_entry():
+    """ドライバー・業者専用の入口."""
+    return render_template("entry_driver.html", driver=current_driver())
+
+
+@bp.route("/staff")
+def staff_entry():
+    """管理者専用の入口."""
+    return render_template("entry_admin.html", admin=current_admin())
 
 
 @bp.route("/healthz")

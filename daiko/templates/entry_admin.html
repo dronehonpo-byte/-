@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}管理者｜{{ service_name }}{% endblock %}
+{% block content %}
+<div class="center" style="padding:22px 0 8px">
+  <img class="hero-logo" src="{{ url_for('static', filename='img/logo.svg') }}" alt="{{ service_name }}">
+  <h1 style="margin:18px 0 8px; font-size:38px; font-weight:900; letter-spacing:-.04em; line-height:1.12">管理者</h1>
+  <p class="muted" style="font-size:15px; max-width:24em; margin:0 auto">利用者・業者の管理、業者承認、マッチング状況の確認を行います。</p>
+</div>
+
+<div class="card">
+  <h3>⚙️ 管理者ログイン</h3>
+  {% if admin %}
+    <a class="btn btn-outline btn-block btn-lg" href="{{ url_for('admin.dashboard') }}">管理画面へ</a>
+  {% else %}
+    <a class="btn btn-outline btn-block btn-lg" href="{{ url_for('auth.admin_login') }}">管理者ログイン</a>
+  {% endif %}
+</div>
+
+<p class="center small muted" style="margin-top:10px">
+  <a href="{{ url_for('main.index') }}">← お客様トップへ戻る</a>
+</p>
+{% endblock %}
