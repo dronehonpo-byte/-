@@ -12,8 +12,17 @@ import {
   Dot,
 } from "vexflow";
 import type { Song } from "@/lib/songs";
-import { pitchToFingering, isAdjacentHalfStep, type Fingering } from "@/lib/firstPosition";
-import { STRING_COLORS, HALF_STEP_COLOR, stringColorWithAlpha } from "@/lib/colors";
+import {
+  pitchToFingering,
+  halfStepType,
+  type Fingering,
+  type HalfStepType,
+} from "@/lib/firstPosition";
+import {
+  HALF_STEP_TOUCH_COLOR,
+  HALF_STEP_OPEN_COLOR,
+  stringColorWithAlpha,
+} from "@/lib/colors";
 
 interface Props {
   song: Song;
@@ -25,7 +34,7 @@ interface FlatNote {
   pitch: string;
   duration: string;
   fing: Fingering;
-  half: boolean; // 直前の音と半音（同弦の隣り合う指）
+  half: HalfStepType; // 直前の音との半音の種類
 }
 
 const DUR_BEATS: Record<string, number> = {
@@ -57,10 +66,10 @@ function buildFlat(song: Song): FlatNote[] {
     pitch: sn.pitch,
     duration: sn.duration,
     fing: sn.pitch === "r" ? { string: null, finger: null } : pitchToFingering(sn.pitch),
-    half: false,
+    half: null,
   }));
   for (let i = 1; i < flat.length; i++) {
-    flat[i].half = isAdjacentHalfStep(
+    flat[i].half = halfStepType(
       { pitch: flat[i - 1].pitch, fing: flat[i - 1].fing },
       { pitch: flat[i].pitch, fing: flat[i].fing }
     );
@@ -133,7 +142,7 @@ export default function EngravedScore({ song, showFinger, showHalfStep }: Props)
       y: number; // 符頭中心Y
       topY: number; // 符頭の上端付近
       fing: Fingering;
-      half: boolean;
+      half: HalfStepType;
       row: number;
     }
     const rendered: Rendered[] = [];
@@ -153,7 +162,7 @@ export default function EngravedScore({ song, showFinger, showHalfStep }: Props)
       stave.setContext(ctx).draw();
 
       const staveNotes: StaveNote[] = [];
-      const noteMeta: { fing: Fingering; half: boolean; rest: boolean }[] = [];
+      const noteMeta: { fing: Fingering; half: HalfStepType; rest: boolean }[] = [];
 
       for (const fn of measure) {
         const isRest = fn.pitch === "r";
@@ -165,11 +174,7 @@ export default function EngravedScore({ song, showFinger, showHalfStep }: Props)
         });
         if (dotted) Dot.buildAndAttach([sn], { all: true });
 
-        // 符頭の色（弦色）
-        if (!isRest && fn.fing.string) {
-          const c = STRING_COLORS[fn.fing.string];
-          sn.setKeyStyle(0, { fillStyle: c, strokeStyle: c });
-        }
+        // 符頭は黒のまま（後で半透明の蛍光ディスクを重ねて透けさせる）
         staveNotes.push(sn);
         noteMeta.push({ fing: fn.fing, half: fn.half, rest: isRest });
       }
@@ -205,13 +210,13 @@ export default function EngravedScore({ song, showFinger, showHalfStep }: Props)
       });
     });
 
-    // --- オーバーレイ：色ディスク ---
+    // --- オーバーレイ：蛍光マーカー風の半透明ディスク（符頭が透けて見える） ---
     rendered.forEach((r) => {
       if (!r.fing.string) return;
       ctx.save();
-      ctx.setFillStyle(stringColorWithAlpha(r.fing.string, 0.55));
+      ctx.setFillStyle(stringColorWithAlpha(r.fing.string, 0.65));
       ctx.beginPath();
-      ctx.arc(r.x, r.y, 6.5, 0, Math.PI * 2, false);
+      ctx.arc(r.x, r.y, 8, 0, Math.PI * 2, false);
       ctx.fill();
       ctx.restore();
     });
@@ -236,10 +241,12 @@ export default function EngravedScore({ song, showFinger, showHalfStep }: Props)
         const b = rendered[i];
         if (!b.half) continue;
         if (a.row !== b.row) continue; // 行をまたぐ場合は省略
+        const color =
+          b.half === "touch" ? HALF_STEP_TOUCH_COLOR : HALF_STEP_OPEN_COLOR;
         const topY = Math.min(a.topY, b.topY) - (showFinger ? 30 : 16);
         ctx.save();
-        ctx.setStrokeStyle(HALF_STEP_COLOR);
-        ctx.setLineWidth(2);
+        ctx.setStrokeStyle(color);
+        ctx.setLineWidth(2.5);
         ctx.beginPath();
         ctx.moveTo(a.x, topY + 6);
         ctx.quadraticCurveTo((a.x + b.x) / 2, topY - 6, b.x, topY + 6);

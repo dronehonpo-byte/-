@@ -78,15 +78,30 @@ export function pitchToFingering(pitch: string): Fingering {
   return { string: candidates[0].string, finger: candidates[0].finger };
 }
 
-/** 連続する2音が同じ弦上で半音（隣り合う指がくっつく）か。 */
-export function isAdjacentHalfStep(
+// 半音マークの種類
+//  "touch" … 隣り合う指どうしの半音（指をくっつける）       → 青
+//  "open"  … 開放弦がらみ等、指をくっつけない半音            → 水色
+//  null    … 半音マークなし
+export type HalfStepType = "touch" | "open" | null;
+
+/** 連続する2音が同じ弦上で半音か。さらに「指をくっつけるか」を判定。 */
+export function halfStepType(
   prev: { pitch: string; fing: Fingering },
   cur: { pitch: string; fing: Fingering }
-): boolean {
-  if (!prev.fing.string || !cur.fing.string) return false;
-  if (prev.fing.string !== cur.fing.string) return false;
+): HalfStepType {
+  if (!prev.fing.string || !cur.fing.string) return null;
+  if (prev.fing.string !== cur.fing.string) return null;
   const a = pitchToMidi(prev.pitch);
   const b = pitchToMidi(cur.pitch);
-  if (a === null || b === null) return false;
-  return Math.abs(a - b) === 1;
+  if (a === null || b === null) return null;
+  if (Math.abs(a - b) !== 1) return null;
+
+  const fa = prev.fing.finger;
+  const fb = cur.fing.finger;
+  // 両方とも指で押さえ（1〜4）かつ隣り合う指 → くっつく半音
+  if (fa !== null && fb !== null && fa >= 1 && fb >= 1 && Math.abs(fa - fb) === 1) {
+    return "touch";
+  }
+  // 開放弦(0)がらみ・飛び越す半音 → くっつかない
+  return "open";
 }

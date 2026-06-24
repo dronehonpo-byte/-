@@ -4,7 +4,11 @@ import { useState } from "react";
 import Link from "next/link";
 import EngravedScore from "@/components/EngravedScore";
 import { SONGS } from "@/lib/songs";
-import { STRING_COLORS } from "@/lib/colors";
+import {
+  STRING_COLORS,
+  HALF_STEP_TOUCH_COLOR,
+  HALF_STEP_OPEN_COLOR,
+} from "@/lib/colors";
 import type { ViolinString } from "@/types/score";
 
 const LEGEND: { string: ViolinString; label: string }[] = [
@@ -58,16 +62,31 @@ export default function SongsPage() {
 
       {/* 凡例 + 表示トグル */}
       <section className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl bg-slate-50 p-3">
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           {LEGEND.map((l) => (
             <div key={l.string} className="flex items-center gap-1.5">
               <span
                 className="inline-block h-4 w-4 rounded-full"
-                style={{ backgroundColor: STRING_COLORS[l.string] }}
+                style={{ backgroundColor: STRING_COLORS[l.string], opacity: 0.65 }}
               />
               <span className="text-xs text-slate-600">{l.label}</span>
             </div>
           ))}
+          <span className="mx-1 text-slate-300">|</span>
+          <div className="flex items-center gap-1.5">
+            <span
+              className="inline-block h-3 w-4 rounded"
+              style={{ backgroundColor: HALF_STEP_TOUCH_COLOR }}
+            />
+            <span className="text-xs text-slate-600">半音(指くっつく)</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span
+              className="inline-block h-3 w-4 rounded"
+              style={{ backgroundColor: HALF_STEP_OPEN_COLOR }}
+            />
+            <span className="text-xs text-slate-600">半音(開放弦)</span>
+          </div>
         </div>
         <div className="flex items-center gap-4">
           <label className="flex items-center gap-1.5 text-sm text-slate-700">
