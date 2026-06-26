@@ -3,10 +3,14 @@
     <stop offset="0" stop-color="#12a85d"/><stop offset="1" stop-color="#0a5e34"/>
   </linearGradient></defs>
   <rect width="100" height="100" rx="22" fill="url(#g)"/>
-  <text x="50" y="40" text-anchor="middle" fill="#ffffff"
+  <circle cx="50" cy="34" r="16" fill="none" stroke="#ffffff" stroke-width="4.4"/>
+  <circle cx="50" cy="34" r="5" fill="#ffffff"/>
+  <g stroke="#ffffff" stroke-width="4.4" stroke-linecap="round">
+    <line x1="50" y1="34" x2="50" y2="18"/>
+    <line x1="50" y1="34" x2="37.2" y2="42"/>
+    <line x1="50" y1="34" x2="62.8" y2="42"/>
+  </g>
+  <text x="50" y="74" text-anchor="middle" fill="#ffffff"
         font-family="'Hiragino Sans','Noto Sans JP','Yu Gothic',Meiryo,sans-serif"
-        font-size="42" font-weight="900">代</text>
-  <text x="50" y="78" text-anchor="middle" fill="#ffffff"
-        font-family="'Hiragino Sans','Noto Sans JP','Yu Gothic',Meiryo,sans-serif"
-        font-size="14.5" font-weight="800" letter-spacing="-0.5">代行の窓口</text>
+        font-size="15" font-weight="800" letter-spacing="-0.5">代行の窓口</text>
 </svg>
