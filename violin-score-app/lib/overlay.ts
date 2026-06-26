@@ -122,6 +122,7 @@ export function computeOverlay(
     let halfStepMark: "^" | "v" | null = null;
     let halfStepX = labelX;
     let halfStepY = labelY;
+    let halfStepAttached: boolean | null = null;
     if (showHalf && finger !== null) {
       halfStepMark = side === "above" ? "^" : "v";
       // 直前の音との「間」に寄せる
@@ -129,6 +130,23 @@ export function computeOverlay(
       if (prev) halfStepX = (x + prev.position_in_image.x) / 2;
       halfStepY =
         side === "above" ? labelY - HALFSTEP_GAP : labelY + HALFSTEP_GAP;
+
+      // 半音の色種別：API指定 → 運指から判定 → 手動修正で上書き
+      const prevOv = result[i - 1];
+      let attached: boolean;
+      if (note.half_step_type === "attached") attached = true;
+      else if (note.half_step_type === "detached") attached = false;
+      else {
+        const pf = prevOv?.finger ?? null;
+        attached =
+          !!prevOv?.string &&
+          prevOv.string === string &&
+          pf !== null &&
+          pf >= 1 &&
+          finger >= 1 &&
+          Math.abs(pf - finger) === 1;
+      }
+      halfStepAttached = edit.halfStepAttached ?? attached;
     }
 
     result.push({
@@ -143,6 +161,7 @@ export function computeOverlay(
       halfStepMark,
       halfStepX,
       halfStepY,
+      halfStepAttached,
     });
   }
 

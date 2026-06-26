@@ -7,7 +7,11 @@ import type {
   NoteEdit,
   ViolinString,
 } from "@/types/score";
-import { STRING_COLORS } from "@/lib/colors";
+import {
+  STRING_COLORS,
+  HALF_STEP_TOUCH_COLOR,
+  HALF_STEP_OPEN_COLOR,
+} from "@/lib/colors";
 
 interface Props {
   note: Note;
@@ -18,6 +22,7 @@ interface Props {
     finger: Finger | null;
     side: FingeringSide;
     halfStep: boolean;
+    halfStepAttached: boolean;
   };
   onChange: (patch: NoteEdit) => void;
   onReset: () => void;
@@ -106,6 +111,39 @@ export default function ManualEditor({
             {current.halfStep ? "ON" : "OFF"}
           </button>
         </div>
+
+        {/* 半音マークの色（くっつく/くっつかない） */}
+        {current.halfStep && (
+          <div>
+            <div className="mb-1 text-xs font-semibold text-slate-500">半音の種類</div>
+            <div className="inline-flex overflow-hidden rounded-lg border border-slate-300">
+              <button
+                onClick={() => onChange({ halfStepAttached: true })}
+                className="px-3 py-2 text-sm font-medium text-white"
+                style={{
+                  backgroundColor: current.halfStepAttached
+                    ? HALF_STEP_TOUCH_COLOR
+                    : "#fff",
+                  color: current.halfStepAttached ? "#fff" : "#475569",
+                }}
+              >
+                くっつく
+              </button>
+              <button
+                onClick={() => onChange({ halfStepAttached: false })}
+                className="px-3 py-2 text-sm font-medium"
+                style={{
+                  backgroundColor: !current.halfStepAttached
+                    ? HALF_STEP_OPEN_COLOR
+                    : "#fff",
+                  color: !current.halfStepAttached ? "#0f172a" : "#475569",
+                }}
+              >
+                くっつかない
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* 上下切り替え */}
         <div>

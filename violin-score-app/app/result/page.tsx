@@ -12,6 +12,11 @@ import { applyFingeringRules } from "@/lib/fingeringRules";
 import { computeOverlay } from "@/lib/overlay";
 import { detectHalfSteps } from "@/lib/halfStepDetector";
 import { estimateBpm } from "@/lib/audioGenerator";
+import {
+  STRING_COLORS,
+  HALF_STEP_TOUCH_COLOR,
+  HALF_STEP_OPEN_COLOR,
+} from "@/lib/colors";
 import type {
   DisplayMode,
   NoteEdit,
@@ -168,6 +173,10 @@ export default function ResultPage() {
                   edits[selectedNote.id]?.halfStep ??
                   autoHalfSteps[selectedNote.id] ??
                   false,
+                halfStepAttached:
+                  edits[selectedNote.id]?.halfStepAttached ??
+                  selectedOverlay.halfStepAttached ??
+                  true,
               }}
               onChange={(patch) => updateEdit(selectedNote.id, patch)}
               onReset={() => resetEdit(selectedNote.id)}
@@ -190,23 +199,26 @@ export default function ResultPage() {
             <h3 className="mb-2 font-semibold">弦色の凡例</h3>
             <ul className="space-y-1">
               <li>
-                <span className="mr-2 inline-block h-3 w-3 rounded-full align-middle" style={{ background: "#8B4513" }} />
+                <span className="mr-2 inline-block h-3 w-3 rounded-full align-middle" style={{ background: STRING_COLORS.G }} />
                 G線（茶）
               </li>
               <li>
-                <span className="mr-2 inline-block h-3 w-3 rounded-full align-middle" style={{ background: "#228B22" }} />
+                <span className="mr-2 inline-block h-3 w-3 rounded-full align-middle" style={{ background: STRING_COLORS.D }} />
                 D線（緑）
               </li>
               <li>
-                <span className="mr-2 inline-block h-3 w-3 rounded-full align-middle" style={{ background: "#E05C5C" }} />
+                <span className="mr-2 inline-block h-3 w-3 rounded-full align-middle" style={{ background: STRING_COLORS.A }} />
                 A線（ピンク）
               </li>
               <li>
-                <span className="mr-2 inline-block h-3 w-3 rounded-full align-middle" style={{ background: "#FFD700" }} />
+                <span className="mr-2 inline-block h-3 w-3 rounded-full align-middle" style={{ background: STRING_COLORS.E }} />
                 E線（黄）
               </li>
-              <li className="pt-1 text-halfstep" style={{ color: "#1E90FF" }}>
-                ^ / v … 半音マーク
+              <li className="pt-1" style={{ color: HALF_STEP_TOUCH_COLOR }}>
+                ^ / v … 半音マーク（指くっつく）
+              </li>
+              <li style={{ color: HALF_STEP_OPEN_COLOR }}>
+                ^ / v … 半音マーク（開放弦・くっつかない）
               </li>
             </ul>
           </div>

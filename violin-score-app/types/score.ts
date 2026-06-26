@@ -15,6 +15,8 @@ export interface Note {
   finger: Finger | null;
   is_half_step_above_prev: boolean;
   is_half_step_below_next: boolean;
+  /** 半音の種類：attached=隣接指がくっつく（青）, detached=開放弦等くっつかない（水色） */
+  half_step_type?: "attached" | "detached" | null;
   position_in_image: {
     x: number;
     y: number;
@@ -57,6 +59,7 @@ export interface NoteEdit {
   finger?: Finger;
   side?: FingeringSide;
   halfStep?: boolean; // 半音マークの強制 ON/OFF
+  halfStepAttached?: boolean; // 半音の色：true=くっつく(青) / false=くっつかない(水色)
 }
 
 export type NoteEdits = Record<string, NoteEdit>;
@@ -91,4 +94,6 @@ export interface OverlayNote {
   halfStepMark: "^" | "v" | null;
   halfStepX: number;
   halfStepY: number;
+  // 半音の色種別：true=くっつく(青) / false=くっつかない(水色) / null=半音なし
+  halfStepAttached: boolean | null;
 }

@@ -48,6 +48,10 @@ ${modeDescription}
 # 半音マーク
 隣り合う2つの指番号の間に半音(1 semitone)がある箇所では、
 is_half_step_above_prev / is_half_step_below_next を true にすること。
+さらに half_step_type で半音の種類を返すこと:
+- "attached": 隣り合う指どうしの半音（指をくっつける。例 1-2,2-3,3-4 が半音）
+- "detached": 開放弦との半音など、指をくっつけない半音（例 開放弦0と1指）
+- 半音でない場合は null。
 
 # string の値
 各音符の使用弦を string: "G" / "D" / "A" / "E" のいずれかで返すこと。
@@ -66,6 +70,7 @@ JSON スキーマ:
       "finger": 1,
       "is_half_step_above_prev": false,
       "is_half_step_below_next": false,
+      "half_step_type": null,
       "position_in_image": { "x": 120, "y": 340, "notehead_y": 345 },
       "has_beam": true,
       "stem_direction": "up",

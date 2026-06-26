@@ -1,7 +1,12 @@
 "use client";
 
 import type { DisplayMode, OverlayNote } from "@/types/score";
-import { HALF_STEP_COLOR, STRING_COLORS, stringColorWithAlpha } from "@/lib/colors";
+import {
+  HALF_STEP_TOUCH_COLOR,
+  HALF_STEP_OPEN_COLOR,
+  STRING_COLORS,
+  stringColorWithAlpha,
+} from "@/lib/colors";
 
 interface Props {
   overlay: OverlayNote[];
@@ -50,7 +55,7 @@ export default function NoteOverlay({
                 cx={n.noteheadX}
                 cy={n.noteheadY}
                 r={NOTEHEAD_RADIUS}
-                fill={stringColorWithAlpha(n.string, 0.5)}
+                fill={stringColorWithAlpha(n.string, 0.65)}
                 stroke={STRING_COLORS[n.string]}
                 strokeWidth={isSelected ? 2.5 : 1}
               />
@@ -105,8 +110,8 @@ export default function NoteOverlay({
                 textAnchor="middle"
                 dominantBaseline="central"
                 fontSize={18}
-                fontWeight={400}
-                fill={HALF_STEP_COLOR}
+                fontWeight={700}
+                fill={n.halfStepAttached ? HALF_STEP_TOUCH_COLOR : HALF_STEP_OPEN_COLOR}
                 style={{ paintOrder: "stroke", stroke: "#fff", strokeWidth: 2.5 }}
               >
                 {n.halfStepMark}
