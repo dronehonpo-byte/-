@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🎻 バイオリン楽譜ビューア（Gemini版）</title>
+
+  <!-- CDN: Tone.js / html2canvas / jsPDF -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+  <style>
+    :root {
+      --g: #8B5A3C; --d: #00BFA5; --a: #FF4081; --e: #FFD740;
+      --half-attached: #006CD4; --half-detached: #6EE6FF;
+      --blue: #2563EB; --slate: #475569;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; font-family: system-ui, -apple-system, "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif;
+      color: #1e293b; background: #f8fafc; line-height: 1.6;
+    }
+    header { text-align: center; padding: 20px 16px 8px; }
+    header h1 { margin: 0 0 4px; font-size: 1.5rem; }
+    header p { margin: 0; color: var(--slate); font-size: 0.9rem; }
+    .wrap { max-width: 1024px; margin: 0 auto; padding: 16px; }
+    button { cursor: pointer; font-family: inherit; }
+    .hidden { display: none !important; }
+
+    /* アップロード画面 */
+    .modes { display: flex; gap: 12px; flex-wrap: wrap; margin: 12px 0; }
+    .mode-card {
+      flex: 1; min-width: 200px; border: 2px solid #e2e8f0; border-radius: 14px;
+      padding: 14px; background: #fff; text-align: left;
+    }
+    .mode-card.active { border-color: var(--blue); background: #eff6ff; }
+    .mode-card .t { font-weight: 700; }
+    .mode-card .s { font-size: 0.8rem; color: var(--slate); }
+    .dropzone {
+      border: 2px dashed #cbd5e1; border-radius: 18px; background: #fff;
+      padding: 32px 16px; text-align: center; transition: 0.2s;
+    }
+    .dropzone.over { border-color: var(--blue); background: #eff6ff; }
+    .btn-row { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 12px; }
+    .btn { border: none; border-radius: 10px; padding: 12px 22px; font-weight: 700; font-size: 1rem; color: #fff; }
+    .btn.primary { background: var(--blue); }
+    .btn.dark { background: #334155; }
+    .btn.green { background: #059669; }
+    .btn.gray { background: #fff; color: #334155; border: 1px solid #cbd5e1; }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .err { margin-top: 14px; background: #fef2f2; color: #b91c1c; padding: 12px 14px; border-radius: 10px; }
+
+    /* ローディング */
+    .loading { position: fixed; inset: 0; background: rgba(255,255,255,0.85);
+      display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 50; }
+    .spinner { width: 48px; height: 48px; border: 4px solid #bfdbfe; border-top-color: var(--blue);
+      border-radius: 50%; animation: spin 0.9s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* 結果画面 */
+    .toolbar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 12px; }
+    .seg { display: inline-flex; border: 1px solid #cbd5e1; border-radius: 10px; overflow: hidden; }
+    .seg button { background: #fff; border: none; padding: 8px 12px; font-size: 0.85rem; color: var(--slate); }
+    .seg button.active { background: var(--blue); color: #fff; }
+    .layout { display: block; }
+    .canvas-box { position: relative; background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 8px; overflow: auto; }
+    #scoreCanvas { max-width: 100%; height: auto; display: block; margin: 0 auto; cursor: pointer; }
+    .panel { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px; margin-top: 14px; }
+    .panel h3 { margin: 0 0 10px; font-size: 1rem; }
+    .field { margin-bottom: 10px; }
+    .field .lbl { font-size: 0.75rem; font-weight: 700; color: #64748b; margin-bottom: 4px; }
+    .chips { display: flex; gap: 8px; flex-wrap: wrap; }
+    .chip { border: 1px solid #cbd5e1; border-radius: 8px; background: #fff; padding: 8px 12px; font-weight: 700; }
+    .chip.sel { border-color: var(--blue); background: var(--blue); color: #fff; }
+    .chip.round { width: 40px; height: 40px; border-radius: 50%; color: #fff; border: 2px solid; }
+    .chip.sel-ring { outline: 3px solid #93c5fd; }
+    .legend { font-size: 0.85rem; }
+    .legend li { list-style: none; margin: 2px 0; }
+    .legend .dot { display: inline-block; width: 12px; height: 12px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
+    .slider-row { display: flex; align-items: center; gap: 10px; }
+    input[type=range] { flex: 1; }
+
+    /* モーダル */
+    .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; z-index: 60; padding: 16px; }
+    .modal { background: #fff; border-radius: 16px; max-width: 420px; width: 100%; padding: 22px; }
+    .modal h2 { margin: 0 0 10px; }
+    .step { padding: 8px 0; border-bottom: 1px solid #f1f5f9; }
+    .step b { color: var(--blue); }
+
+    @media (min-width: 1024px) {
+      .layout { display: grid; grid-template-columns: 1fr 300px; gap: 20px; align-items: start; }
+      .side { margin-top: 0; }
+    }
+    @media (max-width: 767px) {
+      .btn, .chip, .seg button { min-height: 44px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>🎻 バイオリン楽譜ビューア</h1>
+    <p>楽譜の写真をアップロードすると、弦色・指番号・半音マークを表示します</p>
+  </header>
+
+  <!-- ============ アップロード画面 ============ -->
+  <div class="wrap" id="uploadView">
+    <div class="modes">
+      <button class="mode-card active" data-mode="A" id="modeA">
+        <div class="t">おまかせ</div>
+        <div class="s">初級〜中級・一般的な運指</div>
+      </button>
+      <button class="mode-card" data-mode="B" id="modeB">
+        <div class="t">開放弦優先</div>
+        <div class="s">第4指（小指）を最小限に</div>
+      </button>
+    </div>
+
+    <div class="dropzone" id="dropzone">
+      <p style="color:#64748b;margin:0 0 8px;">ここに楽譜画像をドラッグ＆ドロップ</p>
+      <div class="btn-row">
+        <button class="btn primary" id="pickBtn">画像を選択</button>
+        <button class="btn dark" id="cameraBtn">📷 カメラで撮影</button>
+      </div>
+      <input type="file" id="fileInput" accept="image/png,image/jpeg,image/webp" class="hidden" />
+      <input type="file" id="cameraInput" accept="image/*" capture="environment" class="hidden" />
+    </div>
+
+    <div class="err hidden" id="uploadErr"></div>
+    <button class="btn gray" id="howtoBtn" style="margin-top:16px;width:100%;">使い方を見る</button>
+  </div>
+
+  <!-- ============ 結果画面 ============ -->
+  <div class="wrap hidden" id="resultView">
+    <div class="toolbar">
+      <div class="seg" id="modeSeg">
+        <button data-dm="color_only">弦色のみ</button>
+        <button data-dm="color_finger">＋指番号</button>
+        <button data-dm="color_finger_half" class="active">＋半音マーク</button>
+      </div>
+      <button class="btn gray" id="backBtn" style="padding:8px 14px;">↩ 別の楽譜</button>
+    </div>
+
+    <div class="layout">
+      <div class="canvas-box">
+        <canvas id="scoreCanvas"></canvas>
+        <p style="text-align:center;color:#94a3b8;font-size:0.8rem;margin:6px 0 0;">音符をタップすると弦・指番号を修正できます</p>
+      </div>
+
+      <div class="side">
+        <!-- 修正パネル -->
+        <div class="panel hidden" id="editPanel"></div>
+
+        <!-- 再生 -->
+        <div class="panel">
+          <h3>音源プレビュー</h3>
+          <div class="btn-row" style="justify-content:flex-start;">
+            <button class="btn green" id="playBtn" style="padding:8px 16px;">▶ 再生</button>
+            <button class="btn gray" id="pauseBtn" style="padding:8px 16px;">⏸</button>
+            <button class="btn gray" id="stopBtn" style="padding:8px 16px;">⏹</button>
+          </div>
+          <div class="field" style="margin-top:12px;">
+            <div class="lbl">テンポ: <span id="bpmLabel">80</span> BPM</div>
+            <div class="slider-row">
+              <span style="font-size:0.75rem;">40</span>
+              <input type="range" id="bpmSlider" min="40" max="200" value="80" />
+              <span style="font-size:0.75rem;">200</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 保存 -->
+        <div class="panel">
+          <h3>保存</h3>
+          <div class="btn-row" style="justify-content:flex-start;">
+            <button class="btn primary" id="pngBtn" style="padding:8px 16px;">PNG</button>
+            <button class="btn dark" id="pdfBtn" style="padding:8px 16px;">PDF</button>
+          </div>
+        </div>
+
+        <!-- 凡例 -->
+        <div class="panel legend">
+          <h3>凡例</h3>
+          <ul style="padding:0;margin:0;">
+            <li><span class="dot" style="background:var(--g)"></span>G線（茶）</li>
+            <li><span class="dot" style="background:var(--d)"></span>D線（緑）</li>
+            <li><span class="dot" style="background:var(--a)"></span>A線（ピンク）</li>
+            <li><span class="dot" style="background:var(--e)"></span>E線（黄）</li>
+            <li style="color:var(--half-attached)">^ / v … 半音（指くっつく）</li>
+            <li style="color:#38bdf8">^ / v … 半音（開放弦・くっつかない）</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="err hidden" id="resultErr"></div>
+  </div>
+
+  <!-- ローディング -->
+  <div class="loading hidden" id="loading">
+    <div class="spinner"></div>
+    <p style="font-weight:700;margin-top:14px;">楽譜を解析中です...少々お待ちください</p>
+    <p style="color:#64748b;font-size:0.85rem;margin-top:2px;">読み取りに数十秒かかることがあります</p>
+  </div>
+
+  <!-- チュートリアル -->
+  <div class="modal-bg hidden" id="tutorial">
+    <div class="modal">
+      <h2>🎻 使い方（3ステップ）</h2>
+      <div class="step"><b>① 撮影/選択</b><br>楽譜をまっすぐ・明るく撮影してアップロード</div>
+      <div class="step"><b>② 自動解析</b><br>弦の色・指番号・半音マークが自動でつきます</div>
+      <div class="step"><b>③ 微調整</b><br>音符をタップして弦・指番号・半音を手直しできます</div>
+      <button class="btn primary" id="tutorialClose" style="width:100%;margin-top:14px;">はじめる</button>
+    </div>
+  </div>
+
+  <script>
+  // =================================================================
+  //  ⚙️ 設定：ここに Gemini API キーを貼り付けてください
+  //  取得: https://aistudio.google.com/app/apikey （無料枠）
+  // =================================================================
+  const GEMINI_API_KEY = "YOUR_GEMINI_API_KEY_HERE";
+  const GEMINI_MODEL = "gemini-2.0-flash";
+  const MAX_EDGE = 1600; // 送信画像の長辺上限(px)
+
+  // ---------- 定数 ----------
+  const STRING_COLORS = {
+    G: "rgba(139, 90, 60, 0.65)",
+    D: "rgba(0, 191, 165, 0.65)",
+    A: "rgba(255, 64, 129, 0.65)",
+    E: "rgba(255, 215, 64, 0.65)",
+  };
+  const STRING_STROKE = { G: "#8B5A3C", D: "#00BFA5", A: "#FF4081", E: "#FFD740" };
+  const HALF_STEP_COLORS = { attached: "#006CD4", detached: "#6EE6FF" };
+  const ROMAN_TO_STRING = { I: "E", II: "A", III: "D", IV: "G" };
+  const OPEN_MIDI = { G: 55, D: 62, A: 69, E: 76 }; // G3 D4 A4 E5
+  const NOTEHEAD_RADIUS = 11;
+  const DISTANCE_THRESHOLD = 80;
+  const PITCH_CLASS = { C:0, D:2, E:4, F:5, G:7, A:9, B:11 };
+  const DUR_BEATS = { whole:4, half:2, quarter:1, eighth:0.5, sixteenth:0.25, "16th":0.25, thirtysecond:0.125 };
+  const DUR_TONE = { whole:"1n", half:"2n", quarter:"4n", eighth:"8n", sixteenth:"16n", "16th":"16n", thirtysecond:"32n" };
+
+  // ---------- 状態 ----------
+  const state = {
+    mode: "A",
+    image: null,         // HTMLImageElement（縮小済み）
+    imgW: 0, imgH: 0,
+    scoreData: null,     // Gemini解析結果（ルール適用済み）
+    edits: {},           // { noteId: {string,finger,side,halfStep,halfStepAttached} }
+    displayMode: "color_finger_half",
+    docId: null,
+    selectedId: null,
+    playingId: null,
+  };
+
+  // ---------- ユーティリティ ----------
+  function pitchToMidi(p) {
+    if (!p) return null;
+    const m = String(p).trim().match(/^([A-Ga-g])([#b♯♭]?)(-?\d+)$/);
+    if (!m) return null;
+    let acc = 0;
+    if (m[2] === "#" || m[2] === "♯") acc = 1;
+    else if (m[2] === "b" || m[2] === "♭") acc = -1;
+    return PITCH_CLASS[m[1].toUpperCase()] + acc + (parseInt(m[3], 10) + 1) * 12;
+  }
+  function isHalfStep(a, b) {
+    const ma = pitchToMidi(a), mb = pitchToMidi(b);
+    if (ma === null || mb === null) return false;
+    return Math.abs(ma - mb) === 1;
+  }
+  function durBeats(d) { return DUR_BEATS[(d||"").toLowerCase()] ?? 1; }
+  function $(id) { return document.getElementById(id); }
+  function showErr(el, msg) { el.textContent = msg; el.classList.remove("hidden"); }
+  function hideErr(el) { el.classList.add("hidden"); }
+
+  // =================================================================
+  //  画像 → 縮小 dataURL
+  // =================================================================
+  function fileToScaledImage(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onerror = () => reject(new Error("ファイルの読み込みに失敗しました"));
+      reader.onload = () => {
+        const img = new Image();
+        img.onerror = () => reject(new Error("画像を開けませんでした。別の画像をお試しください。"));
+        img.onload = () => {
+          let { width, height } = img;
+          const scale = Math.min(1, MAX_EDGE / Math.max(width, height));
+          width = Math.round(width * scale);
+          height = Math.round(height * scale);
+          const c = document.createElement("canvas");
+          c.width = width; c.height = height;
+          c.getContext("2d").drawImage(img, 0, 0, width, height);
+          const dataUrl = c.toDataURL("image/jpeg", 0.92);
+          const out = new Image();
+          out.onload = () => resolve({ image: out, width, height, dataUrl });
+          out.src = dataUrl;
+        };
+        img.src = reader.result;
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  // =================================================================
+  //  Gemini API 呼び出し
+  // =================================================================
+  function buildPrompt(w, h) {
+    return `あなたはバイオリン楽譜の解析専門家です。
+この楽譜画像を解析し、以下のJSONスキーマに厳密に従ってデータを返してください。
+画像サイズは 幅${w}px × 高さ${h}px です。すべての座標はこのピクセル座標（左上が原点, 右がx+, 下がy+）で返してください。
+
+返すJSONの構造：
+{
+  "key_signature": "調号（例: G major）",
+  "time_signature": "拍子記号（例: 4/4）",
+  "tempo_marking": "速度記号 または null",
+  "staff_lines": [ {"top_y":0,"bottom_y":0,"left_x":0,"right_x":0} ],
+  "notes": [
+    {
+      "id": "note_001",
+      "pitch": "A4",
+      "duration": "quarter",
+      "string": "A",
+      "finger": 1,
+      "is_half_step_above_prev": false,
+      "half_step_type": null,
+      "position_in_image": { "x": 0, "y": 0, "notehead_y": 0 },
+      "has_beam": false,
+      "stem_direction": "up",
+      "stem_tip_y": 0,
+      "is_double_stop": false,
+      "double_stop_partner_id": null,
+      "existing_fingering_in_score": null,
+      "fingering_position_in_score": null,
+      "existing_roman_numeral": null,
+      "crescendo_nearby": false,
+      "dynamics_nearby": null,
+      "measure": 1,
+      "beat": 1
+    }
+  ]
+}
+重要なルール：
+1. 楽譜に既に指番号(0〜4)が記載されている場合は必ず existing_fingering_in_score に記録し、finger にも同じ値を使うこと
+2. 楽譜にローマ数字(Ⅰ〜Ⅳ)があれば existing_roman_numeral に I/II/III/IV で記録すること
+3. 既存指番号が音符の上か下かを fingering_position_in_score に above/below で記録すること
+4. 符頭の中心座標を position_in_image.x / notehead_y に正確に記録すること
+5. 半音関係: 前の音と半音なら is_half_step_above_prev を true、half_step_type を attached(隣接指がくっつく)/detached(開放弦等くっつかない) で記録すること
+6. 重音は2音それぞれを notes に含め double_stop_partner_id で相互参照すること
+7. JSONのみを返し、説明文やコードブロック記号は含めないこと`;
+  }
+
+  async function callGemini(dataUrl, w, h) {
+    if (!GEMINI_API_KEY || GEMINI_API_KEY === "YOUR_GEMINI_API_KEY_HERE") {
+      throw new Error("APIキーが未設定です。index.html の GEMINI_API_KEY にキーを設定してください。");
+    }
+    const base64 = dataUrl.split(",")[1];
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [{ parts: [
+          { inline_data: { mime_type: "image/jpeg", data: base64 } },
+          { text: buildPrompt(w, h) },
+        ] }],
+        generationConfig: { temperature: 0.1, responseMimeType: "application/json" },
+      }),
+    });
+    if (!res.ok) {
+      let detail = "";
+      try { detail = (await res.json())?.error?.message || ""; } catch {}
+      if (res.status === 429) throw new Error("APIの無料枠の上限に達しました。少し待ってから再度お試しください。");
+      if (res.status === 400 && /API key/i.test(detail)) throw new Error("APIキーが無効です。キーを確認してください。");
+      throw new Error("解析に失敗しました（" + res.status + "）。" + detail);
+    }
+    const data = await res.json();
+    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (!text) throw new Error("解析結果を取得できませんでした。もう一度お試しください。");
+    let parsed;
+    try { parsed = JSON.parse(extractJson(text)); }
+    catch { throw new Error("画像を読み取れませんでした。明るい環境で撮影してもう一度お試しください。"); }
+    if (!parsed.notes || parsed.notes.length === 0) throw new Error("音符を検出できませんでした。楽譜がはっきり写っているか確認してください。");
+    return parsed;
+  }
+
+  function extractJson(t) {
+    t = (t || "").trim();
+    const fence = t.match(/```(?:json)?\s*([\s\S]*?)```/i);
+    if (fence) t = fence[1].trim();
+    const s = t.indexOf("{"), e = t.lastIndexOf("}");
+    if (s >= 0 && e > s) t = t.slice(s, e + 1);
+    return t;
+  }
+
+  // =================================================================
+  //  弦・指番号の判定ロジック（ルール1〜2）
+  // =================================================================
+  function applyRules(scoreData, mode) {
+    const notes = scoreData.notes;
+    notes.forEach((n, i) => {
+      // ルール1: 楽譜上の明示指示を最優先
+      if (n.existing_fingering_in_score !== null && n.existing_fingering_in_score !== undefined) {
+        n.finger = n.existing_fingering_in_score;
+      }
+      if (n.existing_roman_numeral && ROMAN_TO_STRING[n.existing_roman_numeral]) {
+        n.string = ROMAN_TO_STRING[n.existing_roman_numeral];
+      }
+      // ルール2: 0 vs 4（開放弦 vs 第4指）の補完
+      const open = matchOpenString(n.pitch);
+      if (open && (n.finger === null || n.finger === undefined)) {
+        const choice = resolveOpenVsFourth(notes, i, mode);
+        if (choice === "open") { n.string = open; n.finger = 0; }
+        else { n.finger = 4; if (!n.string) n.string = fourthStringFor(n.pitch); }
+      }
+    });
+    return scoreData;
+  }
+  function matchOpenString(pitch) {
+    const midi = pitchToMidi(pitch);
+    for (const s in OPEN_MIDI) if (OPEN_MIDI[s] === midi) return s;
+    return null;
+  }
+  function fourthStringFor(pitch) {
+    // 第4指で同音になる下の弦（開放弦midi+7）
+    const midi = pitchToMidi(pitch);
+    for (const s in OPEN_MIDI) if (OPEN_MIDI[s] + 7 === midi) return s;
+    return null;
+  }
+  function resolveOpenVsFourth(notes, index, mode) {
+    if (mode === "B") return "open";
+    const cur = notes[index], next = notes[index + 1];
+    if (!next) return "fourth";
+    const c = pitchToMidi(cur.pitch), n = pitchToMidi(next.pitch);
+    if (n === null || c === null) return "fourth";
+    if (n > c) return "open";
+    if (n < c) return "fourth";
+    return resolveOpenVsFourth(notes, index + 1, mode); // 同音なら次へ
+  }
+
+  // =================================================================
+  //  半音マークの補完・分類
+  // =================================================================
+  function halfStepInfo(notes, i, resolvedFinger, resolvedString) {
+    const cur = notes[i], prev = notes[i - 1];
+    if (!prev) return { show: false, type: null };
+    const show = !!cur.is_half_step_above_prev || isHalfStep(prev.pitch, cur.pitch);
+    if (!show) return { show: false, type: null };
+    let type = cur.half_step_type;
+    if (type !== "attached" && type !== "detached") {
+      const pf = resolvedFingerOf(prev), cf = resolvedFinger;
+      const ps = resolvedStringOf(prev), cs = resolvedString;
+      type = (pf !== null && cf !== null && pf >= 1 && cf >= 1 && ps && ps === cs && Math.abs(pf - cf) === 1)
+        ? "attached" : "detached";
+    }
+    return { show: true, type };
+  }
+  function resolvedFingerOf(note) {
+    const e = state.edits[note.id] || {};
+    return e.finger ?? note.finger ?? null;
+  }
+  function resolvedStringOf(note) {
+    const e = state.edits[note.id] || {};
+    return e.string ?? note.string ?? null;
+  }
+
+  // =================================================================
+  //  指番号の配置位置（例外①〜④）
+  // =================================================================
+  function nearestStaff(note, staves) {
+    if (!staves || !staves.length) return null;
+    let best = staves[0], bd = Infinity;
+    for (const s of staves) {
+      const mid = (s.top_y + s.bottom_y) / 2;
+      const d = Math.abs(note.position_in_image.notehead_y - mid);
+      if (d < bd) { bd = d; best = s; }
+    }
+    return best;
+  }
+  function determineSide(note, notes, staves) {
+    const e = state.edits[note.id] || {};
+    if (e.side) return e.side; // 手動修正が最優先
+
+    let side = "above";
+    // 例外②: 元楽譜で下印字 → 以降下（簡易: 当該音）
+    if (note.fingering_position_in_score === "below") side = "below";
+    // 例外③: 重音の下の音
+    if (note.is_double_stop && note.double_stop_partner_id) {
+      const partner = notes.find((n) => n.id === note.double_stop_partner_id);
+      if (partner) {
+        const my = pitchToMidi(note.pitch) ?? 0, pa = pitchToMidi(partner.pitch) ?? 0;
+        side = my < pa ? "below" : "above";
+      }
+    }
+    // 例外①: 高音域で上にスペースなし
+    const staff = nearestStaff(note, staves);
+    if (staff) {
+      const gap = (staff.bottom_y - staff.top_y) / 4 || 10;
+      const ledgerAbove = Math.max(0, (staff.top_y - note.position_in_image.notehead_y) / gap);
+      if (ledgerAbove >= 2) side = "below";
+    }
+    // 例外④: 距離ルール（最優先）。ただし強弱/クレッシェンドと重なるなら上
+    const stemTip = note.stem_tip_y ?? note.stem_top_y ?? note.position_in_image.notehead_y;
+    const aboveAnchor = note.stem_direction === "up" ? stemTip : note.position_in_image.notehead_y;
+    const aboveDist = Math.abs(aboveAnchor - 16 - note.position_in_image.notehead_y);
+    if (side === "above" && aboveDist >= DISTANCE_THRESHOLD) {
+      const collide = note.crescendo_nearby || (note.dynamics_nearby !== null && note.dynamics_nearby !== undefined);
+      if (!collide) side = "below";
+    }
+    return side;
+  }
+
+  // =================================================================
+  //  Canvas 描画
+  // =================================================================
+  function draw() {
+    const canvas = $("scoreCanvas");
+    const ctx = canvas.getContext("2d");
+    canvas.width = state.imgW;
+    canvas.height = state.imgH;
+    ctx.drawImage(state.image, 0, 0, state.imgW, state.imgH);
+
+    const notes = state.scoreData.notes;
+    const staves = state.scoreData.staff_lines;
+    const dm = state.displayMode;
+
+    notes.forEach((note, i) => {
+      const e = state.edits[note.id] || {};
+      const string = e.string ?? note.string;
+      const finger = e.finger ?? note.finger;
+      const x = note.position_in_image.x;
+      const y = note.position_in_image.notehead_y;
+
+      // ① 弦色ディスク（蛍光マーカー風・全モード）
+      if (string && STRING_COLORS[string]) {
+        ctx.beginPath();
+        ctx.arc(x, y, NOTEHEAD_RADIUS, 0, Math.PI * 2);
+        ctx.fillStyle = STRING_COLORS[string];
+        ctx.fill();
+        ctx.lineWidth = note.id === state.selectedId ? 3 : 1.2;
+        ctx.strokeStyle = STRING_STROKE[string];
+        ctx.stroke();
+      }
+      // 再生中ハイライト
+      if (note.id === state.playingId) {
+        ctx.beginPath();
+        ctx.arc(x, y, NOTEHEAD_RADIUS + 4, 0, Math.PI * 2);
+        ctx.lineWidth = 3; ctx.strokeStyle = "#FACC15"; ctx.stroke();
+      }
+      // 選択枠
+      if (note.id === state.selectedId) {
+        ctx.beginPath();
+        ctx.arc(x, y, NOTEHEAD_RADIUS + 7, 0, Math.PI * 2);
+        ctx.lineWidth = 2; ctx.setLineDash([4, 3]); ctx.strokeStyle = "#2563EB"; ctx.stroke();
+        ctx.setLineDash([]);
+      }
+
+      if (dm === "color_only") return;
+
+      // ② 指番号
+      const side = determineSide(note, notes, staves);
+      if (finger !== null && finger !== undefined) {
+        const fy = side === "above" ? y - NOTEHEAD_RADIUS - 8 : y + NOTEHEAD_RADIUS + 16;
+        ctx.font = "bold 16px sans-serif";
+        ctx.textAlign = "center";
+        ctx.lineWidth = 3; ctx.strokeStyle = "#fff";
+        ctx.strokeText(String(finger), x, fy);
+        ctx.fillStyle = "#111827";
+        ctx.fillText(String(finger), x, fy);
+
+        if (dm === "color_finger") return;
+
+        // ③ 半音マーク
+        const hs = e.halfStep !== undefined
+          ? { show: e.halfStep, type: (e.halfStepAttached === false ? "detached" : "attached") }
+          : halfStepInfo(notes, i, finger, string);
+        if (e.halfStep && e.halfStepAttached !== undefined) {
+          hs.type = e.halfStepAttached ? "attached" : "detached";
+        }
+        if (hs.show) {
+          const sym = side === "above" ? "^" : "v";
+          const my = side === "above" ? fy - 16 : fy + 16;
+          const prev = notes[i - 1];
+          const mx = prev ? (x + prev.position_in_image.x) / 2 : x;
+          ctx.font = "bold 18px sans-serif";
+          ctx.lineWidth = 3; ctx.strokeStyle = "#fff";
+          ctx.strokeText(sym, mx, my);
+          ctx.fillStyle = HALF_STEP_COLORS[hs.type] || HALF_STEP_COLORS.attached;
+          ctx.fillText(sym, mx, my);
+        }
+      }
+    });
+  }
+
+  // =================================================================
+  //  ヒットテスト（クリックした音符）
+  // =================================================================
+  function hitTest(clientX, clientY) {
+    const canvas = $("scoreCanvas");
+    const rect = canvas.getBoundingClientRect();
+    const sx = canvas.width / rect.width, sy = canvas.height / rect.height;
+    const px = (clientX - rect.left) * sx, py = (clientY - rect.top) * sy;
+    let found = null, bd = Infinity;
+    for (const note of state.scoreData.notes) {
+      const dx = px - note.position_in_image.x, dy = py - note.position_in_image.notehead_y;
+      const d = Math.hypot(dx, dy);
+      if (d < NOTEHEAD_RADIUS + 8 && d < bd) { bd = d; found = note; }
+    }
+    return found;
+  }
+
+  // =================================================================
+  //  手動修正パネル
+  // =================================================================
+  function renderEditPanel() {
+    const panel = $("editPanel");
+    if (!state.selectedId) { panel.classList.add("hidden"); return; }
+    const note = state.scoreData.notes.find((n) => n.id === state.selectedId);
+    if (!note) { panel.classList.add("hidden"); return; }
+    const e = state.edits[note.id] || {};
+    const curString = e.string ?? note.string;
+    const curFinger = e.finger ?? note.finger;
+    const curSide = determineSide(note, state.scoreData.notes, state.scoreData.staff_lines);
+    const i = state.scoreData.notes.indexOf(note);
+    const autoHalf = halfStepInfo(state.scoreData.notes, i, curFinger, curString);
+    const curHalf = e.halfStep ?? autoHalf.show;
+    const curAttached = e.halfStepAttached ?? (autoHalf.type !== "detached");
+
+    panel.classList.remove("hidden");
+    panel.innerHTML = `
+      <h3>音符を修正 <span style="font-weight:400;color:#94a3b8;font-size:0.85rem;">(${note.pitch || ""} / ${note.measure || "?"}小節)</span></h3>
+      <div class="field">
+        <div class="lbl">弦</div>
+        <div class="chips" id="ed-string">
+          ${["G","D","A","E"].map(s => `<button class="chip round ${curString===s?"sel-ring":""}" data-s="${s}" style="background:${STRING_STROKE[s]};border-color:${STRING_STROKE[s]}">${s}</button>`).join("")}
+        </div>
+      </div>
+      <div class="field">
+        <div class="lbl">指番号</div>
+        <div class="chips" id="ed-finger">
+          ${[0,1,2,3,4].map(f => `<button class="chip ${curFinger===f?"sel":""}" data-f="${f}">${f}</button>`).join("")}
+        </div>
+      </div>
+      <div class="field">
+        <div class="lbl">指番号の位置</div>
+        <div class="chips" id="ed-side">
+          <button class="chip ${curSide==="above"?"sel":""}" data-side="above">上</button>
+          <button class="chip ${curSide==="below"?"sel":""}" data-side="below">下</button>
+        </div>
+      </div>
+      <div class="field">
+        <div class="lbl">半音マーク</div>
+        <div class="chips" id="ed-half">
+          <button class="chip ${!curHalf?"sel":""}" data-half="off">なし</button>
+          <button class="chip ${curHalf&&curAttached?"sel":""}" data-half="attached" style="${curHalf&&curAttached?"background:"+HALF_STEP_COLORS.attached+";border-color:"+HALF_STEP_COLORS.attached:""}">くっつく(青)</button>
+          <button class="chip ${curHalf&&!curAttached?"sel":""}" data-half="detached" style="${curHalf&&!curAttached?"background:"+HALF_STEP_COLORS.detached+";border-color:"+HALF_STEP_COLORS.detached+";color:#0f172a":""}">くっつかない(水色)</button>
+        </div>
+      </div>
+      <button class="btn gray" id="ed-reset" style="padding:6px 12px;font-size:0.85rem;">この音符をリセット</button>
+    `;
+
+    panel.querySelectorAll("#ed-string button").forEach(b => b.onclick = () => patchEdit(note.id, { string: b.dataset.s }));
+    panel.querySelectorAll("#ed-finger button").forEach(b => b.onclick = () => patchEdit(note.id, { finger: parseInt(b.dataset.f, 10) }));
+    panel.querySelectorAll("#ed-side button").forEach(b => b.onclick = () => patchEdit(note.id, { side: b.dataset.side }));
+    panel.querySelectorAll("#ed-half button").forEach(b => b.onclick = () => {
+      const v = b.dataset.half;
+      if (v === "off") patchEdit(note.id, { halfStep: false });
+      else patchEdit(note.id, { halfStep: true, halfStepAttached: v === "attached" });
+    });
+    $("ed-reset").onclick = () => { delete state.edits[note.id]; saveEdits(); renderEditPanel(); draw(); };
+  }
+  function patchEdit(id, patch) {
+    state.edits[id] = Object.assign({}, state.edits[id], patch);
+    saveEdits();
+    renderEditPanel();
+    draw();
+  }
+
+  // ---------- localStorage ----------
+  function editsKey() { return "violin-edits:" + state.docId; }
+  function saveEdits() { try { localStorage.setItem(editsKey(), JSON.stringify(state.edits)); } catch {} }
+  function loadEdits() { try { return JSON.parse(localStorage.getItem(editsKey()) || "{}"); } catch { return {}; } }
+
+  // =================================================================
+  //  音源再生（Tone.js）
+  // =================================================================
+  let synth = null, part = null;
+  function buildSchedule(bpm) {
+    const spb = 60 / bpm;
+    let t = 0; const ev = [];
+    for (const n of state.scoreData.notes) {
+      if (n.is_double_stop && n.double_stop_partner_id) {
+        // 重音の相方は同時刻（時間を進めない）。ペアの後者は加算スキップ簡易対応
+      }
+      ev.push({ time: t, pitch: n.pitch, dur: DUR_TONE[(n.duration||"").toLowerCase()] || "4n", id: n.id });
+      t += durBeats(n.duration) * spb;
+    }
+    return { ev, total: t };
+  }
+  async function playScore() {
+    if (!state.scoreData) return;
+    await Tone.start();
+    stopScore();
+    const bpm = parseInt($("bpmSlider").value, 10);
+    synth = new Tone.Synth({ oscillator: { type: "sawtooth" }, envelope: { attack: 0.02, decay: 0.1, sustain: 0.5, release: 0.8 } }).toDestination();
+    const { ev, total } = buildSchedule(bpm);
+    part = new Tone.Part((time, e) => {
+      synth.triggerAttackRelease(e.pitch, e.dur, time);
+      Tone.Draw.schedule(() => { state.playingId = e.id; draw(); }, time);
+    }, ev.map(e => [e.time, e]));
+    part.start(0);
+    Tone.Transport.scheduleOnce(() => { state.playingId = null; draw(); }, total + 0.3);
+    Tone.Transport.start();
+  }
+  function pauseScore() { Tone.Transport.pause(); }
+  function stopScore() {
+    try { Tone.Transport.stop(); Tone.Transport.cancel(); } catch {}
+    if (part) { try { part.dispose(); } catch {} part = null; }
+    if (synth) { try { synth.dispose(); } catch {} synth = null; }
+    state.playingId = null;
+    if (state.scoreData) draw();
+  }
+
+  // =================================================================
+  //  保存
+  // =================================================================
+  function savePNG() {
+    const link = document.createElement("a");
+    link.download = "violin_score.png";
+    link.href = $("scoreCanvas").toDataURL("image/png");
+    link.click();
+  }
+  function savePDF() {
+    const canvas = $("scoreCanvas");
+    const imgData = canvas.toDataURL("image/png");
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+    const w = 190, h = (canvas.height / canvas.width) * w;
+    pdf.addImage(imgData, "PNG", 10, 10, w, h);
+    pdf.save("violin_score.pdf");
+  }
+
+  // =================================================================
+  //  画面遷移・解析フロー
+  // =================================================================
+  async function handleFile(file) {
+    hideErr($("uploadErr"));
+    if (file.type === "application/pdf") { showErr($("uploadErr"), "PDFは画像（JPG/PNG）にしてからアップロードしてください。"); return; }
+    if (!file.type.startsWith("image/")) { showErr($("uploadErr"), "画像ファイル（JPG/PNG）を選択してください。"); return; }
+    $("loading").classList.remove("hidden");
+    try {
+      const { image, width, height, dataUrl } = await fileToScaledImage(file);
+      const scoreData = await callGemini(dataUrl, width, height);
+      applyRules(scoreData, state.mode);
+      state.image = image; state.imgW = width; state.imgH = height;
+      state.scoreData = scoreData;
+      state.docId = "doc_" + Date.now();
+      state.edits = loadEdits();
+      state.selectedId = null;
+      // テンポ初期値
+      const bpm = estimateBpm(scoreData.tempo_marking);
+      $("bpmSlider").value = bpm; $("bpmLabel").textContent = bpm;
+      $("uploadView").classList.add("hidden");
+      $("resultView").classList.remove("hidden");
+      draw();
+      renderEditPanel();
+    } catch (err) {
+      showErr($("uploadErr"), err.message || "予期しないエラーが発生しました。");
+    } finally {
+      $("loading").classList.add("hidden");
+    }
+  }
+  function estimateBpm(marking) {
+    if (!marking) return 80;
+    const m = marking.toLowerCase();
+    if (/(presto|vivace|allegro)/.test(m)) return 120;
+    if (/(moderato|allegretto)/.test(m)) return 96;
+    if (/(andante|andantino)/.test(m)) return 76;
+    if (/(adagio|largo|lento|grave)/.test(m)) return 56;
+    return 80;
+  }
+
+  // =================================================================
+  //  イベント登録
+  // =================================================================
+  function setMode(mode) {
+    state.mode = mode;
+    $("modeA").classList.toggle("active", mode === "A");
+    $("modeB").classList.toggle("active", mode === "B");
+  }
+  $("modeA").onclick = () => setMode("A");
+  $("modeB").onclick = () => setMode("B");
+
+  $("pickBtn").onclick = () => $("fileInput").click();
+  $("cameraBtn").onclick = () => $("cameraInput").click();
+  $("fileInput").onchange = (e) => { if (e.target.files[0]) handleFile(e.target.files[0]); e.target.value = ""; };
+  $("cameraInput").onchange = (e) => { if (e.target.files[0]) handleFile(e.target.files[0]); e.target.value = ""; };
+
+  const dz = $("dropzone");
+  dz.addEventListener("dragover", (e) => { e.preventDefault(); dz.classList.add("over"); });
+  dz.addEventListener("dragleave", () => dz.classList.remove("over"));
+  dz.addEventListener("drop", (e) => { e.preventDefault(); dz.classList.remove("over"); if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]); });
+
+  $("modeSeg").querySelectorAll("button").forEach(b => b.onclick = () => {
+    state.displayMode = b.dataset.dm;
+    $("modeSeg").querySelectorAll("button").forEach(x => x.classList.toggle("active", x === b));
+    draw();
+  });
+
+  $("scoreCanvas").addEventListener("click", (e) => {
+    const note = hitTest(e.clientX, e.clientY);
+    state.selectedId = note ? note.id : null;
+    renderEditPanel();
+    draw();
+  });
+
+  $("backBtn").onclick = () => { stopScore(); $("resultView").classList.add("hidden"); $("uploadView").classList.remove("hidden"); };
+
+  $("playBtn").onclick = playScore;
+  $("pauseBtn").onclick = pauseScore;
+  $("stopBtn").onclick = stopScore;
+  $("bpmSlider").oninput = (e) => { $("bpmLabel").textContent = e.target.value; };
+  $("pngBtn").onclick = savePNG;
+  $("pdfBtn").onclick = savePDF;
+
+  // チュートリアル
+  $("howtoBtn").onclick = () => $("tutorial").classList.remove("hidden");
+  $("tutorialClose").onclick = () => { localStorage.setItem("violin-tutorial-seen", "1"); $("tutorial").classList.add("hidden"); };
+  if (!localStorage.getItem("violin-tutorial-seen")) $("tutorial").classList.remove("hidden");
+  </script>
+</body>
+</html>
