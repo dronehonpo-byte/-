@@ -28,11 +28,15 @@ bp = Blueprint("customer", __name__, url_prefix="/c")
 def home():
     active = (
         g.customer.requests.filter(
-            Request.status.notin_([RequestStatus.COMPLETED, RequestStatus.CANCELLED])
+            Request.status.notin_(
+                [RequestStatus.COMPLETED, RequestStatus.CANCELLED, RequestStatus.EXPIRED]
+            )
         )
         .order_by(Request.created_at.desc())
         .first()
     )
+    if active is not None and matching.expire_if_stale(active):
+        active = None  # 表示時に時間切れになったら募集案件なし扱い
     return render_template("customer/home.html", active=active)
 
 
@@ -91,6 +95,7 @@ def wait(request_id: int):
 def entries_json(request_id: int):
     """エントリー待ち画面のポーリング用 JSON."""
     req = _own_request(request_id)
+    matching.expire_if_stale(req)  # 10分経過なら自動で時間切れに
     entries = (
         req.entries.filter(Entry.status.in_([EntryStatus.OFFERED, EntryStatus.ACCEPTED]))
         .order_by(Entry.price.asc())
@@ -102,6 +107,8 @@ def entries_json(request_id: int):
             "status_label": req.status.label,
             "confirmed_entry_id": req.confirmed_entry_id,
             "elapsed_seconds": max(0, int((datetime.utcnow() - req.created_at).total_seconds())),
+            "seconds_left": req.seconds_left,
+            "ttl_seconds": req.RECRUIT_TTL_SECONDS,
             "entries": [
                 {
                     "id": e.id,

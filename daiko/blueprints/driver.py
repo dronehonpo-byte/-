@@ -23,6 +23,7 @@ def dashboard():
 @driver_required
 def requests_json():
     """近くの募集中リクエスト一覧（地図・一覧の両方で使用）."""
+    matching.expire_all_stale()  # 締め切りを過ぎた募集を一覧から落とす
     open_reqs = (
         Request.query.filter(
             Request.status.in_([RequestStatus.RECRUITING, RequestStatus.ENTERED])

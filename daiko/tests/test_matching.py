@@ -100,6 +100,46 @@ def test_cancel_before_confirm(app, seed_data):
         assert db.session.get(Request, rid).status == RequestStatus.CANCELLED
 
 
+def test_auto_expire_after_ttl(app, seed_data):
+    """締め切り時刻を過ぎた募集は時間切れになり、以後エントリーできない."""
+    from datetime import datetime, timedelta
+
+    rid = _make_request(app, seed_data)
+    with app.app_context():
+        req = db.session.get(Request, rid)
+        # まだ募集中・残り時間あり
+        assert req.status == RequestStatus.RECRUITING
+        assert req.seconds_left > 0
+        # 受付を TTL より前にずらして時間切れにする
+        req.created_at = datetime.utcnow() - timedelta(
+            seconds=Request.RECRUIT_TTL_SECONDS + 5
+        )
+        db.session.commit()
+        assert req.is_time_expired is True
+        assert matching.expire_if_stale(req) is True
+        assert db.session.get(Request, rid).status == RequestStatus.EXPIRED
+        # 二重呼び出しは何もしない
+        assert matching.expire_if_stale(db.session.get(Request, rid)) is False
+        # 時間切れ後はエントリー不可
+        d1 = db.session.get(Driver, seed_data["driver1_id"])
+        with pytest.raises(MatchingError):
+            matching.add_entry(rid, d1, price=3000, eta_minutes=15)
+
+
+def test_expire_all_stale_bulk(app, seed_data):
+    from datetime import datetime, timedelta
+
+    rid = _make_request(app, seed_data)
+    with app.app_context():
+        req = db.session.get(Request, rid)
+        req.created_at = datetime.utcnow() - timedelta(
+            seconds=Request.RECRUIT_TTL_SECONDS + 60
+        )
+        db.session.commit()
+        assert matching.expire_all_stale() == 1
+        assert db.session.get(Request, rid).status == RequestStatus.EXPIRED
+
+
 def test_unapproved_vendor_cannot_entry(app, seed_data):
     from daiko.models import Vendor, VendorStatus
 

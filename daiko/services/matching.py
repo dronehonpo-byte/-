@@ -8,7 +8,7 @@ DB レベルの条件付き UPDATE（status を WHERE 句に含める）で原�
 """
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from sqlalchemy import update
 
@@ -80,12 +80,54 @@ def nearby_driver_ids(lat: float, lng: float) -> list[int]:
 
 
 # ─────────────────────────────────────────────────────────────
+# 自動締め切り（時間切れ）
+# ─────────────────────────────────────────────────────────────
+def expire_if_stale(req: Request) -> bool:
+    """募集中で締め切り時刻を過ぎていれば「時間切れ」にする.
+
+    サーバー常駐の仕組みを使わず、画面アクセス時（お客様のポーリング・
+    ドライバー一覧表示など）に判定して締め切る方式。締め切れたら True。
+    """
+    if req is None or not req.status.is_open or not req.is_time_expired:
+        return False
+    req.status = RequestStatus.EXPIRED
+    req.updated_at = datetime.utcnow()
+    Entry.query.filter(
+        Entry.request_id == req.id, Entry.status == EntryStatus.OFFERED
+    ).update({Entry.status: EntryStatus.REJECTED}, synchronize_session=False)
+    notif.notify(
+        "customer", req.customer_id,
+        "募集を締め切りました",
+        "制限時間（10分）内にドライバーが確定しませんでした。もう一度依頼できます。",
+        req.id,
+    )
+    notif.notify_admins("リクエスト時間切れ", f"#{req.id}", req.id)
+    db.session.commit()
+    return True
+
+
+def expire_all_stale() -> int:
+    """募集中で締め切りを過ぎたリクエストをまとめて時間切れにする（一覧表示時）."""
+    cutoff = datetime.utcnow() - timedelta(seconds=Request.RECRUIT_TTL_SECONDS)
+    stale = (
+        Request.query.filter(
+            Request.status.in_([RequestStatus.RECRUITING, RequestStatus.ENTERED]),
+            Request.created_at <= cutoff,
+        ).all()
+    )
+    for req in stale:
+        expire_if_stale(req)
+    return len(stale)
+
+
+# ─────────────────────────────────────────────────────────────
 # エントリー（ドライバーの応募）
 # ─────────────────────────────────────────────────────────────
 def add_entry(request_id: int, driver: Driver, price: int, eta_minutes: int, cancellation_fee: str | None = None) -> Entry:
     req = db.session.get(Request, request_id)
     if req is None:
         raise MatchingError("リクエストが見つかりません。")
+    expire_if_stale(req)  # 締め切り時刻を過ぎていれば確定前に時間切れへ
     if not req.status.is_open:
         raise MatchingError("このリクエストは既に締め切られています。")
     if not driver.can_operate:

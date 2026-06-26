@@ -7,14 +7,28 @@
   <div class="small muted">{{ req.car_type }} ／ {{ req.transmission.value }} ／ {{ req.handle.label }} ／ {{ req.time_label }}</div>
 </div>
 
+<div id="countdown" class="card center" style="padding:14px;margin-bottom:12px">
+  <div class="small muted">募集の締め切りまで</div>
+  <div id="countdown-val" style="font-size:30px;font-weight:900;letter-spacing:-.04em;color:var(--green-dark)">--:--</div>
+  <div class="small muted">10分以内に提示の中からお選びください</div>
+</div>
+
 <div class="center small muted" style="margin:2px 0 12px">
   <span id="elapsed">募集開始から 0:00</span>
-  ・<span style="color:var(--green-dd);font-weight:700">自動更新中（5秒ごと）</span>
+  ・<span style="color:var(--green-dark);font-weight:700">自動更新中（5秒ごと）</span>
 </div>
 
 <div id="waiting" class="waiting">
   <div class="spin"></div>
   <p class="muted">ドライバーを探しています…<br>料金・到着時間の提示が届くと、ここに自動で表示されます。</p>
+</div>
+
+<div id="expired" class="card center" style="display:none">
+  <div style="font-size:34px">⌛</div>
+  <h3 style="margin:6px 0">募集を締め切りました</h3>
+  <p class="muted small">制限時間（10分）内にドライバーが確定しませんでした。<br>恐れ入りますが、もう一度依頼してください。</p>
+  <a class="btn btn-primary btn-block" href="{{ url_for('customer.new_request') }}" style="margin-top:8px">もう一度依頼する</a>
+  <a class="btn btn-outline btn-block" href="{{ url_for('customer.home') }}" style="margin-top:8px">トップへ戻る</a>
 </div>
 
 <div id="entries"></div>
@@ -36,17 +50,39 @@ function selectEntry(id, vendor, price) {
   document.getElementById('confirm-form').submit();
 }
 let elapsed = 0;
+let secondsLeft = {{ req.seconds_left }};
+let stopped = false;
 function fmt(s) { const m = Math.floor(s / 60); return m + ':' + String(s % 60).padStart(2, '0'); }
-function tick() { elapsed += 1; document.getElementById('elapsed').textContent = '募集開始から ' + fmt(elapsed); }
+function showExpired() {
+  stopped = true;
+  document.getElementById('waiting').style.display = 'none';
+  document.getElementById('entries').innerHTML = '';
+  document.getElementById('countdown').style.display = 'none';
+  document.getElementById('expired').style.display = 'block';
+}
+function paintCountdown() {
+  const el = document.getElementById('countdown-val');
+  el.textContent = fmt(Math.max(0, secondsLeft));
+  el.style.color = secondsLeft <= 60 ? 'var(--danger)' : 'var(--green-dark)';
+}
+function tick() {
+  if (stopped) return;
+  elapsed += 1;
+  document.getElementById('elapsed').textContent = '募集開始から ' + fmt(elapsed);
+  if (secondsLeft > 0) { secondsLeft -= 1; paintCountdown(); }
+  else { showExpired(); poll(); }
+}
 function render(data) {
   if (typeof data.elapsed_seconds === 'number') {
     elapsed = data.elapsed_seconds;
     document.getElementById('elapsed').textContent = '募集開始から ' + fmt(elapsed);
   }
+  if (typeof data.seconds_left === 'number') { secondsLeft = data.seconds_left; paintCountdown(); }
   if (data.status === 'confirmed' || data.status === 'in_progress' || data.status === 'completed') {
     location.href = "{{ url_for('customer.detail', request_id=req.id) }}"; return;
   }
   if (data.status === 'cancelled') { location.href = "{{ url_for('customer.home') }}"; return; }
+  if (data.status === 'expired') { showExpired(); return; }
   const box = document.getElementById('entries');
   const entries = data.entries.filter((e) => e.status === 'offered');
   document.getElementById('waiting').style.display = entries.length ? 'none' : 'block';
@@ -68,6 +104,8 @@ function poll() {
   fetch("{{ url_for('customer.entries_json', request_id=req.id) }}")
     .then((r) => r.json()).then(render).catch(() => {});
 }
+paintCountdown();
+if (secondsLeft <= 0) showExpired();
 poll(); setInterval(poll, 5000); setInterval(tick, 1000);
 </script>
 {% endblock %}

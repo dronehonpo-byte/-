@@ -7,7 +7,7 @@
 from __future__ import annotations
 
 import enum
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from werkzeug.security import check_password_hash, generate_password_hash
 
@@ -26,6 +26,7 @@ class RequestStatus(str, enum.Enum):
     IN_PROGRESS = "in_progress"    # 対応中
     COMPLETED = "completed"        # 完了
     CANCELLED = "cancelled"        # キャンセル
+    EXPIRED = "expired"            # 時間切れ（自動締め切り）
 
     @property
     def label(self) -> str:
@@ -36,6 +37,7 @@ class RequestStatus(str, enum.Enum):
             "in_progress": "対応中",
             "completed": "完了",
             "cancelled": "キャンセル",
+            "expired": "時間切れ",
         }[self.value]
 
     @property
@@ -45,8 +47,12 @@ class RequestStatus(str, enum.Enum):
 
     @property
     def is_active(self) -> bool:
-        """進行中（完了/キャンセルでない）か."""
-        return self not in (RequestStatus.COMPLETED, RequestStatus.CANCELLED)
+        """進行中（完了/キャンセル/時間切れでない）か."""
+        return self not in (
+            RequestStatus.COMPLETED,
+            RequestStatus.CANCELLED,
+            RequestStatus.EXPIRED,
+        )
 
 
 class EntryStatus(str, enum.Enum):
@@ -215,6 +221,9 @@ class Request(db.Model):
     )
     confirmed_entry = db.relationship("Entry", foreign_keys=[confirmed_entry_id], post_update=True)
 
+    # 募集の自動締め切り（受付からの猶予）
+    RECRUIT_TTL_SECONDS = 600  # 10分
+
     @property
     def time_label(self) -> str:
         if self.asap:
@@ -222,6 +231,23 @@ class Request(db.Model):
         if self.scheduled_time:
             return self.scheduled_time.strftime("%m/%d %H:%M")
         return "時刻指定"
+
+    @property
+    def deadline_at(self) -> datetime:
+        """募集の締め切り時刻（受付 + 猶予）."""
+        return self.created_at + timedelta(seconds=self.RECRUIT_TTL_SECONDS)
+
+    @property
+    def seconds_left(self) -> int:
+        """締め切りまでの残り秒（募集中以外は0）."""
+        if not self.status.is_open:
+            return 0
+        return max(0, int((self.deadline_at - datetime.utcnow()).total_seconds()))
+
+    @property
+    def is_time_expired(self) -> bool:
+        """募集中だが締め切り時刻を過ぎているか."""
+        return self.status.is_open and datetime.utcnow() >= self.deadline_at
 
 
 class Entry(db.Model):
