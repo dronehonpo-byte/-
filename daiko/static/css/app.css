@@ -173,3 +173,19 @@ hr.sep { border: none; border-top: 1px solid var(--line); margin: 18px 0; }
   color: var(--green-dark); appearance: none; -webkit-appearance: none; box-shadow: var(--shadow-sm); }
 .dial-select:focus { outline: none; border-color: var(--green); box-shadow: 0 0 0 3px var(--ring); }
 .dial-colon { font-size: 30px; font-weight: 900; color: var(--green-dark); }
+
+/* ── お支払い方法バッジ ── */
+.pay-badge { display: inline-flex; align-items: center; justify-content: center; min-width: 30px; height: 22px;
+  padding: 0 7px; border-radius: 6px; font-size: 11px; font-weight: 800; letter-spacing: .01em; color: #fff;
+  line-height: 1; vertical-align: middle; }
+.pay-badges { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; }
+
+/* 選択グリッド（業者登録の料金案内） */
+.pay-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 6px; }
+.pay-opt { position: relative; display: flex; flex-direction: column; align-items: center; gap: 6px;
+  padding: 12px 6px; border: 1.5px solid var(--line); border-radius: 14px; background: #fff; cursor: pointer;
+  text-align: center; transition: border-color .12s ease, background .12s ease, box-shadow .12s ease; }
+.pay-opt input { position: absolute; opacity: 0; pointer-events: none; }
+.pay-opt .pay-label { font-size: 12px; font-weight: 800; color: var(--ink-2); line-height: 1.2; }
+.pay-opt:has(input:checked) { border-color: var(--green); background: var(--green-bg); box-shadow: 0 0 0 2px var(--ring); }
+.pay-opt:has(input:checked)::after { content: "✓"; position: absolute; top: 5px; right: 7px; color: var(--green-dark); font-weight: 900; font-size: 13px; }

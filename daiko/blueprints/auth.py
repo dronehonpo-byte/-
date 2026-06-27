@@ -24,7 +24,14 @@ from ..auth import (
     logout,
 )
 from ..extensions import db
-from ..models import Admin, Customer, Driver, Vendor, VendorStatus
+from ..models import (
+    PAYMENT_METHOD_KEYS,
+    Admin,
+    Customer,
+    Driver,
+    Vendor,
+    VendorStatus,
+)
 from ..services import sms
 from ..services.notifications import notify_admins
 
@@ -107,6 +114,7 @@ def vendor_register():
         driver_name = form.get("driver_name", "").strip()
         driver_phone = sms.normalize_phone(form.get("driver_phone", ""))
         password = form.get("password", "")
+        payment_methods = [k for k in form.getlist("payment_methods") if k in PAYMENT_METHOD_KEYS]
 
         errors = []
         if not vendor_name:
@@ -138,7 +146,9 @@ def vendor_register():
         if errors:
             for e in errors:
                 flash(e, "danger")
-            return render_template("auth/vendor_register.html", form=form)
+            return render_template(
+                "auth/vendor_register.html", form=form, selected_payments=set(payment_methods)
+            )
 
         vendor = Vendor(
             name=vendor_name,
@@ -146,6 +156,7 @@ def vendor_register():
             email=form.get("email", "").strip() or None,
             cert_filename=cert_filename,
             cancellation_policy=form.get("cancellation_policy", "").strip() or None,
+            payment_methods=",".join(payment_methods) or None,
             status=VendorStatus.PENDING,
         )
         db.session.add(vendor)
@@ -160,7 +171,7 @@ def vendor_register():
         flash("業者登録を申請しました。管理者の承認後にご利用いただけます。", "success")
         return redirect(url_for("auth.driver_login"))
 
-    return render_template("auth/vendor_register.html", form={})
+    return render_template("auth/vendor_register.html", form={}, selected_payments=set())
 
 
 # ─────────────────────────────────────────────

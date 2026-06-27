@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% import "_payment.html" as pay with context %}
 {% block title %}依頼の詳細｜{{ service_name }}{% endblock %}
 {% block head %}
 {% if req.status in (RequestStatus.CONFIRMED, RequestStatus.IN_PROGRESS) %}
@@ -20,6 +21,10 @@
     </div>
     <div class="price" style="font-size:22px;font-weight:800;color:var(--orange-d)">{{ e.price | yen }}</div>
   </div>
+  {% if e.vendor.payment_method_list %}
+  <div class="small muted" style="margin-top:8px">お支払い方法</div>
+  {{ pay.badges(e.vendor.payment_method_list) }}
+  {% endif %}
   <hr class="sep">
   <a class="btn btn-green btn-block" href="tel:{{ e.driver.phone }}">📞 ドライバーに電話する（{{ e.driver.phone }}）</a>
   <p class="hint">料金は現地でドライバーと精算してください。{% if e.cancellation_fee %}／ キャンセル料: {{ e.cancellation_fee }}{% endif %}</p>

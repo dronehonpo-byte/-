@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% import "_payment.html" as pay with context %}
 {% block title %}業者登録｜{{ service_name }}{% endblock %}
 {% block content %}
 <h2 class="page-title">代行業者の登録申請</h2>
@@ -17,6 +18,10 @@
     <input type="file" name="cert" accept=".pdf,.png,.jpg,.jpeg,.webp" required>
     <label>キャンセル料・料金に関する案内（任意）</label>
     <textarea name="cancellation_policy" placeholder="例：確定後のキャンセルは1,000円を申し受けます">{{ form.cancellation_policy or '' }}</textarea>
+
+    <label>対応するお支払い方法（任意・複数選択可）</label>
+    <p class="hint" style="margin-top:0">選んだ方法はアイコンでお客様に表示されます（料金案内）。</p>
+    {{ pay.selector(selected_payments) }}
 
     <hr class="sep">
     <h3>代表ドライバー（ログイン用）</h3>

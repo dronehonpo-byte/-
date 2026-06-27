@@ -60,7 +60,13 @@ def create_app(config_class: type | object = Config) -> Flask:
 
     # テンプレートグローバル
     from .auth import current_admin, current_customer, current_driver
-    from .models import EntryStatus, RequestStatus, VendorStatus
+    from .models import (
+        PAYMENT_METHODS,
+        PAYMENT_METHODS_BY_KEY,
+        EntryStatus,
+        RequestStatus,
+        VendorStatus,
+    )
 
     @app.context_processor
     def inject_globals():
@@ -68,6 +74,8 @@ def create_app(config_class: type | object = Config) -> Flask:
             "RequestStatus": RequestStatus,
             "EntryStatus": EntryStatus,
             "VendorStatus": VendorStatus,
+            "PAYMENT_METHODS": PAYMENT_METHODS,
+            "PAYMENT_METHODS_BY_KEY": PAYMENT_METHODS_BY_KEY,
             "service_name": app.config["SERVICE_NAME"],
             "area": app.config["AREA"],
             "operator_name": app.config["OPERATOR_NAME"],

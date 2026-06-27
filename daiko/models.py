@@ -105,6 +105,26 @@ class Customer(db.Model):
     requests = db.relationship("Request", back_populates="customer", lazy="dynamic")
 
 
+# 対応お支払い方法の選択肢（料金案内で業者が選ぶ・アイコンバッジで表示）
+PAYMENT_METHODS = [
+    {"key": "cash",       "label": "現金",          "short": "¥",     "bg": "#3b7a57"},
+    {"key": "visa",       "label": "VISA",          "short": "VISA",  "bg": "#1a1f71"},
+    {"key": "master",     "label": "Mastercard",    "short": "MC",    "bg": "#1a1a1a"},
+    {"key": "jcb",        "label": "JCB",           "short": "JCB",   "bg": "#0b4ea2"},
+    {"key": "amex",       "label": "American Express", "short": "AMEX", "bg": "#2e77bb"},
+    {"key": "diners",     "label": "Diners Club",   "short": "DC",    "bg": "#0079be"},
+    {"key": "ic",         "label": "交通系IC",       "short": "IC",    "bg": "#00a040"},
+    {"key": "id",         "label": "iD",            "short": "iD",    "bg": "#ff6a00"},
+    {"key": "quicpay",    "label": "QUICPay",       "short": "QP",    "bg": "#e6007e"},
+    {"key": "paypay",     "label": "PayPay",        "short": "Pay",   "bg": "#ff0033"},
+    {"key": "dpay",       "label": "d払い",          "short": "d",     "bg": "#cc0000"},
+    {"key": "aupay",      "label": "au PAY",        "short": "au",    "bg": "#eb5505"},
+    {"key": "rakutenpay", "label": "楽天ペイ",        "short": "R",     "bg": "#bf0000"},
+]
+PAYMENT_METHODS_BY_KEY = {m["key"]: m for m in PAYMENT_METHODS}
+PAYMENT_METHOD_KEYS = {m["key"] for m in PAYMENT_METHODS}
+
+
 class Vendor(db.Model):
     """業者（事業者）— 公安委員会認定を受けた代行業者. 承認の単位."""
 
@@ -118,6 +138,8 @@ class Vendor(db.Model):
     status = db.Column(db.Enum(VendorStatus), default=VendorStatus.PENDING, nullable=False)
     # キャンセル料・料金トラブル時の連絡など、業者ごとの料金ポリシー（自由記述）
     cancellation_policy = db.Column(db.Text)
+    # 対応お支払い方法（キーのカンマ区切り。例: "cash,visa,paypay"）
+    payment_methods = db.Column(db.Text)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
     drivers = db.relationship("Driver", back_populates="vendor", lazy="dynamic")
@@ -125,6 +147,12 @@ class Vendor(db.Model):
     @property
     def is_active(self) -> bool:
         return self.status == VendorStatus.APPROVED
+
+    @property
+    def payment_method_list(self) -> list[str]:
+        """対応お支払い方法のキー一覧（カタログ順）."""
+        keys = {k for k in (self.payment_methods or "").split(",") if k}
+        return [m["key"] for m in PAYMENT_METHODS if m["key"] in keys]
 
 
 class Driver(db.Model):

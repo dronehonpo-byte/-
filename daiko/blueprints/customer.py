@@ -116,6 +116,7 @@ def entries_json(request_id: int):
                     "price": e.price,
                     "eta_minutes": e.eta_minutes,
                     "cancellation_fee": e.cancellation_fee,
+                    "payment_methods": e.vendor.payment_method_list,
                     "status": e.status.value,
                 }
                 for e in entries

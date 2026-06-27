@@ -44,6 +44,13 @@
 {% block scripts %}
 <script>
 const reqId = {{ req.id }};
+const PAY = {{ PAYMENT_METHODS_BY_KEY | tojson }};
+function payBadges(keys) {
+  if (!keys || !keys.length) return '';
+  const items = keys.map((k) => PAY[k]).filter(Boolean)
+    .map((m) => `<span class="pay-badge" style="background:${m.bg}" title="${m.label}">${m.short}</span>`).join('');
+  return `<div class="pay-badges" style="margin-top:8px">${items}</div>`;
+}
 function selectEntry(id, vendor, price) {
   if (!confirm(vendor + ' / ' + price.toLocaleString() + '円 で確定しますか？\n確定後は連絡先が表示されます。')) return;
   document.getElementById('entry_id').value = id;
@@ -96,6 +103,7 @@ function render(data) {
         </div>
         <div class="price">${e.price.toLocaleString()}<span style="font-size:13px">円</span></div>
       </div>
+      ${payBadges(e.payment_methods)}
       <button class="btn btn-green btn-block" style="margin-top:10px"
         onclick="selectEntry(${e.id}, '${e.vendor_name.replace(/'/g, '')}', ${e.price})">このドライバーに決める</button>
     </div>`).join('');

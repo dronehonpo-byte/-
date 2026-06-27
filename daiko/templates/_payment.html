@@ -1,0 +1,26 @@
+{# お支払い方法バッジ／選択グリッドの共通マクロ #}
+
+{% macro badge(key) %}
+  {%- set m = PAYMENT_METHODS_BY_KEY.get(key) -%}
+  {%- if m -%}<span class="pay-badge" style="background:{{ m.bg }}" title="{{ m.label }}">{{ m.short }}</span>{%- endif -%}
+{% endmacro %}
+
+{% macro badges(keys) %}
+  {%- if keys -%}
+  <span class="pay-badges">
+    {%- for k in keys %}{{ badge(k) }}{% endfor -%}
+  </span>
+  {%- endif -%}
+{% endmacro %}
+
+{% macro selector(selected) %}
+  <div class="pay-grid">
+    {% for m in PAYMENT_METHODS %}
+    <label class="pay-opt">
+      <input type="checkbox" name="payment_methods" value="{{ m.key }}"{% if m.key in selected %} checked{% endif %}>
+      <span class="pay-badge" style="background:{{ m.bg }}">{{ m.short }}</span>
+      <span class="pay-label">{{ m.label }}</span>
+    </label>
+    {% endfor %}
+  </div>
+{% endmacro %}

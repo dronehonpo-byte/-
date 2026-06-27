@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% import "_payment.html" as pay with context %}
 {% block title %}業者・ドライバー｜{{ service_name }}{% endblock %}
 {% block content %}
 <h2 class="page-title">業者・ドライバー一覧</h2>
@@ -13,6 +14,7 @@
       {% if v.cert_filename %}<a class="btn btn-outline small" href="{{ url_for('admin.vendor_cert', vendor_id=v.id) }}" target="_blank">認定書</a>{% endif %}
     </div>
     {% if v.cancellation_policy %}<p class="small muted" style="margin-top:6px">キャンセル料: {{ v.cancellation_policy }}</p>{% endif %}
+    {% if v.payment_method_list %}<div class="small muted" style="margin-top:6px">対応支払い: {{ pay.badges(v.payment_method_list) }}</div>{% endif %}
     <div class="small" style="margin-top:8px">所属ドライバー:
       {% for d in v.drivers %}<span class="chip chip-info">{{ d.name }}（{{ d.phone }}）</span> {% else %}<span class="muted">なし</span>{% endfor %}
     </div>

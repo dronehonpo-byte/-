@@ -37,9 +37,11 @@ def ensure_seed(app, *, demo: bool = True) -> None:
             db.session.commit()
 
         emp = _ensure_vendor("エンペラー代行", "090-2496-3656", "090-2496-3656",
-                             "確定後のキャンセルは1,500円")
+                             "確定後のキャンセルは1,500円",
+                             payment_methods="cash,visa,master,jcb,ic,paypay")
         sak = _ensure_vendor("さくら運転代行", "028-600-1234", "090-3333-4444",
-                             "確定後30分以内は1,000円")
+                             "確定後30分以内は1,000円",
+                             payment_methods="cash,paypay,dpay")
 
         if not demo:
             return
@@ -76,7 +78,8 @@ def ensure_seed(app, *, demo: bool = True) -> None:
                                    cancellation_fee="確定後30分以内は1,000円")
 
 
-def _ensure_vendor(name: str, vendor_phone: str, driver_phone: str, policy: str) -> Vendor:
+def _ensure_vendor(name: str, vendor_phone: str, driver_phone: str, policy: str,
+                   payment_methods: str = "") -> Vendor:
     vendor = Vendor.query.filter_by(name=name).first()
     if vendor is not None:
         return vendor
@@ -85,6 +88,7 @@ def _ensure_vendor(name: str, vendor_phone: str, driver_phone: str, policy: str)
         phone=normalize_phone(vendor_phone),
         status=VendorStatus.APPROVED,
         cancellation_policy=policy,
+        payment_methods=payment_methods or None,
     )
     db.session.add(vendor)
     db.session.flush()
