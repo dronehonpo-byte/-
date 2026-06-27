@@ -52,11 +52,19 @@
     <h3>③ 到着希望時間</h3>
     <div class="seg" id="time-seg">
       <label><input type="radio" name="asap" value="1" checked><span>今すぐ</span></label>
-      <label><input type="radio" name="asap" value="0"><span>時刻指定</span></label>
+      <label><input type="radio" name="asap" value="0"><span>日時を指定</span></label>
     </div>
     <div id="sched-wrap" style="display:none">
-      <label>希望時刻</label>
-      <input type="datetime-local" name="scheduled_time">
+      <label>日付（1週間先まで）</label>
+      <div id="date-chips" class="date-chips"></div>
+      <label>時刻</label>
+      <div class="time-dial">
+        <select id="sel-hour" class="dial-select" aria-label="時"></select>
+        <span class="dial-colon">:</span>
+        <select id="sel-min" class="dial-select" aria-label="分"></select>
+      </div>
+      <p class="hint center" id="sched-summary" style="font-size:14px;font-weight:700;color:var(--green-dark)"></p>
+      <input type="hidden" name="scheduled_time" id="scheduled_time">
     </div>
     <label>ドライバーへの連絡（任意）</label>
     <textarea name="note" placeholder="例：店の前で待っています"></textarea>
@@ -84,10 +92,63 @@ const picker = DaikoMap.picker('map', cfg, setVal);
 document.getElementById('btn-locate').onclick = () => { picker.setMode('origin'); picker.locate(); };
 document.getElementById('search-origin').addEventListener('change', (e) => picker.search(e.target.value, 'origin'));
 document.getElementById('search-dest').addEventListener('change', (e) => picker.search(e.target.value, 'dest'));
-// 時刻指定の表示切替
+</script>
+<script>
+// 時刻指定の表示切替（地図スクリプトとは独立して動作させる）
 document.querySelectorAll('input[name=asap]').forEach((el) => el.addEventListener('change', () => {
   document.getElementById('sched-wrap').style.display =
     document.querySelector('input[name=asap]:checked').value === '0' ? 'block' : 'none';
 }));
+
+// ── 日時ピッカー（7日分の日付チップ ＋ 大きな時/分ダイヤル） ──
+(function () {
+  const DOW = ['日', '月', '火', '水', '木', '金', '土'];
+  const pad = (n) => String(n).padStart(2, '0');
+  const chips = document.getElementById('date-chips');
+  const selH = document.getElementById('sel-hour');
+  const selM = document.getElementById('sel-min');
+  const hidden = document.getElementById('scheduled_time');
+  const summary = document.getElementById('sched-summary');
+  let selectedDate = null; // 'YYYY-MM-DD'
+
+  // 日付チップ（今日から7日分）
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(today); d.setDate(today.getDate() + i);
+    const ymd = d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+    const top = i === 0 ? '今日' : i === 1 ? '明日' : DOW[d.getDay()] + '曜';
+    const chip = document.createElement('button');
+    chip.type = 'button';
+    chip.className = 'date-chip' + (i === 0 ? ' active' : '');
+    chip.dataset.date = ymd;
+    chip.innerHTML = `<span class="dow">${top}</span><span class="day">${d.getMonth() + 1}/${d.getDate()}</span>`;
+    chip.addEventListener('click', () => {
+      chips.querySelectorAll('.date-chip').forEach((c) => c.classList.remove('active'));
+      chip.classList.add('active');
+      selectedDate = ymd;
+      sync();
+    });
+    chips.appendChild(chip);
+    if (i === 0) selectedDate = ymd;
+  }
+
+  // 時（0〜23）・分（5分刻み）
+  for (let h = 0; h < 24; h++) selH.add(new Option(pad(h) + ' 時', pad(h)));
+  for (let m = 0; m < 60; m += 5) selM.add(new Option(pad(m) + ' 分', pad(m)));
+  // 既定：次の30分（5分単位に丸め）
+  const now = new Date();
+  let dh = now.getHours(), dm = Math.ceil((now.getMinutes() + 30) / 5) * 5;
+  if (dm >= 60) { dm -= 60; dh = (dh + 1) % 24; }
+  selH.value = pad(dh); selM.value = pad(dm);
+
+  function sync() {
+    hidden.value = selectedDate + 'T' + selH.value + ':' + selM.value;
+    const d = new Date(selectedDate + 'T00:00');
+    summary.textContent = `${d.getMonth() + 1}月${d.getDate()}日(${DOW[d.getDay()]}) ${selH.value}:${selM.value} に到着希望`;
+  }
+  selH.addEventListener('change', sync);
+  selM.addEventListener('change', sync);
+  sync();
+})();
 </script>
 {% endblock %}

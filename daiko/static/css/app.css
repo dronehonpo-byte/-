@@ -156,3 +156,20 @@ th { color: var(--muted); font-weight: 700; white-space: nowrap; font-size: 12px
 hr.sep { border: none; border-top: 1px solid var(--line); margin: 18px 0; }
 .list-item { display: block; padding: 15px; border: 1px solid var(--line); border-radius: 14px; margin-bottom: 8px; background: #fff; text-decoration: none; color: var(--ink); box-shadow: var(--shadow-sm); transition: border-color .12s ease; }
 .list-item:hover { border-color: var(--green); }
+
+/* ── 日時ピッカー（日付チップ＋時刻ダイヤル） ── */
+.date-chips { display: flex; gap: 8px; overflow-x: auto; padding: 4px 2px 10px; -webkit-overflow-scrolling: touch; scrollbar-width: thin; }
+.date-chip { flex: 0 0 auto; min-width: 66px; text-align: center; padding: 10px 8px; border: 1.5px solid var(--line);
+  border-radius: 14px; background: #fff; cursor: pointer; transition: background .12s ease, color .12s ease, border-color .12s ease; }
+.date-chip .dow { display: block; font-size: 11px; font-weight: 700; color: var(--muted); }
+.date-chip .day { display: block; font-size: 19px; font-weight: 900; letter-spacing: -.03em; color: var(--ink-2); margin-top: 2px; }
+.date-chip.active { background: var(--green); border-color: var(--green); }
+.date-chip.active .dow { color: rgba(255,255,255,.88); }
+.date-chip.active .day { color: #fff; }
+
+.time-dial { display: flex; align-items: center; justify-content: center; gap: 10px; margin: 6px 0 2px; }
+.dial-select { font-size: 28px; font-weight: 900; letter-spacing: -.02em; text-align: center; text-align-last: center;
+  padding: 14px 16px; min-width: 116px; border: 1.5px solid var(--line); border-radius: 16px; background: #fff;
+  color: var(--green-dark); appearance: none; -webkit-appearance: none; box-shadow: var(--shadow-sm); }
+.dial-select:focus { outline: none; border-color: var(--green); box-shadow: 0 0 0 3px var(--ring); }
+.dial-colon { font-size: 30px; font-weight: 900; color: var(--green-dark); }
