@@ -98,7 +98,7 @@ def entries_json(request_id: int):
     matching.expire_if_stale(req)  # 10分経過なら自動で時間切れに
     entries = (
         req.entries.filter(Entry.status.in_([EntryStatus.OFFERED, EntryStatus.ACCEPTED]))
-        .order_by(Entry.price.asc())
+        .order_by(Entry.created_at.asc())  # エントリーした順（早い順）
         .all()
     )
     return jsonify(

@@ -91,11 +91,16 @@ function render(data) {
   if (data.status === 'cancelled') { location.href = "{{ url_for('customer.home') }}"; return; }
   if (data.status === 'expired') { showExpired(); return; }
   const box = document.getElementById('entries');
-  const entries = data.entries.filter((e) => e.status === 'offered');
+  const entries = data.entries.filter((e) => e.status === 'offered');  // エントリー順（早い順）
   document.getElementById('waiting').style.display = entries.length ? 'none' : 'block';
-  box.innerHTML = entries.map((e, i) => `
-    <div class="entry ${i === 0 ? 'best' : ''}">
-      ${i === 0 ? '<span class="chip chip-orange">最安</span>' : ''}
+  const minPrice = entries.length ? Math.min(...entries.map((e) => e.price)) : null;
+  let cheapestShown = false;
+  box.innerHTML = entries.map((e) => {
+    const isCheapest = e.price === minPrice && !cheapestShown;
+    if (isCheapest) cheapestShown = true;
+    return `
+    <div class="entry ${isCheapest ? 'best' : ''}">
+      ${isCheapest ? '<span class="chip chip-orange">最安</span>' : ''}
       <div class="flex">
         <div><div class="vendor">${e.vendor_name}</div>
           <div class="small muted">到着 約 ${e.eta_minutes} 分</div>
@@ -106,7 +111,8 @@ function render(data) {
       ${payBadges(e.payment_methods)}
       <button class="btn btn-green btn-block" style="margin-top:10px"
         onclick="selectEntry(${e.id}, '${e.vendor_name.replace(/'/g, '')}', ${e.price})">このドライバーに決める</button>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
 function poll() {
   fetch("{{ url_for('customer.entries_json', request_id=req.id) }}")
