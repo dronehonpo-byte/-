@@ -1,6 +1,6 @@
 /* 代行の窓口 — Service Worker（PWA: オフラインで起動できる最小キャッシュ） */
-const CACHE = 'daiko-v1';
-const ASSETS = ['/', '/static/css/app.css', '/static/img/logo.png', '/static/img/icon-192.png'];
+const CACHE = 'daiko-v2';
+const ASSETS = ['/', '/static/css/app.css', '/static/img/icon-192.png', '/static/img/icon-512.png'];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(ASSETS)).then(() => self.skipWaiting()));

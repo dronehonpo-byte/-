@@ -7,7 +7,7 @@
   <meta name="theme-color" content="#ffffff">
   <link rel="manifest" href="/manifest.webmanifest">
   <link rel="apple-touch-icon" href="/static/img/icon-192.png">
-  <link rel="icon" href="/static/img/logo-mark.svg" type="image/svg+xml">
+  <link rel="icon" href="/static/img/icon-192.png">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
   {% block head %}{% endblock %}
 </head>
@@ -15,7 +15,7 @@
   {% block appbar %}
   <div class="appbar">
     <a class="brand" href="{{ url_for('main.index') }}">
-      <img src="{{ url_for('static', filename='img/logo-mark.svg') }}" alt="">
+      <img src="{{ url_for('static', filename='img/icon-192.png') }}" alt="">
       <span>{{ service_name }}</span>
     </a>
     <span class="spacer"></span>
