@@ -127,6 +127,20 @@
     </div>
 
     <div class="err hidden" id="uploadErr"></div>
+
+    <!-- APIキー設定（ファイルに直書きしていない場合のみ表示） -->
+    <div class="panel hidden" id="keyPanel" style="margin-top:16px;">
+      <h3 style="margin:0 0 6px;">🔑 APIキー設定</h3>
+      <p style="font-size:0.8rem;color:#64748b;margin:0 0 8px;">
+        Gemini APIキー（<code>AIza…</code> 形式）を入力。この端末のブラウザにのみ保存され、外部やGitHubには送られません。
+      </p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <input type="password" id="keyInput" placeholder="AIzaSy..." style="flex:1;min-width:200px;padding:10px;border:1px solid #cbd5e1;border-radius:8px;font-size:0.9rem;" />
+        <button class="btn primary" id="keySaveBtn" style="padding:10px 18px;">保存</button>
+      </div>
+      <div id="keyStatus" style="font-size:0.8rem;margin-top:6px;"></div>
+    </div>
+
     <button class="btn gray" id="howtoBtn" style="margin-top:16px;width:100%;">使い方を見る</button>
   </div>
 
@@ -221,6 +235,12 @@
   const GEMINI_API_KEY = "YOUR_GEMINI_API_KEY_HERE";
   const GEMINI_MODEL = "gemini-2.0-flash";
   const MAX_EDGE = 1600; // 送信画像の長辺上限(px)
+
+  // 有効なAPIキーを取得：①ファイル直書き ②ブラウザ保存(localStorage) の順
+  function getApiKey() {
+    if (GEMINI_API_KEY && GEMINI_API_KEY !== "YOUR_GEMINI_API_KEY_HERE") return GEMINI_API_KEY;
+    return (localStorage.getItem("gemini-api-key") || "").trim();
+  }
 
   // ---------- 定数 ----------
   const STRING_COLORS = {
@@ -351,11 +371,12 @@
   }
 
   async function callGemini(dataUrl, w, h) {
-    if (!GEMINI_API_KEY || GEMINI_API_KEY === "YOUR_GEMINI_API_KEY_HERE") {
-      throw new Error("APIキーが未設定です。index.html の GEMINI_API_KEY にキーを設定してください。");
+    const apiKey = getApiKey();
+    if (!apiKey) {
+      throw new Error("APIキーが未設定です。下の「APIキー設定」にキーを入力するか、index.html の GEMINI_API_KEY に直書きしてください。");
     }
     const base64 = dataUrl.split(",")[1];
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${apiKey}`;
     const res = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -822,6 +843,30 @@
   $("bpmSlider").oninput = (e) => { $("bpmLabel").textContent = e.target.value; };
   $("pngBtn").onclick = savePNG;
   $("pdfBtn").onclick = savePDF;
+
+  // APIキー設定UI（ファイル直書きが無いときだけ表示）
+  function refreshKeyStatus() {
+    const embedded = GEMINI_API_KEY && GEMINI_API_KEY !== "YOUR_GEMINI_API_KEY_HERE";
+    if (embedded) { $("keyPanel").classList.add("hidden"); return; }
+    $("keyPanel").classList.remove("hidden");
+    const saved = (localStorage.getItem("gemini-api-key") || "").trim();
+    const st = $("keyStatus");
+    if (saved) {
+      st.textContent = "✅ 保存済み（末尾 …" + saved.slice(-4) + "）";
+      st.style.color = "#059669";
+    } else {
+      st.textContent = "未設定です。キーを入力して保存してください。";
+      st.style.color = "#b45309";
+    }
+  }
+  $("keySaveBtn").onclick = () => {
+    const v = $("keyInput").value.trim();
+    if (!v) { localStorage.removeItem("gemini-api-key"); }
+    else { localStorage.setItem("gemini-api-key", v); }
+    $("keyInput").value = "";
+    refreshKeyStatus();
+  };
+  refreshKeyStatus();
 
   // チュートリアル
   $("howtoBtn").onclick = () => $("tutorial").classList.remove("hidden");
