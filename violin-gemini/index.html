@@ -132,10 +132,10 @@
     <div class="panel hidden" id="keyPanel" style="margin-top:16px;">
       <h3 style="margin:0 0 6px;">🔑 APIキー設定</h3>
       <p style="font-size:0.8rem;color:#64748b;margin:0 0 8px;">
-        Gemini APIキー（<code>AIza…</code> 形式）を入力。この端末のブラウザにのみ保存され、外部やGitHubには送られません。
+        Gemini APIキー（<code>AQ.…</code> または <code>AIza…</code>）を入力。この端末のブラウザにのみ保存され、Google APIの送信先以外（GitHub等）には送られません。
       </p>
       <div style="display:flex;gap:8px;flex-wrap:wrap;">
-        <input type="password" id="keyInput" placeholder="AIzaSy..." style="flex:1;min-width:200px;padding:10px;border:1px solid #cbd5e1;border-radius:8px;font-size:0.9rem;" />
+        <input type="password" id="keyInput" placeholder="APIキーを貼り付け" style="flex:1;min-width:200px;padding:10px;border:1px solid #cbd5e1;border-radius:8px;font-size:0.9rem;" />
         <button class="btn primary" id="keySaveBtn" style="padding:10px 18px;">保存</button>
       </div>
       <div id="keyStatus" style="font-size:0.8rem;margin-top:6px;"></div>
@@ -233,7 +233,8 @@
   //  取得: https://aistudio.google.com/app/apikey （無料枠）
   // =================================================================
   const GEMINI_API_KEY = "YOUR_GEMINI_API_KEY_HERE";
-  const GEMINI_MODEL = "gemini-2.0-flash";
+  // 最新のFlash（画像対応）。固定したい場合は "gemini-2.0-flash" などに変更可
+  const GEMINI_MODEL = "gemini-flash-latest";
   const MAX_EDGE = 1600; // 送信画像の長辺上限(px)
 
   // 有効なAPIキーを取得：①ファイル直書き ②ブラウザ保存(localStorage) の順
@@ -376,10 +377,10 @@
       throw new Error("APIキーが未設定です。下の「APIキー設定」にキーを入力するか、index.html の GEMINI_API_KEY に直書きしてください。");
     }
     const base64 = dataUrl.split(",")[1];
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${apiKey}`;
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
     const res = await fetch(url, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", "X-goog-api-key": apiKey },
       body: JSON.stringify({
         contents: [{ parts: [
           { inline_data: { mime_type: "image/jpeg", data: base64 } },
@@ -396,7 +397,8 @@
       throw new Error("解析に失敗しました（" + res.status + "）。" + detail);
     }
     const data = await res.json();
-    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+    const parts = data?.candidates?.[0]?.content?.parts || [];
+    const text = parts.find((p) => typeof p.text === "string")?.text;
     if (!text) throw new Error("解析結果を取得できませんでした。もう一度お試しください。");
     let parsed;
     try { parsed = JSON.parse(extractJson(text)); }
