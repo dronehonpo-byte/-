@@ -1,0 +1,111 @@
+<!doctype html><html lang="ja"><head><meta charset="utf-8">
+<style>
+  @page { size: A4; margin: 14mm 12mm; }
+  * { box-sizing: border-box; }
+  body { font-family: "Hiragino Sans","Noto Sans JP","Yu Gothic",Meiryo,sans-serif; color:#16241c; font-size:11px; line-height:1.45; margin:0; }
+  h1 { font-size:20px; color:#0a5e34; margin:0 0 2px; letter-spacing:-.02em; }
+  .sub { color:#5f7367; font-size:11px; margin:0 0 10px; }
+  .meta { display:flex; gap:18px; font-size:11px; margin:0 0 12px; }
+  .meta b { color:#0a5e34; }
+  .box { border:1px solid #cdddd3; border-radius:8px; padding:8px 10px; background:#f3f9f5; margin:0 0 12px; font-size:10.5px; }
+  h2 { font-size:13px; color:#fff; background:#0e9e57; padding:5px 9px; border-radius:6px; margin:16px 0 6px; }
+  table { width:100%; border-collapse:collapse; }
+  th,td { border:1px solid #cdddd3; padding:5px 6px; vertical-align:top; text-align:left; }
+  th { background:#e6f4ec; color:#0a5e34; font-size:10px; }
+  td.no { width:26px; text-align:center; color:#5f7367; }
+  td.exp { width:34%; }
+  td.res { width:62px; text-align:center; }
+  td.memo { width:90px; }
+  .chk { display:inline-block; width:11px; height:11px; border:1.3px solid #0a5e34; border-radius:3px; vertical-align:middle; }
+  .ok { font-size:10px; }
+  .footer { margin-top:10px; color:#5f7367; font-size:10px; }
+  tr { page-break-inside: avoid; }
+</style></head><body>
+
+<h1>代行の窓口 — テスト項目チェックシート</h1>
+<p class="sub">各項目を実機で確認し、判定欄に ○（OK）/ ×（NG）を記入してください。× の場合はメモに「何が起きたか・端末・時刻」を記録。</p>
+
+<div class="meta">
+  <div><b>テスト日</b> ________________</div>
+  <div><b>担当者</b> ________________</div>
+  <div><b>端末/OS</b> ________________</div>
+  <div><b>回線</b> ________________</div>
+</div>
+
+<div class="box">
+  <b>テスト環境URL・ログイン</b><br>
+  お客様: <u>______________________________/</u> ／ ドライバー: <u>…/driver</u> ／ 管理者: <u>…/staff</u><br>
+  お試し用 — お客様: 09011112222（コードは画面表示）／ ドライバー: 09033334444・demo123 ／ 管理者: admin・(設定したPW)
+</div>
+
+<h2>事前準備</h2>
+<table><tr><th class="no">#</th><th>確認内容</th><th class="exp">期待される結果</th><th class="res">判定</th><th class="memo">メモ</th></tr>
+<tr><td class="no">0-1</td><td>テスト用データと本番データが分かれている（テスト依頼が実ドライバーに飛ばない）</td><td class="exp">テスト環境で実害が出ない</td><td class="res"><span class="chk"></span></td><td></td></tr>
+<tr><td class="no">0-2</td><td>3役（お客様/ドライバー/管理者）でログインできる</td><td class="exp">それぞれログイン成功</td><td class="res"><span class="chk"></span></td><td></td></tr>
+</table>
+
+<h2>A. お客様アプリ（基本フロー）</h2>
+<table><tr><th class="no">#</th><th>確認内容</th><th class="exp">期待される結果</th><th class="res">判定</th><th class="memo">メモ</th></tr>
+<tr><td class="no">A-1</td><td>電話番号→認証コードでログインできる</td><td class="exp">ホームが表示される</td><td class="res"><span class="chk"></span></td><td></td></tr>
+<tr><td class="no">A-2</td><td>地図で出発地・目的地のピンを置ける／検索できる</td><td class="exp">住所が正しく反映</td><td class="res"><span class="chk"></span></td><td></td></tr>
+<tr><td class="no">A-3</td><td>車種・車名（色・ナンバー含む）を入力できる</td><td class="exp">入力内容が保存される</td><td class="res"><span class="chk"></span></td><td></td></tr>
+<tr><td class="no">A-4</td><td>「今すぐ」で依頼を送信できる</td><td class="exp">募集中＝ドライバー待ち画面へ</td><td class="res"><span class="chk"></span></td><td></td></tr>
+<tr><td class="no">A-5</td><td>「日時を指定」で日付チップ＋時刻ダイヤルを選べる</td><td class="exp">指定日時で依頼できる</td><td class="res"><span class="chk"></span></td><td></td></tr>
+<tr><td class="no">A-6</td><td>提示が届くと待機画面に自動表示される（手動更新不要）</td><td class="exp">5秒ごとに自動更新</td><td class="res"><span class="chk"></span></td><td></td></tr>
+<tr><td class="no">A-7</td><td>提示が「エントリー順」で並ぶ／最安に「最安」表示</td><td class="exp">並び順・最安が正しい</td><td class="res"><span class="chk"></span></td><td></td></tr>
+<tr><td class="no">A-8</td><td>各提示に支払い方法アイコンが正しく表示される</td><td class="exp">業者の設定どおり</td><td class="res"><span class="chk"></span></td><td></td></tr>
+<tr><td class="no">A-9</td><td>1名を選んで「確定」できる</td><td class="exp">確定画面＋連絡先表示</td><td class="res"><span class="chk"></span></td><td></td></tr>
+<tr><td class="no">A-10</td><td>確定後「ドライバーに電話」で正しい番号に発信できる</td><td class="exp">担当ドライバーに発信</td><td class="res"><span class="chk"></span></td><td></td></tr>
+<tr><td class="no">A-11</td><td>履歴に過去の依頼が新しい順に表示される</td><td class="exp">全件表示</td><td class="res"><span class="chk"></span></td><td></td></tr>
+</table>
+
+<h2>B. ドライバー・業者アプリ</h2>
+<table><tr><th class="no">#</th><th>確認内容</th><th class="exp">期待される結果</th><th class="res">判定</th><th class="memo">メモ</th></tr>
+<tr><td class="no">B-1</td><td>業者登録（認定書アップロード＋支払い方法選択）を申請できる</td><td class="exp">申請完了・承認待ち</td><td class="res"><span class="chk"></span></td><td></td></tr>
+<tr><td class="no">B-2</td><td>承認済みドライバーでログインできる</td><td class="exp">ドライバー画面表示</td><td class="res"><span class="chk"></span></td><td></td></tr>
+<tr><td class="no">B-3</td><td>近くの募集中依頼が一覧・地図に表示される</td><td class="exp">未確定の依頼が見える</td><td class="res"><span class="chk"></span></td><td></td></tr>
+<tr><td class="no">B-4</td><td>料金・到着時間を入れてエントリーできる</td><td class="exp">お客様側に提示が届く</td><td class="res"><span class="chk"></span></td><td></td></tr>
+<tr><td class="no">B-5</td><td>確定/不成立の通知が届く</td><td class="exp">結果が分かる</td><td class="res"><span class="chk"></span></td><td></td></tr>
+<tr><td class="no">B-6</td><td>確定後、対応開始→完了の操作ができる</td><td class="exp">状態が進む</td><td class="res"><span class="chk"></span></td><td></td></tr>
+<tr><td class="no">B-7</td><td>履歴に自分のエントリーが表示される</td><td class="exp">全件表示</td><td class="res"><span class="chk"></span></td><td></td></tr>
+</table>
+
+<h2>C. 管理者</h2>
+<table><tr><th class="no">#</th><th>確認内容</th><th class="exp">期待される結果</th><th class="res">判定</th><th class="memo">メモ</th></tr>
+<tr><td class="no">C-1</td><td>業者登録申請を確認し、認定書を閲覧できる</td><td class="exp">PDF/画像が開ける</td><td class="res"><span class="chk"></span></td><td></td></tr>
+<tr><td class="no">C-2</td><td>業者を承認／停止できる</td><td class="exp">状態が切り替わる</td><td class="res"><span class="chk"></span></td><td></td></tr>
+<tr><td class="no">C-3</td><td>承認した業者のドライバーがエントリーできるようになる</td><td class="exp">連動して反映</td><td class="res"><span class="chk"></span></td><td></td></tr>
+<tr><td class="no">C-4</td><td>概況・マッチング状況・利用者一覧が確認できる</td><td class="exp">数値・一覧が表示</td><td class="res"><span class="chk"></span></td><td></td></tr>
+</table>
+
+<h2>D. マッチング・異常系（重要）</h2>
+<table><tr><th class="no">#</th><th>確認内容</th><th class="exp">期待される結果</th><th class="res">判定</th><th class="memo">メモ</th></tr>
+<tr><td class="no">D-1</td><td>複数ドライバーが同じ依頼にエントリーできる（人数制限なし）</td><td class="exp">全件が提示に並ぶ</td><td class="res"><span class="chk"></span></td><td></td></tr>
+<tr><td class="no">D-2</td><td>2台でほぼ同時に確定操作 → 1名だけ成立する</td><td class="exp">二重確定しない</td><td class="res"><span class="chk"></span></td><td></td></tr>
+<tr><td class="no">D-3</td><td>確定前にお客様がキャンセルできる</td><td class="exp">募集終了</td><td class="res"><span class="chk"></span></td><td></td></tr>
+<tr><td class="no">D-4</td><td>確定後にキャンセルすると相手方に通知が届く</td><td class="exp">双方に反映</td><td class="res"><span class="chk"></span></td><td></td></tr>
+<tr><td class="no">D-5</td><td>10分放置で自動締切＝時間切れ表示になる</td><td class="exp">カウントダウン→締切</td><td class="res"><span class="chk"></span></td><td></td></tr>
+<tr><td class="no">D-6</td><td>締切後はドライバー一覧から消え、エントリー不可</td><td class="exp">応募できない</td><td class="res"><span class="chk"></span></td><td></td></tr>
+</table>
+
+<h2>E. 実機・環境</h2>
+<table><tr><th class="no">#</th><th>確認内容</th><th class="exp">期待される結果</th><th class="res">判定</th><th class="memo">メモ</th></tr>
+<tr><td class="no">E-1</td><td>現在地の取得が実際の場所と合う（屋外）</td><td class="exp">ピンが正しい</td><td class="res"><span class="chk"></span></td><td></td></tr>
+<tr><td class="no">E-2</td><td>屋内・地下・電波の弱い場所での動作</td><td class="exp">取得可否を記録</td><td class="res"><span class="chk"></span></td><td></td></tr>
+<tr><td class="no">E-3</td><td>通知が遅延なく届く</td><td class="exp">数秒〜十数秒</td><td class="res"><span class="chk"></span></td><td></td></tr>
+<tr><td class="no">E-4</td><td>iPhone（Safari）で一連の操作ができる</td><td class="exp">崩れ・不具合なし</td><td class="res"><span class="chk"></span></td><td></td></tr>
+<tr><td class="no">E-5</td><td>Android（Chrome）で一連の操作ができる</td><td class="exp">崩れ・不具合なし</td><td class="res"><span class="chk"></span></td><td></td></tr>
+<tr><td class="no">E-6</td><td>「ホーム画面に追加」でアイコン表示・起動できる</td><td class="exp">アイコン正常</td><td class="res"><span class="chk"></span></td><td></td></tr>
+<tr><td class="no">E-7</td><td>複数人が同時に使っても落ちない</td><td class="exp">安定動作</td><td class="res"><span class="chk"></span></td><td></td></tr>
+</table>
+
+<h2>F. 表示・文言・デザイン</h2>
+<table><tr><th class="no">#</th><th>確認内容</th><th class="exp">期待される結果</th><th class="res">判定</th><th class="memo">メモ</th></tr>
+<tr><td class="no">F-1</td><td>誤字・分かりにくい文言がない</td><td class="exp">問題なし</td><td class="res"><span class="chk"></span></td><td></td></tr>
+<tr><td class="no">F-2</td><td>金額・時間・住所の表示が正しい</td><td class="exp">ズレなし</td><td class="res"><span class="chk"></span></td><td></td></tr>
+<tr><td class="no">F-3</td><td>運営者・問い合わせ先の表示が正しい</td><td class="exp">正確</td><td class="res"><span class="chk"></span></td><td></td></tr>
+</table>
+
+<p class="footer">判定: ○=OK ／ ×=NG（メモに詳細）。NG項目は別紙またはLINE等で報告し、修正後に再テスト（同番号で再確認）してください。&nbsp;&nbsp;— 代行の窓口 テストチェックシート v1</p>
+
+</body></html>
