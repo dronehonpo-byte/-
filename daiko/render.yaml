@@ -10,6 +10,8 @@ services:
     buildCommand: |
       pip install --upgrade pip
       pip install -r requirements.txt
+    preDeployCommand: |
+      flask --app wsgi init-db          # テーブルを冪等に作成（本番Postgres）
     startCommand: |
       gunicorn -c gunicorn.conf.py wsgi:app
     healthCheckPath: /healthz
@@ -23,10 +25,14 @@ services:
         generateValue: true
       - key: APP_BASE_URL
         sync: false                      # ← デプロイ後に Render の URL/独自ドメインを入れる
+      - key: DAIKO_ADMIN_ID
+        value: admin                     # ← 管理者ログインID（変更可）
+      - key: DAIKO_ADMIN_PASSWORD
+        sync: false                      # ← 本番用の管理者パスワードを設定（必須・推測されにくい値）
       - key: SMS_BACKEND
         value: console                   # ← Twilio 契約後に twilio へ
       - key: DAIKO_OTP_SHOW_IN_RESPONSE
-        value: "true"                    # ← 本番運用開始時は false に
+        value: "true"                    # ← console運用中は true。実SMS化したら false に
       - key: SESSION_COOKIE_SECURE
         value: "true"
       - key: DAIKO_STORAGE_DIR
