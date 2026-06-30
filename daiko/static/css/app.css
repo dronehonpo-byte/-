@@ -50,7 +50,7 @@ a { color: var(--green-dark); }
   color: var(--green-dark);
 }
 .appbar .brand { display: flex; align-items: center; gap: 11px; font-weight: 900; letter-spacing: -.04em; color: var(--green-dark); text-decoration: none; font-size: 21px; }
-.appbar .brand img { width: 36px; height: 36px; }
+.appbar .brand img { width: 42px; height: 42px; border-radius: 9px; }
 .appbar .spacer { flex: 1; }
 .appbar a.iconbtn { color: var(--green-d); text-decoration: none; font-size: 13px; font-weight: 700; position: relative; }
 .appbar a.iconbtn:hover { color: var(--green-dark); }
