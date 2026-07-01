@@ -2,22 +2,23 @@
 {% block title %}マッチング状況｜{{ service_name }}{% endblock %}
 {% block content %}
 <h2 class="page-title">マッチング状況・履歴</h2>
-<div class="card">
-  <table>
-    <tr><th>#</th><th>状態</th><th>区間</th><th>車両</th><th>提示</th><th>確定業者</th><th>日時</th></tr>
-    {% for r in reqs %}
-    <tr>
-      <td>{{ r.id }}</td>
-      <td><span class="chip {% if r.status == RequestStatus.COMPLETED %}chip-green{% elif r.status == RequestStatus.CANCELLED %}chip-gray{% else %}chip-orange{% endif %}">{{ r.status.label }}</span></td>
-      <td class="small">{{ r.origin_label or '—' }}<br>→ {{ r.dest_label or '—' }}</td>
-      <td class="small">{{ r.transmission.value }}/{{ r.handle.label }}</td>
-      <td class="small">{{ r.entries.count() }}件</td>
-      <td class="small">{% if r.confirmed_entry %}{{ r.confirmed_entry.vendor.name }}<br>{{ r.confirmed_entry.price | yen }}{% else %}—{% endif %}</td>
-      <td class="small muted">{{ r.created_at | dt('%m/%d %H:%M') }}</td>
-    </tr>
-    {% else %}<tr><td colspan="7" class="center muted">リクエストはまだありません。</td></tr>{% endfor %}
-  </table>
+{% for r in reqs %}
+<div class="card" style="padding:14px;margin-bottom:10px">
+  <div class="flex">
+    <div><b>#{{ r.id }}</b>&nbsp;
+      <span class="chip {% if r.status == RequestStatus.COMPLETED %}chip-green{% elif r.status == RequestStatus.CANCELLED %}chip-gray{% elif r.status == RequestStatus.EXPIRED %}chip-gray{% else %}chip-orange{% endif %}">{{ r.status.label }}</span>
+    </div>
+    <div class="small muted">{{ r.created_at | dt('%m/%d %H:%M') }}</div>
+  </div>
+  <div style="margin-top:7px;font-weight:700;line-height:1.5">{{ r.origin_label or '—' }} → {{ r.dest_label or '—' }}</div>
+  <div class="small muted" style="margin-top:5px">
+    車両 {{ r.transmission.value }}/{{ r.handle.label }}　・　提示 {{ r.entries.count() }}件　・
+    確定 {% if r.confirmed_entry %}{{ r.confirmed_entry.vendor.name }}（{{ r.confirmed_entry.price | yen }}）{% else %}—{% endif %}
+  </div>
 </div>
+{% else %}
+<div class="card center muted">リクエストはまだありません。</div>
+{% endfor %}
 {% endblock %}
 {% block tabbar %}
 <div class="tabbar">
