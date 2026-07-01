@@ -1,36 +1,8 @@
-# ルート依存パッケージ = 電子契約 Web アプリ (econtract)
-#
-# Vercel 等のゼロコンフィグ Python ビルドはリポジトリ直下の requirements.txt を
-# 参照する。ビルド環境によっては `-r <相対パス>` の include が解決できないため、
-# econtract/requirements.txt の内容をここに直接展開する。
-# ※ econtract/requirements.txt を変更したら、この一覧も同期すること。
-#
-# LINE スクリーンショット監視ツールの依存は requirements-line.txt を参照。
+# LINE スクリーンショット監視ツール 依存パッケージ
+# pip install -r requirements.txt でインストール
 
-# --- Flask core ---
-Flask>=3.0.0
-Flask-Login>=0.6.3
-Flask-SQLAlchemy>=3.1.1
-Flask-WTF>=1.2.1
-Flask-Migrate>=4.0.5
-Werkzeug>=3.0.1
+# D-Bus バインディング（Linux デスクトップ通知の受信に必要）
+dbus-python>=1.3.2
 
-# --- PDF / 暗号 ---
-reportlab>=4.0.7
-pypdf>=4.0.1
-cryptography>=41.0.7
-Pillow>=10.0.0
-
-# --- 認証 (Google OAuth) ---
-Authlib>=1.3.0
-requests>=2.31.0
-
-# --- DB (本番: PostgreSQL) ---
-psycopg2-binary>=2.9.9
-
-# --- 本番サーバー ---
-gunicorn>=21.2.0
-
-# --- ユーティリティ ---
-python-dateutil>=2.8.2
-python-dotenv>=1.0.0
+# GLib メインループ（PyGObject 経由）
+PyGObject>=3.42.0
