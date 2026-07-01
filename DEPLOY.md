@@ -22,6 +22,9 @@ docker build -t econtract .
 docker compose up -d  # docker-compose.yml は別途用意してください (Postgres + econtract)
 ```
 
-## オプション3: Vercel について
-Vercel は Python の serverless ランタイムで動きますが、本アプリは PDF生成 / 永続ストレージ /
-バックグラウンド処理 を必要とするため Render か Docker を推奨します。
+## オプション3: Vercel
+`api/index.py` + `vercel.json` で Vercel の Python serverless にデプロイできます
+(手順は `VERCEL.md`)。デフォルトのままプレビュー起動しますが、サーバーレスは
+永続ストレージを持たないため、生成した PDF は永続化されず、DB も外部 Postgres
+(`DATABASE_URL`) が必須です。PDF保管・永続ストレージ・バックグラウンド処理を
+そのまま使うなら Render か Docker を推奨します。

@@ -13,7 +13,10 @@ from .extensions import db, login_manager, migrate, oauth
 
 
 def create_app(config_class: type | object = Config) -> Flask:
-    app = Flask(__name__, instance_relative_config=False)
+    # サーバーレス等で読み取り専用FSの場合、書き込み可能な instance_path を
+    # 環境変数で指定できるようにする (未設定時は Flask 既定 = パッケージ内 instance/)。
+    instance_path = os.environ.get("ECONTRACT_INSTANCE_PATH") or None
+    app = Flask(__name__, instance_relative_config=False, instance_path=instance_path)
     app.config.from_object(config_class)
 
     # Render/Heroku のような proxy 配下では X-Forwarded-* を信頼
