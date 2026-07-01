@@ -5,12 +5,14 @@ window.DaikoMap = (function () {
   }
 
   // 出発地・目的地をピンで指定する地図（リクエスト入力画面）
-  function picker(elId, cfg, onChange) {
+  function picker(elId, cfg, onChange, onMode) {
     const map = L.map(elId).setView([cfg.lat, cfg.lng], 14);
     tile(map, cfg);
     let origin = null, dest = null, mode = 'origin';
     const oIcon = L.divIcon({ html: '🟠', className: 'pin', iconSize: [24, 24] });
     const dIcon = L.divIcon({ html: '🟢', className: 'pin', iconSize: [24, 24] });
+
+    function setMode(m) { mode = m; if (onMode) onMode(m); }
 
     function place(latlng) {
       if (mode === 'origin') {
@@ -18,6 +20,7 @@ window.DaikoMap = (function () {
         origin = L.marker(latlng, { icon: oIcon, draggable: true }).addTo(map);
         origin.on('dragend', () => emit('origin', origin.getLatLng()));
         emit('origin', latlng);
+        if (!dest) setMode('dest');   // 出発地を置いたら自動で「目的地」モードへ
       } else {
         if (dest) map.removeLayer(dest);
         dest = L.marker(latlng, { icon: dIcon, draggable: true }).addTo(map);
@@ -30,18 +33,17 @@ window.DaikoMap = (function () {
     }
     map.on('click', (e) => place(e.latlng));
 
-    // 現在地
+    // 現在地（取得できたら出発地に自動セット。失敗しても手動でタップ可）
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition((p) => {
         const ll = { lat: p.coords.latitude, lng: p.coords.longitude };
         map.setView([ll.lat, ll.lng], 15);
-        mode = 'origin';
-        place(ll);
-        mode = 'dest';
+        if (!origin) { setMode('origin'); place(ll); }  // place 内で自動的に目的地モードへ
       }, () => {}, { enableHighAccuracy: true, timeout: 6000 });
     }
+    if (onMode) onMode(mode);  // 初期状態をUIへ通知
     return {
-      setMode: (m) => { mode = m; },
+      setMode,
       locate: () => {
         if (!navigator.geolocation) return;
         navigator.geolocation.getCurrentPosition((p) => {
@@ -50,7 +52,7 @@ window.DaikoMap = (function () {
         });
       },
       search: (q, which) => {
-        mode = which;
+        setMode(which);
         geocode(cfg, q, (ll) => { if (ll) { map.setView([ll.lat, ll.lng], 16); place(ll); } });
       },
       map,

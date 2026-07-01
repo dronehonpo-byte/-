@@ -15,8 +15,12 @@
       <button type="button" class="btn btn-outline" id="btn-locate" style="flex:0 0 auto">現在地</button>
     </div>
     <input type="text" id="search-dest" placeholder="目的地を住所で検索" style="margin-bottom:8px">
+    <div class="seg" id="pin-mode" style="margin-bottom:8px">
+      <label id="mode-origin"><span>🟠 出発地を置く</span></label>
+      <label id="mode-dest"><span>🟢 目的地を置く</span></label>
+    </div>
     <div id="map"></div>
-    <p class="hint">地図をタップしてピンを置けます（🟠出発地 → 🟢目的地）。ピンはドラッグで微調整できます。</p>
+    <p class="hint">上のボタンで「出発地／目的地」を選び、地図をタップしてピンを置きます。<br>出発地を置くと自動で目的地モードに切り替わります。ピンはドラッグで微調整できます。</p>
     <div class="small">🟠 出発地：<span id="lbl-origin" class="muted">未設定</span></div>
     <div class="small">🟢 目的地：<span id="lbl-dest" class="muted">未設定</span></div>
     <input type="hidden" name="origin_lat" id="origin_lat"><input type="hidden" name="origin_lng" id="origin_lng">
@@ -88,7 +92,13 @@ function setVal(which, ll, label) {
   const ok = document.getElementById('origin_lat').value && document.getElementById('dest_lat').value;
   document.getElementById('submit-btn').disabled = !ok;
 }
-const picker = DaikoMap.picker('map', cfg, setVal);
+function updateModeUI(m) {
+  document.getElementById('mode-origin').classList.toggle('pin-on', m === 'origin');
+  document.getElementById('mode-dest').classList.toggle('pin-on', m === 'dest');
+}
+const picker = DaikoMap.picker('map', cfg, setVal, updateModeUI);
+document.getElementById('mode-origin').onclick = () => picker.setMode('origin');
+document.getElementById('mode-dest').onclick = () => picker.setMode('dest');
 document.getElementById('btn-locate').onclick = () => { picker.setMode('origin'); picker.locate(); };
 document.getElementById('search-origin').addEventListener('change', (e) => picker.search(e.target.value, 'origin'));
 document.getElementById('search-dest').addEventListener('change', (e) => picker.search(e.target.value, 'dest'));
