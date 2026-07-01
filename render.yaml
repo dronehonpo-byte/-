@@ -9,7 +9,7 @@ services:
       pip install --upgrade pip
       pip install -r econtract/requirements.txt
     preDeployCommand: |
-      flask --app econtract.wsgi db upgrade
+      cd econtract && flask --app wsgi db upgrade
     startCommand: |
       gunicorn -c econtract/gunicorn.conf.py econtract.wsgi:app
     healthCheckPath: /healthz
