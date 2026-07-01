@@ -1,0 +1,6 @@
+# Google Places API 企業リスト出力ツール 依存パッケージ
+# pip install -r requirements-places.txt でインストール
+
+requests>=2.31.0
+openpyxl>=3.1.0
+python-dotenv>=1.0.0

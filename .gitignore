@@ -1,0 +1,9 @@
+# 環境変数(APIキーなど)
+.env
+
+# 出力された Excel ファイル
+*.xlsx
+
+# Python
+__pycache__/
+*.pyc
