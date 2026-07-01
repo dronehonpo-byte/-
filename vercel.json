@@ -1,5 +1,7 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "buildCommand": "echo 'no framework build step (python serverless functions only)'",
   "rewrites": [
     { "source": "/(.*)", "destination": "/api/index" }
   ]
