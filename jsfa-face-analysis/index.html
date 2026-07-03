@@ -349,7 +349,7 @@ const DEFAULT_COEF = { b0:50, area:2.5, fl:1.5, asym:1.0, balance:1.0 };
 const CALIB_FEATURES = ["area","fl","asym","balance"];   // 校正で使う特徴量
 const SCORE_SCALE = 20;                        // 改善(上げ)側の広がり：大きいほど高得点が出にくい
 const DOWN_SCALE  = 42;                         // 悪化(下げ)側の傾き：大きいほど甘い＝下がりにくい
-const MIN_SCORE   = 25;                         // スコア下限（0まで落とさない）
+const MIN_SCORE   = 17.25;                      // スコア下限（0まで落とさない）
 const CALIB_MIN = 12;                          // 校正に必要な最小サンプル数
 // 黄金比／比率バランスの理想値と許容幅（日本人向けに調整可）
 const GR = {
