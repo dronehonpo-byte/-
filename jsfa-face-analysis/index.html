@@ -38,40 +38,41 @@
 
   .screen{ flex:1; display:none; flex-direction:column; padding:16px; }
   .screen.active{ display:flex; }
-  .center{ align-items:center; justify-content:center; text-align:center; gap:20px; }
+  .center{ align-items:center; justify-content:center; text-align:center; gap:18px; }
 
   /* Buttons */
   .btn{
     appearance:none; border:none; border-radius:14px; font-weight:700;
-    font-size:19px; padding:18px 24px; min-height:60px; min-width:44px;
+    font-size:18px; padding:16px 22px; min-height:56px; min-width:44px;
     cursor:pointer; transition:transform .05s ease, background .15s ease, opacity .15s ease;
   }
   .btn:active{ transform:scale(.97); }
   .btn-primary{ background:var(--brand); color:#fff; }
   .btn-primary:disabled{ background:#94A3B8; color:#E2E8F0; opacity:.9; cursor:not-allowed; }
-  .btn-lg{ font-size:22px; min-height:72px; width:100%; max-width:420px; }
+  .btn-lg{ font-size:22px; min-height:70px; width:100%; max-width:420px; }
   .btn-ghost{ background:#fff; color:var(--brand); border:2px solid var(--brand); }
   .btn-danger{ background:#fff; color:var(--danger); border:2px solid var(--danger); }
+  .btn-sm{ font-size:15px; min-height:48px; padding:12px 16px; }
   .btn-row{ display:flex; gap:12px; width:100%; max-width:520px; }
   .btn-row .btn{ flex:1; }
 
   /* Home */
   .home-logo{
-    width:96px; height:96px; border-radius:24px; background:var(--brand);
+    width:88px; height:88px; border-radius:24px; background:var(--brand);
     display:flex; align-items:center; justify-content:center; color:#fff;
-    font-weight:800; font-size:34px; letter-spacing:1px; box-shadow:0 10px 30px rgba(29,78,216,.25);
+    font-weight:800; font-size:32px; letter-spacing:1px; box-shadow:0 10px 30px rgba(29,78,216,.25);
   }
-  .home-title{ font-size:24px; font-weight:800; }
+  .home-title{ font-size:23px; font-weight:800; }
   .home-sub{ color:var(--muted); font-size:15px; line-height:1.6; max-width:420px; }
+  .home-actions{ display:flex; flex-direction:column; gap:12px; width:100%; max-width:420px; }
   .loading-note{ color:var(--muted); font-size:14px; display:flex; gap:10px; align-items:center; }
 
   /* Capture */
   .stage{
     position:relative; width:100%; max-width:520px; margin:0 auto;
-    aspect-ratio:3/4; background:#000; border-radius:18px; overflow:hidden;
+    aspect-ratio:3/4; background:#0B1220; border-radius:18px; overflow:hidden;
   }
   .stage video, .stage img.snap{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
-  .stage video{ transform:scaleX(1); }
   .overlay-before{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:.45; pointer-events:none; }
   .guide-svg{ position:absolute; inset:0; width:100%; height:100%; pointer-events:none; }
   .guide-ellipse{ fill:none; stroke:#3B82F6; stroke-width:4; opacity:.9; transition:stroke .2s ease; }
@@ -82,23 +83,43 @@
     font-size:14px; font-weight:600; white-space:nowrap; max-width:92%;
   }
   .hint.ok{ background:rgba(22,163,74,.9); }
+  .upload-ph{
+    position:absolute; inset:0; display:flex; flex-direction:column; gap:10px;
+    align-items:center; justify-content:center; color:#CBD5E1; text-align:center; padding:24px;
+  }
+  .upload-ph svg{ width:52px; height:52px; opacity:.8; }
+  .upload-ph .t{ font-size:16px; font-weight:700; }
+  .upload-ph .s{ font-size:13px; opacity:.85; }
+  .stage.busy::after{
+    content:""; position:absolute; inset:0; background:rgba(11,18,32,.55);
+  }
+  .stage .spin-overlay{
+    position:absolute; inset:0; display:none; align-items:center; justify-content:center; z-index:2;
+  }
+  .stage.busy .spin-overlay{ display:flex; }
+
   .badge-step{
     align-self:center; background:#EFF6FF; color:var(--brand); font-weight:700;
-    padding:6px 14px; border-radius:999px; font-size:13px; margin-bottom:12px;
+    padding:6px 14px; border-radius:999px; font-size:13px; margin-bottom:10px;
   }
   .cap-title{ text-align:center; font-size:20px; font-weight:800; margin:2px 0 12px; }
-  .cap-actions{ margin-top:16px; display:flex; justify-content:center; }
+  .cap-actions{ margin-top:16px; display:flex; justify-content:center; align-items:center; gap:18px; }
   .shutter{
-    width:78px; height:78px; border-radius:50%; background:var(--brand);
-    border:6px solid #fff; box-shadow:0 0 0 3px var(--brand); cursor:pointer;
+    width:74px; height:74px; border-radius:50%; background:var(--brand);
+    border:6px solid #fff; box-shadow:0 0 0 3px var(--brand); cursor:pointer; flex:none;
   }
   .shutter:disabled{ background:#94A3B8; box-shadow:0 0 0 3px #94A3B8; opacity:.9; }
+  .cap-secondary{ margin-top:14px; display:flex; gap:12px; justify-content:center; flex-wrap:wrap; }
+  .linkback{
+    margin:16px auto 0; color:var(--muted); font-size:14px; text-decoration:underline; cursor:pointer; background:none; border:none;
+  }
 
   /* Analyzing */
   .spinner{
     width:56px; height:56px; border-radius:50%; border:6px solid #DBEAFE;
     border-top-color:var(--brand); animation:spin 1s linear infinite;
   }
+  .spinner.sm{ width:34px; height:34px; border-width:4px; border-color:rgba(219,234,254,.4); border-top-color:#fff; }
   @keyframes spin{ to{ transform:rotate(360deg); } }
 
   /* Result */
@@ -112,11 +133,11 @@
     border-radius:16px; padding:18px; text-align:center;
   }
   .headline .big{ font-size:15px; color:var(--muted); font-weight:600; }
-  .headline .score{ font-size:44px; font-weight:800; color:var(--brand); line-height:1.1; margin:6px 0; }
+  .headline .score{ font-size:42px; font-weight:800; color:var(--brand); line-height:1.1; margin:6px 0; }
   .headline .up{ font-size:22px; font-weight:800; color:var(--ok); }
   .headline .up.neg{ color:var(--muted); }
   table.metrics{
-    max-width:560px; margin:0 auto 16px; width:100%; border-collapse:collapse;
+    max-width:560px; margin:0 auto 12px; width:100%; border-collapse:collapse;
     background:#fff; border:1px solid var(--line); border-radius:14px; overflow:hidden; font-size:14px;
   }
   table.metrics th, table.metrics td{ padding:11px 10px; text-align:center; border-bottom:1px solid var(--line); }
@@ -131,7 +152,7 @@
     max-width:460px; background:#FEF2F2; border:1px solid #FECACA; color:var(--danger);
     border-radius:12px; padding:14px 16px; font-size:14px; line-height:1.6; font-weight:600;
   }
-  .footnote{ color:var(--muted); font-size:11px; text-align:center; max-width:520px; margin:8px auto 0; line-height:1.5; }
+  .footnote{ color:var(--muted); font-size:11px; text-align:center; max-width:560px; margin:8px auto 0; line-height:1.5; }
   .hidden{ display:none !important; }
 </style>
 </head>
@@ -143,31 +164,46 @@
 
   <!-- STEP1: Home -->
   <section id="screen-home" class="screen center active">
-    <div class="home-logo" id="homeLogo">JSFA</div>
+    <div class="home-logo">JSFA</div>
     <div class="home-title">小顔矯正 Before / After 解析</div>
-    <div class="home-sub">施術前後の顔の変化を数値で可視化します。「計測スタート」を押して、Before → After の順に撮影してください。</div>
-    <button id="btnStart" class="btn btn-primary btn-lg" disabled>読み込み中…</button>
+    <div class="home-sub">施術前後の顔の変化を数値で可視化します。カメラ撮影、または手持ちの写真アップロードで計測できます。</div>
+    <div class="home-actions">
+      <button id="btnStartCamera" class="btn btn-primary btn-lg" disabled>読み込み中…</button>
+      <button id="btnStartUpload" class="btn btn-ghost" disabled>写真をアップロードして解析</button>
+    </div>
     <div id="loadNote" class="loading-note"><span class="spinner" style="width:20px;height:20px;border-width:3px;"></span> 解析エンジンを準備しています…</div>
     <div id="homeError" class="error-box hidden"></div>
   </section>
 
-  <!-- STEP2/4: Capture (before & after share this) -->
+  <!-- STEP2/4: Capture (before & after share this; camera OR upload) -->
   <section id="screen-capture" class="screen">
-    <div class="badge-step" id="capBadge">STEP 2 / Before撮影</div>
-    <div class="cap-title" id="capTitle">Before を撮影</div>
+    <div class="badge-step" id="capBadge">STEP 2 / Before</div>
+    <div class="cap-title" id="capTitle">Before を撮影／選択</div>
     <div class="stage" id="stage">
       <video id="video" playsinline muted autoplay></video>
       <img id="overlayBefore" class="overlay-before hidden" alt="" />
-      <svg class="guide-svg" viewBox="0 0 100 133" preserveAspectRatio="none">
+      <svg class="guide-svg" id="guideSvg" viewBox="0 0 100 133" preserveAspectRatio="none">
         <ellipse id="guideEllipse" class="guide-ellipse" cx="50" cy="60" rx="32" ry="42" />
       </svg>
       <div class="hint" id="capHint">顔をガイド枠の中に合わせてください</div>
+      <div class="upload-ph hidden" id="uploadPh">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 16V4m0 0L8 8m4-4l4 4"/><path d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2"/></svg>
+        <div class="t">写真を選んでください</div>
+        <div class="s">正面・顔がはっきり写った写真がおすすめです</div>
+      </div>
+      <div class="spin-overlay"><span class="spinner sm"></span></div>
     </div>
-    <div class="cap-actions">
+
+    <div class="cap-actions" id="capActions">
       <button id="btnShutter" class="shutter" disabled aria-label="撮影"></button>
     </div>
+    <div class="cap-secondary">
+      <button id="btnPickPhoto" class="btn btn-ghost btn-sm">アルバムから選ぶ</button>
+      <button id="btnUseCamera" class="btn btn-ghost btn-sm hidden">カメラで撮影</button>
+    </div>
+    <input type="file" id="fileInput" accept="image/*" class="hidden" />
     <div id="capError" class="error-box hidden" style="margin:14px auto 0;"></div>
-    <div class="footnote">正面を向くと撮影ボタンが有効になります。背面（アウト）カメラを使用します。</div>
+    <button class="linkback" id="capHome">← 最初に戻る</button>
   </section>
 
   <!-- STEP3/5: Confirm -->
@@ -181,6 +217,7 @@
       <button id="btnRetake" class="btn btn-ghost">撮り直す</button>
       <button id="btnConfirmOk" class="btn btn-primary">OK</button>
     </div>
+    <button class="linkback" id="confirmHome">← 最初に戻る</button>
   </section>
 
   <!-- STEP6: Analyzing -->
@@ -213,7 +250,8 @@
       </div>
     </div>
     <div class="footnote">
-      ※ 本スコアはランドマーク座標の相対的な変化率に基づく数値であり、医学的な変化量を保証するものではありません。<br>
+      ※ 各指標の数値は「目の間隔」を基準に正規化した相対値です（写真サイズ・撮影距離の違いを吸収）。<br>
+      本スコアはランドマーク座標の相対的な変化率に基づく数値であり、医学的な変化量を保証するものではありません。<br>
       画像・解析データは端末内でのみ処理され、外部サーバーへは送信されません。
     </div>
   </section>
@@ -228,40 +266,44 @@ import { FaceLandmarker, FilesetResolver }
 /* ---------- Config ---------- */
 const WASM_URL  = "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm";
 const MODEL_URL = "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task";
-const YAW_MAX = 15;      // 正面判定：ヨー角の許容（度）
-const PITCH_MAX = 18;    // 正面判定：ピッチ角の許容（度）
+const YAW_MAX = 15, PITCH_MAX = 18;          // カメラ撮影：正面判定
+const YAW_MAX_UP = 28, PITCH_MAX_UP = 28;    // アップロード：許容を緩める
 const BEFORE_OPACITY = 0.45;
+const MAX_UPLOAD_DIM = 1600;                 // アップロード画像の最大辺（メモリ対策）
 
-// 顔輪郭ランドマーク（Shoelace 面積算出用）
+// 顔輪郭（Shoelace 面積）
 const CONTOUR = [10,338,297,332,284,251,389,356,454,323,361,288,397,365,379,378,400,377,152,148,176,149,150,136,172,58,132,93,234,127,162,21,54,103,67,109];
-// 下顎ライン（フェイスライン周囲長用）
+// 下顎ライン（フェイスライン周囲長）
 const JAW = [356,454,323,361,288,397,365,379,378,400,377,152,148,176,149,150,136,172,58,132,93,234,127];
-// ガイド枠内チェックに使う代表点（上・下・左・右）
-const KEYPTS = [10,152,234,454];
-// ガイド楕円（正規化座標）
+const KEYPTS = [10,152,234,454];             // ガイド枠内チェック点
+// 目の中心（左右）＝正規化の基準（目の間隔）
+const L_EYE = [33,133], R_EYE = [362,263];
 const OVAL = { cx:0.5, cy:0.45, rx:0.33, ry:0.42 };
 
 /* ---------- State ---------- */
 const state = {
-  phase: "home",
-  target: "before",          // 現在撮影中の対象
-  latest: null,              // 直近フレームの検出結果
-  captured: { before:null, after:null },
-  stream: null,
-  rafId: null,
-  lastTs: -1,
+  phase:"home",
+  target:"before",
+  mode:"camera",             // "camera" | "upload"
+  latest:null,
+  captured:{ before:null, after:null },
+  stream:null, rafId:null, lastTs:-1,
+  lastMetrics:null,
 };
-let landmarker = null;
+let landmarker = null;       // VIDEO モード（ライブガイド用）
+let imgLandmarker = null;    // IMAGE モード（アップロード用・遅延生成）
+let fileset = null;
 
 /* ---------- DOM ---------- */
 const $ = (id) => document.getElementById(id);
 const screens = {
-  home: $("screen-home"), capture: $("screen-capture"), confirm: $("screen-confirm"),
-  analyzing: $("screen-analyzing"), result: $("screen-result"),
+  home:$("screen-home"), capture:$("screen-capture"), confirm:$("screen-confirm"),
+  analyzing:$("screen-analyzing"), result:$("screen-result"),
 };
 const video = $("video");
 const guideEllipse = $("guideEllipse");
 const overlayBefore = $("overlayBefore");
+const stage = $("stage");
 
 function show(name){
   Object.values(screens).forEach(s => s.classList.remove("active"));
@@ -272,15 +314,14 @@ function show(name){
 /* ---------- Init MediaPipe ---------- */
 async function init(){
   try{
-    const fileset = await FilesetResolver.forVisionTasks(WASM_URL);
+    fileset = await FilesetResolver.forVisionTasks(WASM_URL);
     landmarker = await FaceLandmarker.createFromOptions(fileset, {
       baseOptions:{ modelAssetPath: MODEL_URL, delegate:"GPU" },
-      runningMode:"VIDEO",
-      numFaces:1,
-      outputFacialTransformationMatrixes:true,
+      runningMode:"VIDEO", numFaces:1, outputFacialTransformationMatrixes:true,
     });
-    $("btnStart").disabled = false;
-    $("btnStart").textContent = "計測スタート";
+    $("btnStartCamera").disabled = false;
+    $("btnStartCamera").textContent = "カメラで撮影スタート";
+    $("btnStartUpload").disabled = false;
     $("loadNote").classList.add("hidden");
   }catch(err){
     console.error(err);
@@ -290,91 +331,98 @@ async function init(){
     box.textContent = "解析エンジンの読み込みに失敗しました。通信環境をご確認のうえ、ページを再読み込みしてください。";
   }
 }
+async function getImageLandmarker(){
+  if(imgLandmarker) return imgLandmarker;
+  imgLandmarker = await FaceLandmarker.createFromOptions(fileset, {
+    baseOptions:{ modelAssetPath: MODEL_URL, delegate:"GPU" },
+    runningMode:"IMAGE", numFaces:1, outputFacialTransformationMatrixes:true,
+  });
+  return imgLandmarker;
+}
 
-/* ---------- Head pose from transformation matrix (column-major 4x4) ---------- */
+/* ---------- Head pose ---------- */
 function matrixToEuler(m){
-  const r00=m[0], r10=m[1], r20=m[2];
-  const r21=m[6], r22=m[10];
+  const r00=m[0], r10=m[1], r20=m[2], r21=m[6], r22=m[10];
   const sy = Math.hypot(r00, r10);
-  let pitch, yaw;
-  if(sy > 1e-6){
-    pitch = Math.atan2(r21, r22);
-    yaw   = Math.atan2(-r20, sy);
-  }else{
-    pitch = 0;
-    yaw   = Math.atan2(-r20, sy);
-  }
+  const pitch = sy>1e-6 ? Math.atan2(r21, r22) : 0;
+  const yaw   = Math.atan2(-r20, sy);
   return { pitch: pitch*180/Math.PI, yaw: yaw*180/Math.PI };
 }
 
-/* ---------- Geometry helpers (normalized coords -> pixels) ---------- */
+/* ---------- Geometry (normalized coords -> pixels) ---------- */
 function polygonArea(lm, idx, w, h){
-  let a = 0;
+  let a=0;
   for(let i=0;i<idx.length;i++){
-    const p = lm[idx[i]], q = lm[idx[(i+1)%idx.length]];
+    const p=lm[idx[i]], q=lm[idx[(i+1)%idx.length]];
     a += (p.x*w)*(q.y*h) - (q.x*w)*(p.y*h);
   }
   return Math.abs(a)/2;
 }
 function pathLength(lm, idx, w, h){
-  let d = 0;
+  let d=0;
   for(let i=0;i<idx.length-1;i++){
-    const p = lm[idx[i]], q = lm[idx[i+1]];
+    const p=lm[idx[i]], q=lm[idx[i+1]];
     d += Math.hypot((p.x-q.x)*w, (p.y-q.y)*h);
   }
   return d;
 }
+function centerOf(lm, pair, w, h){
+  return { x:(lm[pair[0]].x+lm[pair[1]].x)/2*w, y:(lm[pair[0]].y+lm[pair[1]].y)/2*h };
+}
+function interOcular(lm, w, h){
+  const l=centerOf(lm,L_EYE,w,h), r=centerOf(lm,R_EYE,w,h);
+  return Math.hypot(l.x-r.x, l.y-r.y) || 1;
+}
 function asymmetry(lm, w, h){
-  const cx = ((lm[10].x + lm[152].x)/2)*w;   // 顔の中心線（額-顎の中点）
+  const cx = ((lm[10].x + lm[152].x)/2)*w;
   const left  = cx - lm[234].x*w;
   const right = lm[454].x*w - cx;
   return Math.abs(left - right);
 }
 
-/* ---------- Guide / front-face validation ---------- */
-function insideOval(x,y){
-  const dx=(x-OVAL.cx)/OVAL.rx, dy=(y-OVAL.cy)/OVAL.ry;
-  return dx*dx+dy*dy <= 1;
-}
+/* ---------- Validation ---------- */
+function insideOval(x,y){ const dx=(x-OVAL.cx)/OVAL.rx, dy=(y-OVAL.cy)/OVAL.ry; return dx*dx+dy*dy<=1; }
 function evaluateFrame(result){
-  if(!result || !result.faceLandmarks || result.faceLandmarks.length===0){
+  if(!result || !result.faceLandmarks || result.faceLandmarks.length===0)
     return { valid:false, msg:"顔が検出できません。枠の中に顔を入れてください" };
-  }
   const lm = result.faceLandmarks[0];
-  // ガイド枠内チェック
   const allIn = KEYPTS.every(i => insideOval(lm[i].x, lm[i].y));
-  // 顔サイズ（左右頬幅）チェック — 近すぎ/遠すぎ防止
   const faceW = Math.abs(lm[454].x - lm[234].x);
-  if(!allIn || faceW < 0.28){
-    return { valid:false, msg:"顔をガイド枠いっぱいに合わせてください" };
-  }
-  if(faceW > 0.72){
-    return { valid:false, msg:"少し離れてください" };
-  }
-  // 正面チェック
+  if(!allIn || faceW < 0.28) return { valid:false, msg:"顔をガイド枠いっぱいに合わせてください" };
+  if(faceW > 0.72) return { valid:false, msg:"少し離れてください" };
   const mat = result.facialTransformationMatrixes?.[0]?.data;
   if(mat){
     const { yaw, pitch } = matrixToEuler(mat);
-    if(Math.abs(yaw) > YAW_MAX || Math.abs(pitch) > PITCH_MAX){
-      return { valid:false, msg:"正面を向いてください" };
-    }
+    if(Math.abs(yaw) > YAW_MAX || Math.abs(pitch) > PITCH_MAX) return { valid:false, msg:"正面を向いてください" };
   }
   return { valid:true, msg:"正面OK！撮影できます" };
+}
+function validateUpload(result){
+  if(!result || !result.faceLandmarks || result.faceLandmarks.length===0)
+    return { valid:false, msg:"顔が検出できませんでした。正面の顔がはっきり写った写真を選んでください。" };
+  const lm = result.faceLandmarks[0];
+  const faceW = Math.abs(lm[454].x - lm[234].x);
+  if(faceW < 0.12) return { valid:false, msg:"顔が小さすぎます。顔が大きく写った写真を選んでください。" };
+  const mat = result.facialTransformationMatrixes?.[0]?.data;
+  if(mat){
+    const { yaw, pitch } = matrixToEuler(mat);
+    if(Math.abs(yaw) > YAW_MAX_UP || Math.abs(pitch) > PITCH_MAX_UP)
+      return { valid:false, msg:"横向き・斜めの写真です。できるだけ正面の写真を選んでください。" };
+  }
+  return { valid:true };
 }
 
 /* ---------- Camera loop ---------- */
 async function startCamera(){
-  const capError = $("capError");
-  capError.classList.add("hidden");
+  $("capError").classList.add("hidden");
   try{
     state.stream = await navigator.mediaDevices.getUserMedia({
-      video:{ facingMode:{ ideal:"environment" }, width:{ ideal:1280 }, height:{ ideal:1707 } },
-      audio:false,
+      video:{ facingMode:{ ideal:"environment" }, width:{ ideal:1280 }, height:{ ideal:1707 } }, audio:false,
     });
   }catch(err){
     console.error(err);
-    capError.classList.remove("hidden");
-    capError.textContent = "カメラを起動できませんでした。ブラウザのカメラ許可設定をご確認ください。";
+    const e=$("capError"); e.classList.remove("hidden");
+    e.textContent = "カメラを起動できませんでした。『アルバムから選ぶ』で写真アップロードもご利用いただけます。";
     return;
   }
   video.srcObject = state.stream;
@@ -384,19 +432,16 @@ async function startCamera(){
 }
 function loop(){
   state.rafId = requestAnimationFrame(loop);
-  if(!landmarker || video.readyState < 2) return;
+  if(state.mode!=="camera" || !landmarker || video.readyState < 2) return;
   const ts = performance.now();
   if(ts <= state.lastTs) return;
   state.lastTs = ts;
   let result;
-  try{ result = landmarker.detectForVideo(video, ts); }
-  catch(e){ return; }
+  try{ result = landmarker.detectForVideo(video, ts); }catch(e){ return; }
   state.latest = result;
   const ev = evaluateFrame(result);
   guideEllipse.classList.toggle("ok", ev.valid);
-  const hint = $("capHint");
-  hint.textContent = ev.msg;
-  hint.classList.toggle("ok", ev.valid);
+  const hint=$("capHint"); hint.textContent = ev.msg; hint.classList.toggle("ok", ev.valid);
   $("btnShutter").disabled = !ev.valid;
 }
 function stopCamera(){
@@ -405,255 +450,252 @@ function stopCamera(){
   video.srcObject = null;
 }
 
-/* ---------- Capture flow ---------- */
+/* ---------- Capture screen UI ---------- */
+function applyModeUI(){
+  const cam = state.mode==="camera";
+  video.classList.toggle("hidden", !cam);
+  $("guideSvg").classList.toggle("hidden", !cam);
+  $("capHint").classList.toggle("hidden", !cam);
+  $("uploadPh").classList.toggle("hidden", cam);
+  $("capActions").classList.toggle("hidden", !cam);   // シャッターはカメラ時のみ
+  $("btnUseCamera").classList.toggle("hidden", cam);
+  // アップロード時：Before重ねは非表示
+  if(!cam){ overlayBefore.classList.add("hidden"); }
+}
 function enterCapture(target){
   state.target = target;
   const isBefore = target==="before";
-  $("capBadge").textContent = isBefore ? "STEP 2 / Before撮影" : "STEP 4 / After撮影";
-  $("capTitle").textContent = isBefore ? "Before を撮影" : "After を撮影";
+  $("capBadge").textContent = isBefore ? "STEP 2 / Before" : "STEP 4 / After";
+  $("capTitle").textContent = (isBefore ? "Before を" : "After を") + (state.mode==="camera" ? "撮影" : "選択");
   guideEllipse.classList.remove("ok");
   $("btnShutter").disabled = true;
-  // After 撮影時：Before を半透明オーバーレイ
-  if(!isBefore && state.captured.before){
+  $("capError").classList.add("hidden");
+  stage.classList.remove("busy");
+  // After×カメラ：Before半透明重ね
+  if(!isBefore && state.mode==="camera" && state.captured.before){
     overlayBefore.src = state.captured.before.dataUrl;
     overlayBefore.style.opacity = BEFORE_OPACITY;
     overlayBefore.classList.remove("hidden");
   }else{
-    overlayBefore.classList.add("hidden");
-    overlayBefore.removeAttribute("src");
+    overlayBefore.classList.add("hidden"); overlayBefore.removeAttribute("src");
   }
+  applyModeUI();
   show("capture");
-  startCamera();
+  if(state.mode==="camera") startCamera(); else stopCamera();
 }
+function switchToCamera(){
+  state.mode="camera";
+  enterCapture(state.target);
+}
+
+/* ---------- Camera capture ---------- */
 function doCapture(){
   const result = state.latest;
-  const ev = evaluateFrame(result);
-  if(!ev.valid) return;
-  const w = video.videoWidth, h = video.videoHeight;
-  const canvas = $("workCanvas");
-  canvas.width = w; canvas.height = h;
-  const ctx = canvas.getContext("2d");
-  ctx.drawImage(video, 0, 0, w, h);
+  if(!evaluateFrame(result).valid) return;
+  const w=video.videoWidth, h=video.videoHeight;
+  const canvas=$("workCanvas"); canvas.width=w; canvas.height=h;
+  canvas.getContext("2d").drawImage(video,0,0,w,h);
   const dataUrl = canvas.toDataURL("image/jpeg", 0.92);
   const landmarks = result.faceLandmarks[0].map(p=>({x:p.x,y:p.y}));
-  state.captured[state.target] = { dataUrl, w, h, landmarks };
+  storeAndConfirm({ dataUrl, w, h, landmarks });
+}
+
+/* ---------- Upload capture ---------- */
+function loadImage(src){
+  return new Promise((res,rej)=>{ const i=new Image(); i.onload=()=>res(i); i.onerror=()=>rej(new Error("画像を読み込めませんでした")); i.src=src; });
+}
+async function handleFile(file){
+  if(!file) return;
+  if(!file.type.startsWith("image/")){
+    showCapError("画像ファイルを選んでください。"); return;
+  }
+  stage.classList.remove("busy");
+  let img;
+  try{
+    const url = URL.createObjectURL(file);
+    img = await loadImage(url);
+    URL.revokeObjectURL(url);
+  }catch(e){ showCapError("画像を読み込めませんでした。別の写真をお試しください。"); return; }
+
+  // 縮小して canvas 化（EXIF 回転はブラウザが <img> 描画時に反映）
+  let w=img.naturalWidth, h=img.naturalHeight;
+  const scale = Math.min(1, MAX_UPLOAD_DIM/Math.max(w,h));
+  w=Math.round(w*scale); h=Math.round(h*scale);
+  const canvas=$("workCanvas"); canvas.width=w; canvas.height=h;
+  canvas.getContext("2d").drawImage(img,0,0,w,h);
+
+  stage.classList.add("busy");
+  let result;
+  try{
+    const lmk = await getImageLandmarker();
+    result = lmk.detect(canvas);
+  }catch(e){ console.error(e); stage.classList.remove("busy"); showCapError("解析に失敗しました。別の写真をお試しください。"); return; }
+  stage.classList.remove("busy");
+
+  const v = validateUpload(result);
+  if(!v.valid){ showCapError(v.msg); return; }
+  const dataUrl = canvas.toDataURL("image/jpeg", 0.92);
+  const landmarks = result.faceLandmarks[0].map(p=>({x:p.x,y:p.y}));
+  storeAndConfirm({ dataUrl, w, h, landmarks });
+}
+function showCapError(msg){ const e=$("capError"); e.textContent=msg; e.classList.remove("hidden"); }
+
+/* ---------- Shared: store & go to confirm ---------- */
+function storeAndConfirm(payload){
+  state.captured[state.target] = payload;
   stopCamera();
-  // 確認画面へ
   const isBefore = state.target==="before";
   $("confirmBadge").textContent = isBefore ? "STEP 3 / Before確認" : "STEP 5 / After確認";
-  $("confirmImg").src = dataUrl;
+  $("confirmImg").src = payload.dataUrl;
   show("confirm");
 }
 
-/* ---------- Analysis ---------- */
-function clamp(v,min,max){ return Math.min(max, Math.max(min, v)); }
-function improveToPoints(improvePct){ return clamp(50 + improvePct*5, 0, 100); }
-
-function analyze(){
-  const b = state.captured.before, a = state.captured.after;
-  const areaB = polygonArea(b.landmarks, CONTOUR, b.w, b.h);
-  const areaA = polygonArea(a.landmarks, CONTOUR, a.w, a.h);
-  const periB = pathLength(b.landmarks, JAW, b.w, b.h);
-  const periA = pathLength(a.landmarks, JAW, a.w, a.h);
-  const asymB = asymmetry(b.landmarks, b.w, b.h);
-  const asymA = asymmetry(a.landmarks, a.w, a.h);
-
-  const areaRate = areaB>0 ? (areaB-areaA)/areaB*100 : 0;        // 顔面積変化率(%)
-  const flRate   = periB>0 ? (periB-periA)/periB*100 : 0;        // フェイスライン改善率(%)
-  const asymRate = asymB>0 ? (asymB-asymA)/asymB*100 : 0;        // 左右差改善率(%)
-
-  // 総合スコア：3指標を重み付き平均（面積50%・FL30%・左右差20%）→ 100点換算
-  const weighted = areaRate*0.5 + flRate*0.3 + asymRate*0.2;
-  const totalScore = Math.round(improveToPoints(weighted));
-
+/* ---------- Analysis (scale-normalized by inter-ocular distance) ---------- */
+function clamp(v,mn,mx){ return Math.min(mx, Math.max(mn, v)); }
+function improveToPoints(p){ return clamp(50 + p*5, 0, 100); }
+function measure(cap){
+  const { landmarks:lm, w, h } = cap;
+  const s = interOcular(lm, w, h);        // 目の間隔（px）＝スケール基準
   return {
-    areaB, areaA, areaRate, periB, periA, flRate, asymB, asymA, asymRate,
-    totalScore, up: totalScore - 50,
+    area: polygonArea(lm, CONTOUR, w, h) / (s*s),   // 面積（目間隔²で正規化）
+    peri: pathLength(lm, JAW, w, h) / s,             // 周囲長（目間隔で正規化）
+    asym: asymmetry(lm, w, h) / s,                   // 左右差（目間隔で正規化）
   };
 }
-
+function analyze(){
+  const b = measure(state.captured.before);
+  const a = measure(state.captured.after);
+  const areaRate = b.area>0 ? (b.area-a.area)/b.area*100 : 0;
+  const flRate   = b.peri>0 ? (b.peri-a.peri)/b.peri*100 : 0;
+  const asymRate = b.asym>0 ? (b.asym-a.asym)/b.asym*100 : 0;
+  const weighted = areaRate*0.5 + flRate*0.3 + asymRate*0.2;
+  const totalScore = Math.round(improveToPoints(weighted));
+  return { b, a, areaRate, flRate, asymRate, totalScore, up: totalScore-50 };
+}
 function fmtPct(v){ return (v>=0?"+":"") + v.toFixed(1) + "%"; }
-function fmtNum(v){ return Math.round(v).toLocaleString("ja-JP"); }
 
 function renderResult(m){
   $("resBefore").src = state.captured.before.dataUrl;
   $("resAfter").src  = state.captured.after.dataUrl;
   $("scoreBefore").textContent = "50";
   $("scoreAfter").textContent = m.totalScore;
-  const up = $("scoreUp");
+  const up=$("scoreUp");
   up.textContent = (m.up>=0 ? "＋"+m.up+"点UP!" : m.up+"点");
   up.classList.toggle("neg", m.up<0);
 
   const rows = [
-    { name:"顔面積", b:fmtNum(m.areaB)+" px²", a:fmtNum(m.areaA)+" px²", r:m.areaRate },
-    { name:"フェイスライン", b:fmtNum(m.periB)+" px", a:fmtNum(m.periA)+" px", r:m.flRate },
-    { name:"左右差", b:fmtNum(m.asymB)+" px", a:fmtNum(m.asymA)+" px", r:m.asymRate },
-    { name:"総合スコア", b:"50 点", a:m.totalScore+" 点", r:null, up:m.up },
+    { name:"顔面積",       b:m.b.area.toFixed(2), a:m.a.area.toFixed(2), r:m.areaRate },
+    { name:"フェイスライン", b:m.b.peri.toFixed(2), a:m.a.peri.toFixed(2), r:m.flRate },
+    { name:"左右差",       b:m.b.asym.toFixed(3), a:m.a.asym.toFixed(3), r:m.asymRate },
+    { name:"総合スコア",    b:"50 点", a:m.totalScore+" 点", r:null, up:m.up },
   ];
-  const tbody = $("metricRows");
-  tbody.innerHTML = "";
+  const tbody=$("metricRows"); tbody.innerHTML="";
   for(const row of rows){
-    const tr = document.createElement("tr");
+    const tr=document.createElement("tr");
     let rateCell;
     if(row.r===null){
-      const cls = row.up<0 ? "rate neg" : "rate";
-      rateCell = `<td class="${cls}">${row.up>=0?"+":""}${row.up}点</td>`;
+      rateCell = `<td class="rate ${row.up<0?"neg":""}">${row.up>=0?"+":""}${row.up}点</td>`;
     }else{
-      const cls = row.r<0 ? "rate neg" : "rate";
-      rateCell = `<td class="${cls}">${fmtPct(row.r)}</td>`;
+      rateCell = `<td class="rate ${row.r<0?"neg":""}">${fmtPct(row.r)}</td>`;
     }
     tr.innerHTML = `<td class="name">${row.name}</td><td>${row.b}</td><td>${row.a}</td>${rateCell}`;
     tbody.appendChild(tr);
   }
   show("result");
 }
-
 function runAnalysis(){
   show("analyzing");
-  // 解析中画面を確実に描画させてから計算
   requestAnimationFrame(()=>requestAnimationFrame(()=>{
-    try{
-      const m = analyze();
-      state.lastMetrics = m;
-      renderResult(m);
-    }catch(err){
-      console.error(err);
-      alert("解析に失敗しました。もう一度撮影してください。");
-      resetAll();
-    }
+    try{ const m=analyze(); state.lastMetrics=m; renderResult(m); }
+    catch(err){ console.error(err); alert("解析に失敗しました。もう一度お試しください。"); resetAll(); }
   }));
 }
 
-/* ---------- Save composite image ---------- */
-function loadImg(src){
-  return new Promise((res,rej)=>{ const i=new Image(); i.onload=()=>res(i); i.onerror=rej; i.src=src; });
-}
+/* ---------- Save composite ---------- */
 async function saveResult(){
-  const m = state.lastMetrics;
-  const [imgB, imgA] = await Promise.all([
-    loadImg(state.captured.before.dataUrl),
-    loadImg(state.captured.after.dataUrl),
-  ]);
-  const W = 1200, pad = 40;
-  const photoW = (W - pad*3)/2;
-  const photoH = photoW * 4/3;
-  const headerH = 150;
-  const scoreH = 150;
-  const tableH = 220;
-  const footerH = 90;
-  const H = headerH + photoH + 70 + scoreH + tableH + footerH;
-
-  const c = document.createElement("canvas");
-  c.width = W; c.height = H;
-  const ctx = c.getContext("2d");
-  ctx.fillStyle = "#ffffff"; ctx.fillRect(0,0,W,H);
-
-  // Header
-  ctx.fillStyle = "#1D4ED8"; ctx.fillRect(0,0,W,headerH);
-  ctx.fillStyle = "#ffffff"; ctx.textAlign="center";
-  ctx.font = "bold 40px sans-serif";
-  ctx.fillText("JSFA Small Face Analysis", W/2, 62);
-  ctx.font = "24px sans-serif";
-  ctx.fillText("日本小顔矯正認定協会 顔解析システム", W/2, 104);
-
-  // Photos
-  const py = headerH + 20;
-  drawCover(ctx, imgB, pad, py, photoW, photoH);
-  drawCover(ctx, imgA, pad*2+photoW, py, photoW, photoH);
-  ctx.fillStyle = "#334155"; ctx.font = "bold 30px sans-serif"; ctx.textAlign="center";
+  const m=state.lastMetrics;
+  const [imgB,imgA] = await Promise.all([ loadImage(state.captured.before.dataUrl), loadImage(state.captured.after.dataUrl) ]);
+  const W=1200, pad=40;
+  const photoW=(W-pad*3)/2, photoH=photoW*4/3;
+  const headerH=150, scoreH=150, tableH=200, footerH=90;
+  const H=headerH+photoH+70+scoreH+tableH+footerH;
+  const c=document.createElement("canvas"); c.width=W; c.height=H;
+  const ctx=c.getContext("2d");
+  ctx.fillStyle="#fff"; ctx.fillRect(0,0,W,H);
+  ctx.fillStyle="#1D4ED8"; ctx.fillRect(0,0,W,headerH);
+  ctx.fillStyle="#fff"; ctx.textAlign="center";
+  ctx.font="bold 40px sans-serif"; ctx.fillText("JSFA Small Face Analysis", W/2, 62);
+  ctx.font="24px sans-serif"; ctx.fillText("日本小顔矯正認定協会 顔解析システム", W/2, 104);
+  const py=headerH+20;
+  drawCover(ctx,imgB,pad,py,photoW,photoH);
+  drawCover(ctx,imgA,pad*2+photoW,py,photoW,photoH);
+  ctx.fillStyle="#334155"; ctx.font="bold 30px sans-serif"; ctx.textAlign="center";
   ctx.fillText("Before", pad+photoW/2, py+photoH+44);
   ctx.fillText("After",  pad*2+photoW*1.5, py+photoH+44);
-
-  // Score
-  let y = py + photoH + 70 + 20;
-  ctx.fillStyle = "#64748B"; ctx.font = "26px sans-serif";
-  ctx.fillText("総合スコア", W/2, y+10);
-  ctx.fillStyle = "#1D4ED8"; ctx.font = "bold 64px sans-serif";
-  ctx.fillText(`50点 → ${m.totalScore}点`, W/2, y+72);
-  ctx.fillStyle = m.up<0 ? "#64748B" : "#16A34A"; ctx.font = "bold 40px sans-serif";
-  ctx.fillText(m.up>=0 ? `＋${m.up}点UP!` : `${m.up}点`, W/2, y+120);
-
-  // Metrics table
-  y = y + scoreH + 10;
-  const rows = [
-    ["顔面積変化率", fmtPct(m.areaRate)],
-    ["フェイスライン改善率", fmtPct(m.flRate)],
-    ["左右差改善率", fmtPct(m.asymRate)],
-  ];
-  ctx.font = "28px sans-serif";
+  let y=py+photoH+70+20;
+  ctx.fillStyle="#64748B"; ctx.font="26px sans-serif"; ctx.fillText("総合スコア", W/2, y+10);
+  ctx.fillStyle="#1D4ED8"; ctx.font="bold 64px sans-serif"; ctx.fillText(`50点 → ${m.totalScore}点`, W/2, y+72);
+  ctx.fillStyle=m.up<0?"#64748B":"#16A34A"; ctx.font="bold 40px sans-serif";
+  ctx.fillText(m.up>=0?`＋${m.up}点UP!`:`${m.up}点`, W/2, y+120);
+  y=y+scoreH+10;
+  const rows=[["顔面積変化率",fmtPct(m.areaRate)],["フェイスライン改善率",fmtPct(m.flRate)],["左右差改善率",fmtPct(m.asymRate)]];
+  ctx.font="28px sans-serif";
   rows.forEach((r,i)=>{
-    const ry = y + i*54;
-    ctx.textAlign="left";  ctx.fillStyle="#334155"; ctx.fillText(r[0], pad+20, ry);
-    ctx.textAlign="right"; ctx.fillStyle= r[1].startsWith("-") ? "#64748B" : "#16A34A";
-    ctx.fillText(r[1], W-pad-20, ry);
-    ctx.strokeStyle="#E2E8F0"; ctx.beginPath(); ctx.moveTo(pad, ry+18); ctx.lineTo(W-pad, ry+18); ctx.stroke();
+    const ry=y+i*54;
+    ctx.textAlign="left"; ctx.fillStyle="#334155"; ctx.fillText(r[0], pad+20, ry);
+    ctx.textAlign="right"; ctx.fillStyle=r[1].startsWith("-")?"#64748B":"#16A34A"; ctx.fillText(r[1], W-pad-20, ry);
+    ctx.strokeStyle="#E2E8F0"; ctx.beginPath(); ctx.moveTo(pad,ry+18); ctx.lineTo(W-pad,ry+18); ctx.stroke();
   });
-
-  // Footer
   ctx.textAlign="center"; ctx.fillStyle="#0F172A"; ctx.font="bold 28px sans-serif";
   ctx.fillText("日本小顔矯正認定協会", W/2, H-46);
-  ctx.fillStyle="#94A3B8"; ctx.font="22px sans-serif";
-  ctx.fillText(dateStr(), W/2, H-14);
-
-  const url = c.toDataURL("image/jpeg", 0.92);
-  const aTag = document.createElement("a");
-  aTag.href = url;
-  aTag.download = `jsfa_face_analysis_${dateCompact()}.jpg`;
-  document.body.appendChild(aTag);
-  aTag.click();
-  aTag.remove();
+  ctx.fillStyle="#94A3B8"; ctx.font="22px sans-serif"; ctx.fillText(dateStr(), W/2, H-14);
+  const url=c.toDataURL("image/jpeg",0.92);
+  const aTag=document.createElement("a"); aTag.href=url; aTag.download=`jsfa_face_analysis_${dateCompact()}.jpg`;
+  document.body.appendChild(aTag); aTag.click(); aTag.remove();
 }
-function drawCover(ctx, img, x, y, w, h){
-  const ir = img.width/img.height, tr = w/h;
-  let sw, sh, sx, sy;
-  if(ir > tr){ sh=img.height; sw=sh*tr; sx=(img.width-sw)/2; sy=0; }
+function drawCover(ctx,img,x,y,w,h){
+  const ir=img.width/img.height, tr=w/h; let sw,sh,sx,sy;
+  if(ir>tr){ sh=img.height; sw=sh*tr; sx=(img.width-sw)/2; sy=0; }
   else{ sw=img.width; sh=sw/tr; sx=0; sy=(img.height-sh)/2; }
-  ctx.drawImage(img, sx, sy, sw, sh, x, y, w, h);
+  ctx.drawImage(img,sx,sy,sw,sh,x,y,w,h);
 }
 function pad2(n){ return String(n).padStart(2,"0"); }
 function dateStr(){ const d=new Date(); return `${d.getFullYear()}年${pad2(d.getMonth()+1)}月${pad2(d.getDate())}日`; }
 function dateCompact(){ const d=new Date(); return `${d.getFullYear()}${pad2(d.getMonth()+1)}${pad2(d.getDate())}`; }
 
-/* ---------- Reset (privacy: clear per-person data) ---------- */
+/* ---------- Reset ---------- */
 function resetAll(){
   stopCamera();
-  state.captured.before = null;
-  state.captured.after = null;
-  state.latest = null;
-  state.lastMetrics = null;
-  overlayBefore.classList.add("hidden");
-  overlayBefore.removeAttribute("src");
-  $("confirmImg").removeAttribute("src");
-  $("resBefore").removeAttribute("src");
-  $("resAfter").removeAttribute("src");
+  state.captured.before=null; state.captured.after=null;
+  state.latest=null; state.lastMetrics=null; state.mode="camera";
+  overlayBefore.classList.add("hidden"); overlayBefore.removeAttribute("src");
+  ["confirmImg","resBefore","resAfter"].forEach(id=>$(id).removeAttribute("src"));
+  $("fileInput").value="";
   show("home");
 }
 
 /* ---------- Events ---------- */
-$("btnStart").addEventListener("click", ()=> enterCapture("before"));
+$("btnStartCamera").addEventListener("click", ()=>{ state.mode="camera"; enterCapture("before"); });
+$("btnStartUpload").addEventListener("click", ()=>{ state.mode="upload"; enterCapture("before"); });
 $("btnShutter").addEventListener("click", doCapture);
+$("btnPickPhoto").addEventListener("click", ()=> $("fileInput").click());
+$("btnUseCamera").addEventListener("click", switchToCamera);
+$("fileInput").addEventListener("change", (e)=>{ handleFile(e.target.files[0]); e.target.value=""; });
 $("btnRetake").addEventListener("click", ()=> enterCapture(state.target));
 $("btnConfirmOk").addEventListener("click", ()=>{
-  if(state.target==="before"){ enterCapture("after"); }
-  else{ runAnalysis(); }
+  if(state.target==="before"){ enterCapture("after"); } else { runAnalysis(); }
 });
 $("btnSave").addEventListener("click", ()=> saveResult().catch(err=>{ console.error(err); alert("保存に失敗しました。"); }));
 $("btnNext").addEventListener("click", ()=>{
-  if(confirm("次の人の計測を始めます。現在の結果は端末に残りません。よろしいですか？")){
-    resetAll();
-  }
+  if(confirm("次の人の計測を始めます。現在の結果は端末に残りません。よろしいですか？")) resetAll();
 });
+$("capHome").addEventListener("click", ()=>{ if(confirm("最初の画面に戻ります。撮影中のデータは破棄されます。")) resetAll(); });
+$("confirmHome").addEventListener("click", ()=>{ if(confirm("最初の画面に戻ります。撮影中のデータは破棄されます。")) resetAll(); });
 
-// カメラ稼働中にバックグラウンドへ→復帰時のストリーム解放
-document.addEventListener("visibilitychange", ()=>{
-  if(document.hidden && state.phase==="capture"){ stopCamera(); }
-});
+document.addEventListener("visibilitychange", ()=>{ if(document.hidden && state.phase==="capture") stopCamera(); });
 
-/* ---------- Service Worker (offline) ---------- */
 if("serviceWorker" in navigator){
-  window.addEventListener("load", ()=>{
-    navigator.serviceWorker.register("sw.js").catch(()=>{});
-  });
+  window.addEventListener("load", ()=> navigator.serviceWorker.register("sw.js").catch(()=>{}));
 }
 
 init();
