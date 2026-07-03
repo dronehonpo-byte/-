@@ -266,7 +266,7 @@
       <div class="up" id="scoreUp">＋0点UP!</div>
     </div>
     <table class="metrics">
-      <thead><tr><th>指標</th><th>Before</th><th>After</th><th>改善率</th></tr></thead>
+      <thead><tr><th>指標</th><th>改善率</th><th>点数(100点)</th></tr></thead>
       <tbody id="metricRows"></tbody>
     </table>
     <div class="result-actions">
@@ -293,7 +293,8 @@
       <div class="calib-note">保存されるのは数値（各指標と正解スコア）のみで、顔写真は保存されません。</div>
     </div>
     <div class="footnote">
-      ※ 各指標の数値は「目の間隔」を基準に正規化した相対値です（写真サイズ・撮影距離の違いを吸収）。<br>
+      ※ 総合スコアは主要3指標（顔面積・フェイスライン・左右差）から算出。頬の幅・エラの幅は詳細の参考値です。<br>
+      ※ 各改善率は顔のパーツを「目の間隔」基準で正規化して比較（写真サイズ・撮影距離の違いを吸収）。<br>
       本スコアはランドマーク座標の相対的な変化率に基づく数値であり、医学的な変化量を保証するものではありません。<br>
       画像・解析データは端末内でのみ処理され、外部サーバーへは送信されません。
     </div>
@@ -344,6 +345,7 @@ const Q_BLUR_VAR  = 6;                        // #6 品質：これ未満で「�
 // #4 スコア係数：totalScore = b0 + area*areaRate + fl*flRate + asym*asymRate
 // 既定は従来式（重み0.5/0.3/0.2・0%→50点/10%改善→100点）と等価
 const DEFAULT_COEF = { b0:50, area:2.5, fl:1.5, asym:1.0 };
+const SCORE_SCALE = 20;                        // #スコア広がり：大きいほど高得点が出にくい（tanhの幅）
 const CALIB_MIN = 12;                          // 校正に必要な最小サンプル数
 const isCalib = new URLSearchParams(location.search).has("calib");
 function loadCoef(){ try{ const s=localStorage.getItem("jsfa_calib_coef"); return s?JSON.parse(s):{...DEFAULT_COEF}; }catch(e){ return {...DEFAULT_COEF}; } }
@@ -698,27 +700,50 @@ function storeAndConfirm(payload){
 
 /* ---------- Analysis (scale-normalized by inter-ocular distance) ---------- */
 function clamp(v,mn,mx){ return Math.min(mx, Math.max(mn, v)); }
-function improveToPoints(p){ return clamp(50 + p*5, 0, 100); }
+function round1(x){ return Math.round(x*10)/10; }
+function round2(x){ return Math.round(x*100)/100; }
+// 各指標の改善率(%) → 100点満点スコア。tanhで滑らかに広がり、極端な値でも100/0に張り付かない。
+function metricScore(rate){ return clamp(50 + 50*Math.tanh(rate/SCORE_SCALE), 0, 100); }
+function dist(lm,a,b,w,h){ return Math.hypot((lm[a].x-lm[b].x)*w, (lm[a].y-lm[b].y)*h); }
 function measure(cap){
   const { landmarks:lm, w, h } = cap;
   const s = faceScale(lm, w, h);          // 合成スケール（px）＝正規化基準
   return {
-    area: polygonArea(lm, CONTOUR, w, h) / (s*s),   // 面積（スケール²で正規化）
-    peri: pathLength(lm, JAW, w, h) / s,             // 周囲長（スケールで正規化）
-    asym: asymmetry(lm, w, h) / s,                   // 左右差（スケールで正規化）
+    area:  polygonArea(lm, CONTOUR, w, h) / (s*s),   // 顔面積（スケール²で正規化）
+    peri:  pathLength(lm, JAW, w, h) / s,             // フェイスライン周囲長
+    asym:  asymmetry(lm, w, h) / s,                   // 左右差
+    cheek: dist(lm,234,454,w,h) / s,                  // 頬の幅
+    jaw:   dist(lm,172,397,w,h) / s,                  // エラ（下顎角）の幅
   };
 }
+function pctChange(bv,av){ return bv>0 ? (bv-av)/bv*100 : 0; }  // 減少=プラス（改善）
 function analyze(){
   const b = measure(state.captured.before);
   const a = measure(state.captured.after);
-  const areaRate = b.area>0 ? (b.area-a.area)/b.area*100 : 0;
-  const flRate   = b.peri>0 ? (b.peri-a.peri)/b.peri*100 : 0;
-  const asymRate = b.asym>0 ? (b.asym-a.asym)/b.asym*100 : 0;
-  const raw = COEF.b0 + COEF.area*areaRate + COEF.fl*flRate + COEF.asym*asymRate;
-  const totalScore = Math.round(clamp(raw, 0, 100));
-  return { b, a, areaRate, flRate, asymRate, totalScore, up: totalScore-50 };
+  const areaRate  = pctChange(b.area,  a.area);
+  const flRate    = pctChange(b.peri,  a.peri);
+  const asymRate  = pctChange(b.asym,  a.asym);
+  const cheekRate = pctChange(b.cheek, a.cheek);
+  const jawRate   = pctChange(b.jaw,   a.jaw);
+  // 総合スコア：校正済みなら線形モデル、未校正なら主要3指標の加重平均をtanhで広げる
+  let total;
+  if(calibrated()){
+    total = COEF.b0 + COEF.area*areaRate + COEF.fl*flRate + COEF.asym*asymRate;
+  }else{
+    const improvement = 0.5*areaRate + 0.3*flRate + 0.2*asymRate;
+    total = 50 + 50*Math.tanh(improvement/SCORE_SCALE);
+  }
+  total = round1(clamp(total, 0, 100));
+  const scores = {
+    area:  round1(metricScore(areaRate)),
+    fl:    round1(metricScore(flRate)),
+    asym:  round1(metricScore(asymRate)),
+    cheek: round1(metricScore(cheekRate)),
+    jaw:   round1(metricScore(jawRate)),
+  };
+  return { areaRate, flRate, asymRate, cheekRate, jawRate, scores, totalScore: total, up: round1(total-50) };
 }
-function fmtPct(v){ return (v>=0?"+":"") + v.toFixed(1) + "%"; }
+function fmtPct(v){ return (v>=0?"+":"") + v.toFixed(2) + "%"; }
 
 function renderResult(m){
   $("resBefore").src = state.captured.before.dataUrl;
@@ -731,28 +756,25 @@ function renderResult(m){
   }else{
     pb.classList.add("hidden");
   }
-  $("scoreBefore").textContent = "50";
-  $("scoreAfter").textContent = m.totalScore;
+  $("scoreBefore").textContent = "50.0";
+  $("scoreAfter").textContent = m.totalScore.toFixed(1);
   const up=$("scoreUp");
-  up.textContent = (m.up>=0 ? "＋"+m.up+"点UP!" : m.up+"点");
+  up.textContent = (m.up>=0 ? "＋"+m.up.toFixed(1)+"点UP!" : m.up.toFixed(1)+"点");
   up.classList.toggle("neg", m.up<0);
 
   const rows = [
-    { name:"顔面積",       b:m.b.area.toFixed(2), a:m.a.area.toFixed(2), r:m.areaRate },
-    { name:"フェイスライン", b:m.b.peri.toFixed(2), a:m.a.peri.toFixed(2), r:m.flRate },
-    { name:"左右差",       b:m.b.asym.toFixed(3), a:m.a.asym.toFixed(3), r:m.asymRate },
-    { name:"総合スコア",    b:"50 点", a:m.totalScore+" 点", r:null, up:m.up },
+    { name:"顔面積",        r:m.areaRate,  sc:m.scores.area  },
+    { name:"フェイスライン", r:m.flRate,    sc:m.scores.fl    },
+    { name:"左右差",        r:m.asymRate,  sc:m.scores.asym  },
+    { name:"頬の幅",        r:m.cheekRate, sc:m.scores.cheek },
+    { name:"エラの幅",      r:m.jawRate,   sc:m.scores.jaw   },
   ];
   const tbody=$("metricRows"); tbody.innerHTML="";
   for(const row of rows){
     const tr=document.createElement("tr");
-    let rateCell;
-    if(row.r===null){
-      rateCell = `<td class="rate ${row.up<0?"neg":""}">${row.up>=0?"+":""}${row.up}点</td>`;
-    }else{
-      rateCell = `<td class="rate ${row.r<0?"neg":""}">${fmtPct(row.r)}</td>`;
-    }
-    tr.innerHTML = `<td class="name">${row.name}</td><td>${row.b}</td><td>${row.a}</td>${rateCell}`;
+    tr.innerHTML = `<td class="name">${row.name}</td>`
+      + `<td class="rate ${row.r<0?"neg":""}">${fmtPct(row.r)}</td>`
+      + `<td>${row.sc.toFixed(1)}</td>`;
     tbody.appendChild(tr);
   }
   if(isCalib){ $("calibPanel").classList.remove("hidden"); $("calibLabel").value=""; updateCalibStatus(); }
@@ -794,7 +816,7 @@ async function saveResult(){
   const [imgB,imgA] = await Promise.all([ loadImage(state.captured.before.dataUrl), loadImage(state.captured.after.dataUrl) ]);
   const W=1200, pad=40;
   const photoW=(W-pad*3)/2, photoH=photoW*4/3;
-  const headerH=150, scoreH=150, tableH=200, footerH=90;
+  const headerH=150, scoreH=150, tableH=320, footerH=90;
   const H=headerH+photoH+70+scoreH+tableH+footerH;
   const c=document.createElement("canvas"); c.width=W; c.height=H;
   const ctx=c.getContext("2d");
@@ -811,17 +833,25 @@ async function saveResult(){
   ctx.fillText("After",  pad*2+photoW*1.5, py+photoH+44);
   let y=py+photoH+70+20;
   ctx.fillStyle="#64748B"; ctx.font="26px sans-serif"; ctx.fillText("総合スコア", W/2, y+10);
-  ctx.fillStyle="#1D4ED8"; ctx.font="bold 64px sans-serif"; ctx.fillText(`50点 → ${m.totalScore}点`, W/2, y+72);
+  ctx.fillStyle="#1D4ED8"; ctx.font="bold 64px sans-serif"; ctx.fillText(`50.0点 → ${m.totalScore.toFixed(1)}点`, W/2, y+72);
   ctx.fillStyle=m.up<0?"#64748B":"#16A34A"; ctx.font="bold 40px sans-serif";
-  ctx.fillText(m.up>=0?`＋${m.up}点UP!`:`${m.up}点`, W/2, y+120);
+  ctx.fillText(m.up>=0?`＋${m.up.toFixed(1)}点UP!`:`${m.up.toFixed(1)}点`, W/2, y+120);
   y=y+scoreH+10;
-  const rows=[["顔面積変化率",fmtPct(m.areaRate)],["フェイスライン改善率",fmtPct(m.flRate)],["左右差改善率",fmtPct(m.asymRate)]];
-  ctx.font="28px sans-serif";
+  const rows=[
+    ["顔面積", fmtPct(m.areaRate), m.scores.area],
+    ["フェイスライン", fmtPct(m.flRate), m.scores.fl],
+    ["左右差", fmtPct(m.asymRate), m.scores.asym],
+    ["頬の幅", fmtPct(m.cheekRate), m.scores.cheek],
+    ["エラの幅", fmtPct(m.jawRate), m.scores.jaw],
+  ];
+  ctx.font="27px sans-serif";
   rows.forEach((r,i)=>{
-    const ry=y+i*54;
+    const ry=y+i*52;
     ctx.textAlign="left"; ctx.fillStyle="#334155"; ctx.fillText(r[0], pad+20, ry);
-    ctx.textAlign="right"; ctx.fillStyle=r[1].startsWith("-")?"#64748B":"#16A34A"; ctx.fillText(r[1], W-pad-20, ry);
-    ctx.strokeStyle="#E2E8F0"; ctx.beginPath(); ctx.moveTo(pad,ry+18); ctx.lineTo(W-pad,ry+18); ctx.stroke();
+    ctx.textAlign="center"; ctx.fillStyle=r[1].startsWith("-")?"#64748B":"#16A34A"; ctx.fillText(r[1], W/2+120, ry);
+    ctx.textAlign="right"; ctx.fillStyle="#1D4ED8"; ctx.font="bold 27px sans-serif"; ctx.fillText(`${r[2].toFixed(1)}点`, W-pad-20, ry);
+    ctx.font="27px sans-serif";
+    ctx.strokeStyle="#E2E8F0"; ctx.beginPath(); ctx.moveTo(pad,ry+16); ctx.lineTo(W-pad,ry+16); ctx.stroke();
   });
   ctx.textAlign="center"; ctx.fillStyle="#0F172A"; ctx.font="bold 28px sans-serif";
   ctx.fillText("日本小顔矯正認定協会", W/2, H-46);
