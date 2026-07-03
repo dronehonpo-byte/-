@@ -347,7 +347,9 @@ const Q_BLUR_VAR  = 6;                        // #6 品質：これ未満で「�
 // 既定は従来式（重み0.5/0.3/0.2・0%→50点/10%改善→100点）と等価
 const DEFAULT_COEF = { b0:50, area:2.5, fl:1.5, asym:1.0, balance:1.0 };
 const CALIB_FEATURES = ["area","fl","asym","balance"];   // 校正で使う特徴量
-const SCORE_SCALE = 20;                        // #スコア広がり：大きいほど高得点が出にくい（tanhの幅）
+const SCORE_SCALE = 20;                        // 改善(上げ)側の広がり：大きいほど高得点が出にくい
+const DOWN_SCALE  = 42;                         // 悪化(下げ)側の傾き：大きいほど甘い＝下がりにくい
+const MIN_SCORE   = 25;                         // スコア下限（0まで落とさない）
 const CALIB_MIN = 12;                          // 校正に必要な最小サンプル数
 // 黄金比／比率バランスの理想値と許容幅（日本人向けに調整可）
 const GR = {
@@ -712,8 +714,10 @@ function storeAndConfirm(payload){
 function clamp(v,mn,mx){ return Math.min(mx, Math.max(mn, v)); }
 function round1(x){ return Math.round(x*10)/10; }
 function round2(x){ return Math.round(x*100)/100; }
-// 各指標の改善率(%) → 100点満点スコア。tanhで滑らかに広がり、極端な値でも100/0に張り付かない。
-function metricScore(rate){ return clamp(50 + 50*Math.tanh(rate/SCORE_SCALE), 0, 100); }
+// 改善率(%) → 点数。上げ側と下げ側で傾きが非対称（下げは緩やか）＝悪化しても急落しない。
+function scoreCurve(x){ const s = x>=0 ? SCORE_SCALE : DOWN_SCALE; return 50 + 50*Math.tanh(x/s); }
+// 各指標の改善率(%) → 100点満点スコア（下限 MIN_SCORE）。
+function metricScore(rate){ return clamp(scoreCurve(rate), MIN_SCORE, 100); }
 function dist(lm,a,b,w,h){ return Math.hypot((lm[a].x-lm[b].x)*w, (lm[a].y-lm[b].y)*h); }
 // 理想値への近さ（0〜100）。ideal で100点、離れるほどガウス状に減衰。
 function closeness(val, ideal, tol){ const z=(val-ideal)/tol; return 100*Math.exp(-0.5*z*z); }
@@ -761,9 +765,9 @@ function analyze(){
     total = COEF.b0 + CALIB_FEATURES.reduce((s,k)=> s + (COEF[k]||0)*rv[k], 0);
   }else{
     const improvement = 0.4*areaRate + 0.25*flRate + 0.15*asymRate + 0.2*balanceRate;
-    total = 50 + 50*Math.tanh(improvement/SCORE_SCALE);
+    total = scoreCurve(improvement);
   }
-  total = round1(clamp(total, 0, 100));
+  total = round1(clamp(total, MIN_SCORE, 100));
   const scores = {
     area:  round1(metricScore(areaRate)),
     fl:    round1(metricScore(flRate)),
