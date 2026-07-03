@@ -227,6 +227,7 @@
     <div class="stage" style="max-width:420px;">
       <img id="confirmImg" class="snap" alt="撮影プレビュー" />
     </div>
+    <div id="confirmNote" class="warn-banner hidden" style="margin-top:12px;"></div>
     <div class="btn-row">
       <button id="btnRetake" class="btn btn-ghost">撮り直す</button>
       <button id="btnConfirmOk" class="btn btn-primary">OK</button>
@@ -304,9 +305,14 @@ const CONTOUR = [10,338,297,332,284,251,389,356,454,323,361,288,397,365,379,378,
 // 下顎ライン（フェイスライン周囲長）
 const JAW = [356,454,323,361,288,397,365,379,378,400,377,152,148,176,149,150,136,172,58,132,93,234,127];
 const KEYPTS = [10,152,234,454];             // ガイド枠内チェック点
-// 目の中心（左右）＝正規化の基準（目の間隔）
-const L_EYE = [33,133], R_EYE = [362,263];
+// 正規化の基準：目の中心（左右）と口の中心（合成スケール用）
+const L_EYE = [33,133], R_EYE = [362,263], MOUTH = [13,14];
+// 左右差の対称ペア（中心線を挟む：頬・エラ・口角・目尻など）
+const SYM_PAIRS = [[234,454],[93,323],[58,288],[172,397],[136,365],[61,291],[33,263]];
 const OVAL = { cx:0.5, cy:0.45, rx:0.33, ry:0.42 };
+const FRAME_BUF_MAX = 9;                      // #1 多フレーム中央値：バッファ枚数
+const Q_DARK_LUMA = 45;                       // #6 品質：これ未満で「暗い」
+const Q_BLUR_VAR  = 6;                        // #6 品質：これ未満で「ぶれ/ピンボケ」
 
 /* ---------- State ---------- */
 const state = {
@@ -314,6 +320,7 @@ const state = {
   target:"before",
   mode:"camera",             // "camera" | "upload"
   latest:null,
+  frameBuf:[],               // #1 直近フレームのランドマーク（中央値用）
   captured:{ before:null, after:null },
   stream:null, rafId:null, lastTs:-1,
   lastMetrics:null,
@@ -346,6 +353,7 @@ async function init(){
     landmarker = await FaceLandmarker.createFromOptions(fileset, {
       baseOptions:{ modelAssetPath: MODEL_URL, delegate:"GPU" },
       runningMode:"VIDEO", numFaces:1, outputFacialTransformationMatrixes:true,
+      minFaceDetectionConfidence:0.6, minFacePresenceConfidence:0.6, minTrackingConfidence:0.6,
     });
     $("btnStartCamera").disabled = false;
     $("btnStartCamera").textContent = "カメラで撮影スタート";
@@ -364,6 +372,7 @@ async function getImageLandmarker(){
   imgLandmarker = await FaceLandmarker.createFromOptions(fileset, {
     baseOptions:{ modelAssetPath: MODEL_URL, delegate:"GPU" },
     runningMode:"IMAGE", numFaces:1, outputFacialTransformationMatrixes:true,
+    minFaceDetectionConfidence:0.6, minFacePresenceConfidence:0.6,
   });
   return imgLandmarker;
 }
@@ -380,6 +389,41 @@ function matrixToEuler(m){
 function extractPose(result){
   const mat = result?.facialTransformationMatrixes?.[0]?.data;
   return mat ? matrixToEuler(mat) : null;
+}
+
+/* ---------- #1 Multi-frame median ---------- */
+function median(arr){
+  const a=[...arr].sort((p,q)=>p-q), m=a.length>>1;
+  return a.length%2 ? a[m] : (a[m-1]+a[m])/2;
+}
+function medianLandmarks(frames){
+  const numPts=frames[0].length, n=frames.length, out=new Array(numPts);
+  const xs=new Array(n), ys=new Array(n);
+  for(let i=0;i<numPts;i++){
+    for(let f=0;f<n;f++){ xs[f]=frames[f][i].x; ys[f]=frames[f][i].y; }
+    out[i]={ x:median(xs), y:median(ys) };
+  }
+  return out;
+}
+
+/* ---------- #6 Image quality (luminance & blur) ---------- */
+function assessQuality(canvas){
+  const tw=160, th=Math.max(1, Math.round(canvas.height/canvas.width*160));
+  const c=document.createElement("canvas"); c.width=tw; c.height=th;
+  c.getContext("2d").drawImage(canvas,0,0,tw,th);
+  let d; try{ d=c.getContext("2d").getImageData(0,0,tw,th).data; }catch(e){ return null; }
+  const g=new Float64Array(tw*th); let sum=0;
+  for(let i=0,j=0;i<d.length;i+=4,j++){ const v=0.299*d[i]+0.587*d[i+1]+0.114*d[i+2]; g[j]=v; sum+=v; }
+  const luma=sum/(tw*th);
+  let mean=0, nn=0;
+  for(let y=1;y<th-1;y++) for(let x=1;x<tw-1;x++){ const i=y*tw+x; mean+=g[i-1]+g[i+1]+g[i-tw]+g[i+tw]-4*g[i]; nn++; }
+  mean/= (nn||1); let v=0;
+  for(let y=1;y<th-1;y++) for(let x=1;x<tw-1;x++){ const i=y*tw+x; const l=g[i-1]+g[i+1]+g[i-tw]+g[i+tw]-4*g[i]; v+=(l-mean)*(l-mean); }
+  const blurVar=v/(nn||1);
+  const issues=[];
+  if(luma < Q_DARK_LUMA) issues.push("暗い");
+  if(blurVar < Q_BLUR_VAR) issues.push("ぶれ／ピンボケの");
+  return issues.length ? `⚠ 写真が${issues.join("・")}可能性があります。撮り直すと精度が上がります。` : null;
 }
 
 /* ---------- Geometry (normalized coords -> pixels) ---------- */
@@ -402,9 +446,15 @@ function pathLength(lm, idx, w, h){
 function centerOf(lm, pair, w, h){
   return { x:(lm[pair[0]].x+lm[pair[1]].x)/2*w, y:(lm[pair[0]].y+lm[pair[1]].y)/2*h };
 }
-function interOcular(lm, w, h){
-  const l=centerOf(lm,L_EYE,w,h), r=centerOf(lm,R_EYE,w,h);
-  return Math.hypot(l.x-r.x, l.y-r.y) || 1;
+// 合成スケール：目の間隔(横)と 目線中点〜口中心(縦) の幾何平均。
+// 横方向(ヨー)・縦方向(ピッチ)いずれか片方のズレの影響を約半分に抑える。
+function faceScale(lm, w, h){
+  const el=centerOf(lm,L_EYE,w,h), er=centerOf(lm,R_EYE,w,h);
+  const horiz=Math.hypot(el.x-er.x, el.y-er.y);
+  const eyeMid={ x:(el.x+er.x)/2, y:(el.y+er.y)/2 };
+  const mc=centerOf(lm,MOUTH,w,h);
+  const vert=Math.hypot(eyeMid.x-mc.x, eyeMid.y-mc.y);
+  return Math.sqrt(Math.max(horiz*vert, 1));
 }
 // 点(px,py)から直線A-Bへの符号付き垂直距離（回転に不変）
 function pointLineDist(px,py, ax,ay, bx,by){
@@ -412,14 +462,18 @@ function pointLineDist(px,py, ax,ay, bx,by){
   const len=Math.hypot(vx,vy)||1;
   return (vx*wy - vy*wx)/len;
 }
-// 左右差：顔の中心線（額10→顎152）に対する左右頬の垂直距離の差。
-// 中心線ごと回転するため、顔の傾き（ロール）に影響されない。
+// 左右差：顔の中心線（額10→顎152）に対する、複数の対称ペアの垂直距離差の平均。
+// 中心線ごと回転するためロール不変。複数点の平均で単点ノイズに強い。
 function asymmetry(lm, w, h){
   const ax=lm[10].x*w,  ay=lm[10].y*h;   // 額中央
   const bx=lm[152].x*w, by=lm[152].y*h;  // 顎先
-  const dL=Math.abs(pointLineDist(lm[234].x*w, lm[234].y*h, ax,ay,bx,by));  // 左頬
-  const dR=Math.abs(pointLineDist(lm[454].x*w, lm[454].y*h, ax,ay,bx,by));  // 右頬
-  return Math.abs(dL - dR);
+  let sum=0;
+  for(const [li,ri] of SYM_PAIRS){
+    const dL=Math.abs(pointLineDist(lm[li].x*w, lm[li].y*h, ax,ay,bx,by));
+    const dR=Math.abs(pointLineDist(lm[ri].x*w, lm[ri].y*h, ax,ay,bx,by));
+    sum += Math.abs(dL - dR);
+  }
+  return sum / SYM_PAIRS.length;
 }
 
 /* ---------- Validation ---------- */
@@ -482,6 +536,13 @@ function loop(){
   try{ result = landmarker.detectForVideo(video, ts); }catch(e){ return; }
   state.latest = result;
   const ev = evaluateFrame(result);
+  // #1 正面かつ枠内のフレームのみバッファ（中央値の材料）
+  if(ev.valid && result.faceLandmarks?.[0]){
+    state.frameBuf.push(result.faceLandmarks[0].map(p=>({x:p.x,y:p.y})));
+    if(state.frameBuf.length > FRAME_BUF_MAX) state.frameBuf.shift();
+  }else{
+    state.frameBuf.length = 0;   // 崩れたら貯め直し
+  }
   guideEllipse.classList.toggle("ok", ev.valid);
   const hint=$("capHint"); hint.textContent = ev.msg; hint.classList.toggle("ok", ev.valid);
   $("btnShutter").disabled = !ev.valid;
@@ -506,6 +567,7 @@ function applyModeUI(){
 }
 function enterCapture(target){
   state.target = target;
+  state.frameBuf.length = 0;      // #1 バッファをリセット
   const isBefore = target==="before";
   $("capBadge").textContent = isBefore ? "STEP 2 / Before" : "STEP 4 / After";
   $("capTitle").textContent = (isBefore ? "Before を" : "After を") + (state.mode==="camera" ? "撮影" : "選択");
@@ -538,7 +600,9 @@ function doCapture(){
   const canvas=$("workCanvas"); canvas.width=w; canvas.height=h;
   canvas.getContext("2d").drawImage(video,0,0,w,h);
   const dataUrl = canvas.toDataURL("image/jpeg", 0.92);
-  storeAndConfirm(buildPayload(result, dataUrl, w, h));
+  // #1 直近フレームの中央値でランドマークを安定化（十分貯まっていれば）
+  const lmOverride = state.frameBuf.length>=3 ? medianLandmarks(state.frameBuf) : null;
+  storeAndConfirm(buildPayload(result, dataUrl, w, h, lmOverride, assessQuality(canvas)));
 }
 
 /* ---------- Upload capture ---------- */
@@ -576,14 +640,14 @@ async function handleFile(file){
   const v = validateUpload(result);
   if(!v.valid){ showCapError(v.msg); return; }
   const dataUrl = canvas.toDataURL("image/jpeg", 0.92);
-  storeAndConfirm(buildPayload(result, dataUrl, w, h));
+  storeAndConfirm(buildPayload(result, dataUrl, w, h, null, assessQuality(canvas)));
 }
 function showCapError(msg){ const e=$("capError"); e.textContent=msg; e.classList.remove("hidden"); }
 
 /* ---------- Shared: store & go to confirm ---------- */
-function buildPayload(result, dataUrl, w, h){
-  const landmarks = result.faceLandmarks[0].map(p=>({x:p.x,y:p.y}));
-  return { dataUrl, w, h, landmarks, pose: extractPose(result) };
+function buildPayload(result, dataUrl, w, h, landmarksOverride, qualityMsg){
+  const landmarks = landmarksOverride || result.faceLandmarks[0].map(p=>({x:p.x,y:p.y}));
+  return { dataUrl, w, h, landmarks, pose: extractPose(result), qualityMsg: qualityMsg||null };
 }
 function storeAndConfirm(payload){
   state.captured[state.target] = payload;
@@ -591,6 +655,9 @@ function storeAndConfirm(payload){
   const isBefore = state.target==="before";
   $("confirmBadge").textContent = isBefore ? "STEP 3 / Before確認" : "STEP 5 / After確認";
   $("confirmImg").src = payload.dataUrl;
+  const note=$("confirmNote");
+  if(payload.qualityMsg){ note.textContent = payload.qualityMsg; note.classList.remove("hidden"); }
+  else{ note.classList.add("hidden"); }
   show("confirm");
 }
 
@@ -599,11 +666,11 @@ function clamp(v,mn,mx){ return Math.min(mx, Math.max(mn, v)); }
 function improveToPoints(p){ return clamp(50 + p*5, 0, 100); }
 function measure(cap){
   const { landmarks:lm, w, h } = cap;
-  const s = interOcular(lm, w, h);        // 目の間隔（px）＝スケール基準
+  const s = faceScale(lm, w, h);          // 合成スケール（px）＝正規化基準
   return {
-    area: polygonArea(lm, CONTOUR, w, h) / (s*s),   // 面積（目間隔²で正規化）
-    peri: pathLength(lm, JAW, w, h) / s,             // 周囲長（目間隔で正規化）
-    asym: asymmetry(lm, w, h) / s,                   // 左右差（目間隔で正規化）
+    area: polygonArea(lm, CONTOUR, w, h) / (s*s),   // 面積（スケール²で正規化）
+    peri: pathLength(lm, JAW, w, h) / s,             // 周囲長（スケールで正規化）
+    asym: asymmetry(lm, w, h) / s,                   // 左右差（スケールで正規化）
   };
 }
 function analyze(){
@@ -741,7 +808,7 @@ function dateCompact(){ const d=new Date(); return `${d.getFullYear()}${pad2(d.g
 function resetAll(){
   stopCamera();
   state.captured.before=null; state.captured.after=null;
-  state.latest=null; state.lastMetrics=null; state.poseInfo=null; state.mode="camera";
+  state.latest=null; state.frameBuf.length=0; state.lastMetrics=null; state.poseInfo=null; state.mode="camera";
   overlayBefore.classList.add("hidden"); overlayBefore.removeAttribute("src");
   ["confirmImg","resBefore","resAfter"].forEach(id=>$(id).removeAttribute("src"));
   $("fileInput").value="";
