@@ -167,6 +167,16 @@
   }
   .modal-title{ font-size:19px; font-weight:800; color:#92400E; text-align:center; margin-bottom:12px; }
   .modal-body{ font-size:14px; line-height:1.7; color:var(--text); text-align:center; margin-bottom:18px; }
+  .calib{
+    max-width:560px; margin:16px auto 0; background:#F1F5F9; border:1px dashed #94A3B8;
+    border-radius:14px; padding:16px;
+  }
+  .calib-h{ font-weight:800; font-size:15px; margin-bottom:10px; color:var(--brand-dark); }
+  .calib-row{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+  .calib-row label{ font-size:13px; font-weight:600; flex:1 1 100%; }
+  .calib-row input{ flex:1; min-width:120px; font-size:16px; padding:10px 12px; border:1px solid var(--line); border-radius:10px; }
+  .calib-s{ font-size:12px; color:var(--muted); margin-top:10px; line-height:1.5; word-break:break-all; }
+  .calib-note{ font-size:11px; color:var(--muted); margin-top:8px; }
   .hidden{ display:none !important; }
 </style>
 </head>
@@ -265,6 +275,23 @@
         <button id="btnSave" class="btn btn-primary">保存</button>
       </div>
     </div>
+
+    <!-- #4 校正モード（?calib=1 のときのみ表示・施術者用） -->
+    <div id="calibPanel" class="calib hidden">
+      <div class="calib-h">🔧 校正モード（施術者用）</div>
+      <div class="calib-row">
+        <label for="calibLabel">この結果の正解スコア（0〜100）</label>
+        <input id="calibLabel" type="number" min="0" max="100" inputmode="numeric" placeholder="例: 72" />
+        <button id="calibRecord" class="btn btn-ghost btn-sm">記録</button>
+      </div>
+      <div id="calibStatus" class="calib-s"></div>
+      <div class="btn-row" style="margin-top:8px;">
+        <button id="calibFit" class="btn btn-ghost btn-sm">係数を再計算</button>
+        <button id="calibExport" class="btn btn-ghost btn-sm">CSV書き出し</button>
+        <button id="calibReset" class="btn btn-ghost btn-sm">既定に戻す</button>
+      </div>
+      <div class="calib-note">保存されるのは数値（各指標と正解スコア）のみで、顔写真は保存されません。</div>
+    </div>
     <div class="footnote">
       ※ 各指標の数値は「目の間隔」を基準に正規化した相対値です（写真サイズ・撮影距離の違いを吸収）。<br>
       本スコアはランドマーク座標の相対的な変化率に基づく数値であり、医学的な変化量を保証するものではありません。<br>
@@ -313,6 +340,14 @@ const OVAL = { cx:0.5, cy:0.45, rx:0.33, ry:0.42 };
 const FRAME_BUF_MAX = 9;                      // #1 多フレーム中央値：バッファ枚数
 const Q_DARK_LUMA = 45;                       // #6 品質：これ未満で「暗い」
 const Q_BLUR_VAR  = 6;                        // #6 品質：これ未満で「ぶれ/ピンボケ」
+
+// #4 スコア係数：totalScore = b0 + area*areaRate + fl*flRate + asym*asymRate
+// 既定は従来式（重み0.5/0.3/0.2・0%→50点/10%改善→100点）と等価
+const DEFAULT_COEF = { b0:50, area:2.5, fl:1.5, asym:1.0 };
+const CALIB_MIN = 12;                          // 校正に必要な最小サンプル数
+const isCalib = new URLSearchParams(location.search).has("calib");
+function loadCoef(){ try{ const s=localStorage.getItem("jsfa_calib_coef"); return s?JSON.parse(s):{...DEFAULT_COEF}; }catch(e){ return {...DEFAULT_COEF}; } }
+let COEF = loadCoef();
 
 /* ---------- State ---------- */
 const state = {
@@ -679,8 +714,8 @@ function analyze(){
   const areaRate = b.area>0 ? (b.area-a.area)/b.area*100 : 0;
   const flRate   = b.peri>0 ? (b.peri-a.peri)/b.peri*100 : 0;
   const asymRate = b.asym>0 ? (b.asym-a.asym)/b.asym*100 : 0;
-  const weighted = areaRate*0.5 + flRate*0.3 + asymRate*0.2;
-  const totalScore = Math.round(improveToPoints(weighted));
+  const raw = COEF.b0 + COEF.area*areaRate + COEF.fl*flRate + COEF.asym*asymRate;
+  const totalScore = Math.round(clamp(raw, 0, 100));
   return { b, a, areaRate, flRate, asymRate, totalScore, up: totalScore-50 };
 }
 function fmtPct(v){ return (v>=0?"+":"") + v.toFixed(1) + "%"; }
@@ -720,6 +755,7 @@ function renderResult(m){
     tr.innerHTML = `<td class="name">${row.name}</td><td>${row.b}</td><td>${row.a}</td>${rateCell}`;
     tbody.appendChild(tr);
   }
+  if(isCalib){ $("calibPanel").classList.remove("hidden"); $("calibLabel").value=""; updateCalibStatus(); }
   show("result");
 }
 /* ---------- Pose difference gate (Before vs After) ---------- */
@@ -804,6 +840,62 @@ function pad2(n){ return String(n).padStart(2,"0"); }
 function dateStr(){ const d=new Date(); return `${d.getFullYear()}年${pad2(d.getMonth()+1)}月${pad2(d.getDate())}日`; }
 function dateCompact(){ const d=new Date(); return `${d.getFullYear()}${pad2(d.getMonth()+1)}${pad2(d.getDate())}`; }
 
+/* ---------- #4 Calibration (self-contained, on-device) ---------- */
+function getSamples(){ try{ return JSON.parse(localStorage.getItem("jsfa_calib_samples")||"[]"); }catch(e){ return []; } }
+function saveSamples(a){ localStorage.setItem("jsfa_calib_samples", JSON.stringify(a)); }
+function collectSample(label){
+  const m=state.lastMetrics; if(!m) return null;
+  const s=getSamples();
+  s.push({ area:m.areaRate, fl:m.flRate, asym:m.asymRate, label, ts:Date.now() }); // 数値のみ・写真は保存しない
+  saveSamples(s); return s.length;
+}
+// Ax=b をガウス消去で解く
+function solveLinear(A,b){
+  const n=b.length, M=A.map((row,i)=>[...row,b[i]]);
+  for(let i=0;i<n;i++){
+    let p=i; for(let r=i+1;r<n;r++) if(Math.abs(M[r][i])>Math.abs(M[p][i])) p=r;
+    [M[i],M[p]]=[M[p],M[i]];
+    if(Math.abs(M[i][i])<1e-12) return null;
+    for(let r=0;r<n;r++) if(r!==i){ const f=M[r][i]/M[i][i]; for(let k=i;k<=n;k++) M[r][k]-=f*M[i][k]; }
+  }
+  return M.map((row,i)=>row[n]/row[i]);
+}
+// リッジ回帰で係数を推定
+function fitCoefficients(){
+  const s=getSamples();
+  if(s.length < CALIB_MIN) return { ok:false, msg:`データが不足しています（${s.length}件）。${CALIB_MIN}件以上、できれば20件以上を目安に。` };
+  const XtX=[[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]], Xty=[0,0,0,0];
+  for(const r of s){
+    const x=[1, r.area, r.fl, r.asym];
+    for(let i=0;i<4;i++){ for(let j=0;j<4;j++) XtX[i][j]+=x[i]*x[j]; Xty[i]+=x[i]*r.label; }
+  }
+  for(let i=1;i<4;i++) XtX[i][i]+=1.0;  // ridge（切片は正則化しない）
+  const bb=solveLinear(XtX,Xty);
+  if(!bb) return { ok:false, msg:"計算に失敗しました。サンプルの偏りが大きい可能性があります。" };
+  const ybar=s.reduce((a,r)=>a+r.label,0)/s.length;
+  let sr=0, ss=0;
+  for(const r of s){ const pred=bb[0]+bb[1]*r.area+bb[2]*r.fl+bb[3]*r.asym; sr+=(r.label-pred)**2; ss+=(r.label-ybar)**2; }
+  const r2 = ss>0 ? 1-sr/ss : 0;
+  return { ok:true, coef:{ b0:bb[0], area:bb[1], fl:bb[2], asym:bb[3] }, r2, n:s.length };
+}
+function applyCoef(c){ COEF=c; localStorage.setItem("jsfa_calib_coef", JSON.stringify(c)); }
+function resetCoef(){ COEF={...DEFAULT_COEF}; localStorage.removeItem("jsfa_calib_coef"); }
+function exportCalibCSV(){
+  const s=getSamples();
+  const head="areaRate,flRate,asymRate,label,timestamp\n";
+  const body=s.map(r=>`${r.area.toFixed(4)},${r.fl.toFixed(4)},${r.asym.toFixed(4)},${r.label},${new Date(r.ts).toISOString()}`).join("\n");
+  const blob=new Blob([head+body],{type:"text/csv"});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a"); a.href=url; a.download="jsfa_calibration.csv"; a.click(); URL.revokeObjectURL(url);
+}
+function calibrated(){ return !!localStorage.getItem("jsfa_calib_coef"); }
+function updateCalibStatus(extra){
+  const n=getSamples().length;
+  const c=COEF;
+  const base = `記録 ${n}件 ／ 係数 b0=${c.b0.toFixed(2)} 面積=${c.area.toFixed(2)} FL=${c.fl.toFixed(2)} 左右=${c.asym.toFixed(2)} ${calibrated()?"（校正済）":"（既定）"}`;
+  $("calibStatus").textContent = extra ? (extra+" ｜ "+base) : base;
+}
+
 /* ---------- Reset ---------- */
 function resetAll(){
   stopCamera();
@@ -834,6 +926,23 @@ $("btnNext").addEventListener("click", ()=>{
 });
 $("capHome").addEventListener("click", ()=>{ if(confirm("最初の画面に戻ります。撮影中のデータは破棄されます。")) resetAll(); });
 $("confirmHome").addEventListener("click", ()=>{ if(confirm("最初の画面に戻ります。撮影中のデータは破棄されます。")) resetAll(); });
+
+// #4 校正モードのイベント
+$("calibRecord").addEventListener("click", ()=>{
+  const v=parseFloat($("calibLabel").value);
+  if(isNaN(v) || v<0 || v>100){ updateCalibStatus("0〜100 の数値を入力してください"); return; }
+  const n=collectSample(v);
+  $("calibLabel").value="";
+  updateCalibStatus(n!=null ? `記録しました（累計 ${n}件）` : "記録できませんでした");
+});
+$("calibFit").addEventListener("click", ()=>{
+  const res=fitCoefficients();
+  if(!res.ok){ updateCalibStatus(res.msg); return; }
+  applyCoef(res.coef);
+  updateCalibStatus(`✅ 係数を更新（${res.n}件・当てはまりR²=${res.r2.toFixed(2)}）。以降の解析に反映されます`);
+});
+$("calibExport").addEventListener("click", exportCalibCSV);
+$("calibReset").addEventListener("click", ()=>{ resetCoef(); updateCalibStatus("既定の係数に戻しました"); });
 
 document.addEventListener("visibilitychange", ()=>{ if(document.hidden && state.phase==="capture") stopCamera(); });
 
