@@ -19,7 +19,12 @@ function extractJson(t: string): string {
 }
 
 export async function POST(req: NextRequest) {
-  const key = process.env.GEMINI_API_KEY;
+  // 環境変数名の表記ゆれ（アンダースコア有無など）を許容
+  const key =
+    process.env.GEMINI_API_KEY ||
+    process.env.GEMINIAPIKEY ||
+    process.env.GEMINI_APIKEY ||
+    process.env.GEMINI_KEY;
   if (!key) {
     return NextResponse.json(
       { error: "サーバーに GEMINI_API_KEY が設定されていません。" },
