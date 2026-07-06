@@ -72,7 +72,60 @@ def test_normality_selects_test():
 def test_categorical_test(survey):
     res = hypothesis_test.categorical_test(survey, "education", "age_group")
     assert 0 <= res.pvalue <= 1
-    assert res.effect.name == "Cramer's V"
+    assert res.effect.name in ("Cramer's V", "φ係数 (2×2)")
+    # クロス集計の拡充：行%・列%・期待度数・標準化残差
+    for key in ("crosstab", "expected", "row_pct", "col_pct", "std_resid"):
+        assert key in res.extra
+
+
+def test_categorical_single_category_raises(survey):
+    survey2 = survey.copy()
+    survey2["const"] = "唯一"
+    with pytest.raises(ValueError):
+        hypothesis_test.categorical_test(survey2, "const", "age_group")
+
+
+def test_effect_matches_test():
+    """検定に応じた効果量が選ばれること（Mann-Whitney→Cliff's delta 等）。"""
+    rng = np.random.default_rng(3)
+    # 非正規（指数分布）→ Mann-Whitney → Cliff's delta
+    skew = pd.DataFrame({
+        "v": np.concatenate([rng.exponential(1, 60), rng.exponential(1.8, 60)]),
+        "g": ["A"] * 60 + ["B"] * 60,
+    })
+    r = hypothesis_test.compare_groups(skew, "v", "g")
+    assert "Mann-Whitney" in r.test_name
+    assert "Cliff" in r.effect.name or "rank-biserial" in r.effect.name
+    assert "diff" in r.extra
+
+    # 正規 → t検定 → Hedges' g
+    norm = pd.DataFrame({
+        "v": np.concatenate([rng.normal(0, 1, 50), rng.normal(0.9, 1, 50)]),
+        "g": ["A"] * 50 + ["B"] * 50,
+    })
+    r2 = hypothesis_test.compare_groups(norm, "v", "g")
+    assert "t 検定" in r2.test_name and r2.effect.name == "Hedges' g"
+
+
+def test_nonparametric_effect_sizes():
+    a = [1, 2, 3, 4, 5, 6, 7, 8]
+    b = [4, 5, 6, 7, 8, 9, 10, 11]
+    d = effect_size.cliffs_delta(a, b)
+    assert -1 <= d <= 1 and d < 0
+    assert 0 <= effect_size.epsilon_squared(10.0, 30) <= 1
+    groups = [[1, 2, 3, 4], [3, 4, 5, 6], [6, 7, 8, 9]]
+    assert -1 <= effect_size.omega_squared(groups) <= 1
+
+
+def test_group_summary(experiment):
+    gs = hypothesis_test.group_summary(experiment, "post_score", "group")
+    assert set(["グループ", "n", "中央値", "四分位範囲(IQR)"]).issubset(gs.columns)
+
+
+def test_boxplot_bad_column_friendly_error(experiment):
+    import modules.visualizer as viz
+    with pytest.raises(ValueError):
+        viz.boxplot(experiment, "post_score", "存在しない列")
 
 
 def test_effect_sizes():

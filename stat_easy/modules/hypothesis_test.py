@@ -116,6 +116,7 @@ def _two_group(groups, labels, normality, all_normal, paired, alpha, use_bootstr
                 reason = ("2群・正規性あり・対応なしですが、等分散性が棄却された"
                           "（Levene p≦{:.2f}）ため、Welch の t 検定を選択しました。".format(alpha))
             dof = len(a) + len(b) - 2
+        # パラメトリック検定 → 平均差ベースの効果量（Cohen's d / Hedges' g）
         effect = effect_size.two_group_effect(a, b, paired=paired, use_bootstrap=use_bootstrap)
     else:
         if paired:
@@ -123,19 +124,22 @@ def _two_group(groups, labels, normality, all_normal, paired, alpha, use_bootstr
             stat, p = stats.wilcoxon(a[:n], b[:n])
             name = "Wilcoxon 符号順位検定"
             reason = ("2群・正規性なし・対応ありのため、ノンパラメトリックな"
-                      "Wilcoxon 符号順位検定を選択しました。")
+                      "Wilcoxon 符号順位検定を選択しました。中央値・分布の位置の差を評価します。")
             dof = None
+            # ノンパラ検定 → 順位ベースの効果量（Hedges' g ではない）
+            effect = effect_size.wilcoxon_effect(a, b)
         else:
             stat, p = stats.mannwhitneyu(a, b, alternative="two-sided")
             name = "Mann-Whitney U 検定"
             reason = ("2群・正規性なし・対応なしのため、ノンパラメトリックな"
-                      "Mann-Whitney U 検定を選択しました。")
+                      "Mann-Whitney U 検定を選択しました。平均値ではなく中央値・分布の位置を比較します。")
             dof = None
-        effect = effect_size.two_group_effect(a, b, paired=paired, use_bootstrap=use_bootstrap)
+            effect = effect_size.mannwhitney_effect(a, b)
 
     return TestResult(
         test_name=name, reason=reason, statistic=float(stat), pvalue=float(p),
         dof=dof, assumptions=assumptions, effect=effect, n_groups=2,
+        extra={"diff": _location_diff(a, b, paired)},
     )
 
 
@@ -161,13 +165,46 @@ def _multi_group(groups, labels, sub, value_col, group_col, normality, all_norma
         dof = len(groups) - 1
         if p < alpha:
             posthoc = _dunn(groups, labels)
-        effect = effect_size.anova_effect(groups)
+        # Kruskal-Wallis → ε²（イプシロン二乗）
+        n_total = int(sum(len(g) for g in groups))
+        effect = effect_size.kruskal_effect(float(stat), n_total)
 
     return TestResult(
         test_name=name, reason=reason, statistic=float(stat), pvalue=float(p),
         dof=dof, assumptions=assumptions, effect=effect, posthoc=posthoc,
         n_groups=len(groups),
     )
+
+
+def group_summary(df: pd.DataFrame, value_col: str, group_col: str) -> pd.DataFrame:
+    """群別の要約統計（n・平均・中央値・SD・IQR・欠損数）。結論の根拠として表示する。"""
+    rows = []
+    for g, sub in df.groupby(group_col, dropna=True):
+        s = sub[value_col]
+        valid = s.dropna()
+        q1, q3 = (valid.quantile(0.25), valid.quantile(0.75)) if len(valid) else (np.nan, np.nan)
+        rows.append({
+            "グループ": str(g),
+            "n": int(valid.count()),
+            "欠損数": int(s.isna().sum()),
+            "平均": round(valid.mean(), 3) if len(valid) else np.nan,
+            "中央値": round(valid.median(), 3) if len(valid) else np.nan,
+            "標準偏差": round(valid.std(ddof=1), 3) if len(valid) > 1 else np.nan,
+            "四分位範囲(IQR)": round(q3 - q1, 3) if len(valid) else np.nan,
+        })
+    return pd.DataFrame(rows)
+
+
+def _location_diff(a, b, paired: bool) -> dict:
+    """2群の位置の差（平均差・中央値差）を返す。"""
+    a = np.asarray(a, dtype=float); a = a[~np.isnan(a)]
+    b = np.asarray(b, dtype=float); b = b[~np.isnan(b)]
+    if len(a) == 0 or len(b) == 0:
+        return {}
+    return {
+        "mean_diff": float(np.mean(a) - np.mean(b)),
+        "median_diff": float(np.median(a) - np.median(b)),
+    }
 
 
 def _tukey(sub, value_col, group_col):
@@ -218,12 +255,33 @@ def _dunn(groups, labels):
 
 
 def categorical_test(df: pd.DataFrame, col1: str, col2: str, alpha: float = 0.05) -> TestResult:
-    """2つのカテゴリ変数の関連を検定（カイ二乗 / Fisher 自動選択）。"""
-    table = pd.crosstab(df[col1], df[col2])
+    """2つのカテゴリ変数の関連を検定（カイ二乗 / Fisher 自動選択）。
+
+    クロス集計表・行%・列%・期待度数・標準化残差までまとめて返す。
+    """
+    sub = df[[col1, col2]].dropna()
+    n_dropped = int(len(df) - len(sub))
+    table = pd.crosstab(sub[col1], sub[col2])
+
+    # 片方が1カテゴリしかない場合は分析不可
+    if table.shape[0] < 2 or table.shape[1] < 2:
+        raise ValueError(
+            "少なくとも一方の項目が1カテゴリしかないため、関連の検定ができません。"
+            "2カテゴリ以上ある2つの項目を選んでください。"
+        )
+    if (table.to_numpy() == 0).any():
+        zero_note = "度数が0のセルがあります。結果の解釈に注意してください。"
+    else:
+        zero_note = ""
+
     chi2, p, dof, expected = stats.chi2_contingency(table)
     min_expected = expected.min()
+    n_small = int((expected < 5).sum())
     assumptions = {"min_expected_freq": float(min_expected),
-                   "table_shape": table.shape}
+                   "table_shape": table.shape,
+                   "n_cells_expected_lt5": n_small,
+                   "n_dropped": n_dropped,
+                   "zero_cell_note": zero_note}
 
     if min_expected >= 5:
         name = "カイ二乗検定 (chi-squared test)"
@@ -244,9 +302,21 @@ def categorical_test(df: pd.DataFrame, col1: str, col2: str, alpha: float = 0.05
             stat, pval = float(chi2), float(p)
 
     effect = effect_size.chi2_effect(table.to_numpy())
+
+    expected_df = pd.DataFrame(expected, index=table.index, columns=table.columns)
+    row_pct = (table.div(table.sum(axis=1), axis=0) * 100).round(1)
+    col_pct = (table.div(table.sum(axis=0), axis=1) * 100).round(1)
+    # 標準化残差（Pearson残差）: (観測 - 期待) / sqrt(期待)
+    std_resid = ((table - expected_df) / np.sqrt(expected_df)).round(2)
+
     return TestResult(
         test_name=name, reason=reason, statistic=stat, pvalue=pval, dof=dof,
         assumptions=assumptions, effect=effect,
-        extra={"crosstab": table, "expected": pd.DataFrame(
-            expected, index=table.index, columns=table.columns)},
+        extra={
+            "crosstab": table,
+            "expected": expected_df,
+            "row_pct": row_pct,
+            "col_pct": col_pct,
+            "std_resid": std_resid,
+        },
     )

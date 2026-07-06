@@ -165,18 +165,149 @@ def two_group_effect(a, b, paired: bool = False, use_bootstrap: bool = False) ->
 def anova_effect(groups: list) -> EffectResult:
     eta = eta_squared(groups)
     p_eta = partial_eta_squared(groups)
+    omega = omega_squared(groups)
     interp = interpret_effect(eta, "eta2")
     comment = _pval_effect_comment(interp)
-    comment += f"（partial η² = {p_eta:.3f}）" if not np.isnan(p_eta) else ""
+    extra = []
+    if not np.isnan(p_eta):
+        extra.append(f"partial η² = {p_eta:.3f}")
+    if not np.isnan(omega):
+        extra.append(f"ω² = {omega:.3f}（偏りの少ない推定）")
+    if extra:
+        comment += "（" + " / ".join(extra) + "）"
     res = EffectResult("η² (イータ二乗)", eta, np.nan, np.nan, interp, comment)
     res.partial_eta2 = p_eta
+    res.omega2 = omega
     return res
 
 
 def chi2_effect(confusion: np.ndarray) -> EffectResult:
-    v = cramers_v(confusion)
+    confusion = np.asarray(confusion, dtype=float)
+    if confusion.shape == (2, 2):
+        v = phi_coefficient(confusion)
+        name = "φ係数 (2×2)"
+    else:
+        v = cramers_v(confusion)
+        name = "Cramer's V"
     interp = interpret_effect(v, "cramers_v")
-    return EffectResult("Cramer's V", v, np.nan, np.nan, interp,
+    return EffectResult(name, v, np.nan, np.nan, interp,
+                        _pval_effect_comment(interp))
+
+
+def phi_coefficient(confusion: np.ndarray) -> float:
+    """2×2 分割表の φ係数。"""
+    confusion = np.asarray(confusion, dtype=float)
+    chi2 = stats.chi2_contingency(confusion, correction=False)[0]
+    n = confusion.sum()
+    if n == 0:
+        return np.nan
+    return np.sqrt(chi2 / n)
+
+
+# ---- ノンパラ検定に対応した効果量（検定と効果量の整合性のため）----
+
+def cliffs_delta(a, b) -> float:
+    """Cliff's delta（独立2群・順位ベース）。範囲 -1〜+1。
+
+    Mann-Whitney U 検定に対応する効果量。rank-biserial 相関と等価。
+    """
+    a = np.asarray(a, dtype=float); a = a[~np.isnan(a)]
+    b = np.asarray(b, dtype=float); b = b[~np.isnan(b)]
+    n1, n2 = len(a), len(b)
+    if n1 == 0 or n2 == 0:
+        return np.nan
+    # rank-biserial と等価: δ = 2*U1/(n1*n2) - 1（順位法で ties も適切に処理）
+    combined = np.concatenate([a, b])
+    ranks = stats.rankdata(combined)
+    r1 = ranks[:n1].sum()
+    u1 = r1 - n1 * (n1 + 1) / 2.0
+    return float(2.0 * u1 / (n1 * n2) - 1.0)
+
+
+def rank_biserial_paired(a, b) -> float:
+    """対応あり（Wilcoxon 符号順位検定）の rank-biserial 相関。範囲 -1〜+1。"""
+    a = np.asarray(a, dtype=float)
+    b = np.asarray(b, dtype=float)
+    mask = ~(np.isnan(a) | np.isnan(b))
+    d = a[mask] - b[mask]
+    d = d[d != 0]
+    if len(d) == 0:
+        return np.nan
+    ranks = stats.rankdata(np.abs(d))
+    r_plus = ranks[d > 0].sum()
+    r_minus = ranks[d < 0].sum()
+    total = r_plus + r_minus
+    if total == 0:
+        return np.nan
+    return float((r_plus - r_minus) / total)
+
+
+def epsilon_squared(H: float, n: int) -> float:
+    """Kruskal-Wallis 検定の ε²（イプシロン二乗）。ε² = H/(n-1)。範囲 0〜1。"""
+    if n <= 1:
+        return np.nan
+    return float(H / (n - 1))
+
+
+def omega_squared(groups: list) -> float:
+    """一元配置 ANOVA の ω²（イータ二乗より偏りが小さい効果量）。"""
+    arrays = [np.asarray(g, dtype=float) for g in groups]
+    arrays = [a[~np.isnan(a)] for a in arrays]
+    k = len(arrays)
+    grand = np.concatenate(arrays)
+    N = len(grand)
+    if N <= k or k < 2:
+        return np.nan
+    grand_mean = grand.mean()
+    ss_between = sum(len(a) * (a.mean() - grand_mean) ** 2 for a in arrays)
+    ss_within = sum(((a - a.mean()) ** 2).sum() for a in arrays)
+    ss_total = ss_between + ss_within
+    ms_within = ss_within / (N - k)
+    denom = ss_total + ms_within
+    if denom == 0:
+        return np.nan
+    return float((ss_between - (k - 1) * ms_within) / denom)
+
+
+def _interpret_cliffs(delta: float) -> str:
+    """Cliff's delta / rank-biserial の大きさ解釈（Romano et al. 2006）。"""
+    if delta is None or np.isnan(delta):
+        return "—"
+    a = abs(delta)
+    if a < 0.147:
+        return "ごく小 (negligible)"
+    if a < 0.33:
+        return "小 (small)"
+    if a < 0.474:
+        return "中 (medium)"
+    return "大 (large)"
+
+
+def mannwhitney_effect(a, b) -> EffectResult:
+    """Mann-Whitney U 検定に対応する効果量（Cliff's delta＝rank-biserial）。"""
+    delta = cliffs_delta(a, b)
+    interp = _interpret_cliffs(delta)
+    comment = ("順位ベースの効果量です（中央値・分布の位置の差を表します）。"
+               "Mann-Whitney U 検定は平均値ではなく分布の位置を比較するため、"
+               "Cohen's d ではなくこの指標を用います。")
+    return EffectResult("Cliff's delta (rank-biserial)", delta, np.nan, np.nan,
+                        interp, comment)
+
+
+def wilcoxon_effect(a, b) -> EffectResult:
+    """Wilcoxon 符号順位検定に対応する効果量（対応あり rank-biserial）。"""
+    r = rank_biserial_paired(a, b)
+    interp = _interpret_cliffs(r)
+    comment = ("対応ありの順位ベース効果量です（差分の符号と大きさの偏りを表します）。")
+    return EffectResult("matched-pairs rank-biserial", r, np.nan, np.nan,
+                        interp, comment)
+
+
+def kruskal_effect(H: float, n: int) -> EffectResult:
+    """Kruskal-Wallis 検定に対応する効果量（ε²）。"""
+    eps = epsilon_squared(H, n)
+    interp = interpret_effect(eps, "eta2")
+    return EffectResult("ε² (イプシロン二乗)", eps, np.nan, np.nan, interp,
                         _pval_effect_comment(interp))
 
 

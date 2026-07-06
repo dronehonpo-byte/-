@@ -60,18 +60,47 @@ def histogram(df, col, bins=30, kde=True, lang="ja", title=None):
     return fig
 
 
+def _validate_columns(df, cols):
+    """指定列が DataFrame に存在するか確認し、無ければ日本語エラーを送出する。"""
+    if df is None:
+        raise ValueError("データが読み込まれていません。")
+    missing = [c for c in cols if c is not None and c not in df.columns]
+    if missing:
+        raise ValueError(
+            f"選択した列が見つかりません：{', '.join(map(str, missing))}。"
+            "列名を確認してください（全角・半角・空白の違いにご注意ください）。"
+        )
+
+
+def _clean_group_frame(df, value_col, group_col):
+    """群比較用に必要2列だけを取り出し、欠損除去・グループ列を文字列化した DataFrame を返す。
+
+    日本語・記号・空白を含む列名／カテゴリでも seaborn が確実に解釈できるようにする。
+    """
+    _validate_columns(df, [value_col, group_col])
+    sub = df[[value_col, group_col]].copy()
+    sub[group_col] = sub[group_col].astype("string")
+    sub = sub.dropna(subset=[value_col, group_col])
+    if sub.empty:
+        raise ValueError("有効なデータがありません（選択した列がすべて欠損の可能性があります）。")
+    return sub
+
+
 def boxplot(df, value_col, group_col=None, strip=True, lang="ja", title=None):
     fig, ax = plt.subplots(figsize=(7, 4.5))
     if group_col:
-        sns.boxplot(data=df, x=group_col, y=value_col, ax=ax, hue=group_col,
+        sub = _clean_group_frame(df, value_col, group_col)
+        sns.boxplot(data=sub, x=group_col, y=value_col, ax=ax, hue=group_col,
                     palette="Blues", legend=False)
         if strip:
-            sns.stripplot(data=df, x=group_col, y=value_col, ax=ax, color="#1A1A2E",
+            sns.stripplot(data=sub, x=group_col, y=value_col, ax=ax, color="#1A1A2E",
                           alpha=0.4, size=3)
     else:
-        sns.boxplot(data=df, y=value_col, ax=ax, color="#1E6091")
+        _validate_columns(df, [value_col])
+        s = df[[value_col]].dropna()
+        sns.boxplot(data=s, y=value_col, ax=ax, color="#1E6091")
         if strip:
-            sns.stripplot(data=df, y=value_col, ax=ax, color="#1A1A2E", alpha=0.4, size=3)
+            sns.stripplot(data=s, y=value_col, ax=ax, color="#1A1A2E", alpha=0.4, size=3)
     ax.set_title(title or f"{value_col} の箱ひげ図")
     fig.tight_layout()
     return fig
@@ -80,10 +109,12 @@ def boxplot(df, value_col, group_col=None, strip=True, lang="ja", title=None):
 def violin(df, value_col, group_col=None, lang="ja", title=None):
     fig, ax = plt.subplots(figsize=(7, 4.5))
     if group_col:
-        sns.violinplot(data=df, x=group_col, y=value_col, ax=ax, hue=group_col,
+        sub = _clean_group_frame(df, value_col, group_col)
+        sns.violinplot(data=sub, x=group_col, y=value_col, ax=ax, hue=group_col,
                        palette="Blues", legend=False)
     else:
-        sns.violinplot(data=df, y=value_col, ax=ax, color="#1E6091")
+        _validate_columns(df, [value_col])
+        sns.violinplot(data=df[[value_col]].dropna(), y=value_col, ax=ax, color="#1E6091")
     ax.set_title(title or f"{value_col} のバイオリンプロット")
     fig.tight_layout()
     return fig
@@ -124,6 +155,7 @@ def roc_curve_plot(roc_data: dict, lang="ja", title=None):
 
 def bar_with_error(df, group_col, value_col, lang="ja", title=None):
     fig, ax = plt.subplots(figsize=(7, 4.5))
+    df = _clean_group_frame(df, value_col, group_col)
     grp = df.groupby(group_col)[value_col]
     means = grp.mean()
     sems = grp.sem()
