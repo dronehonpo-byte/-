@@ -41,3 +41,24 @@ def test_app_entry_runs():
     at = AppTest.from_file(str(ROOT / "app.py"), default_timeout=60)
     at.run()
     assert not at.exception
+
+
+def test_web_build_module_consistency():
+    """Web(stlite)版に同梱するページが、同梱していないモジュールに依存しないこと。
+
+    予測系モジュールを外した際に、残ページの dead import で Web 版が
+    ImportError で壊れる事故を防ぐ。
+    """
+    import re
+
+    build_src = (ROOT / "web" / "_build_index.py").read_text(encoding="utf-8")
+    included = re.findall(r'"((?:modules|pages|exporters)/[^"]+\.py)"', build_src)
+    bundled_modules = {p.split("/")[1][:-3] for p in included if p.startswith("modules/")}
+
+    for page in [p for p in included if p.startswith("pages/")]:
+        src = (ROOT / page).read_text(encoding="utf-8")
+        for grp in re.findall(r"from modules import ([^\n]+)", src):
+            for name in [x.strip() for x in grp.split(",")]:
+                assert name in bundled_modules, (
+                    f"{page} が Web 版未同梱のモジュール modules/{name} を import しています"
+                )

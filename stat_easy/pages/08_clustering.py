@@ -7,7 +7,7 @@ from __future__ import annotations
 import streamlit as st
 import pandas as pd
 
-from modules import common, data_loader, ml_compare, clustering, visualizer
+from modules import common, data_loader, clustering, visualizer
 from exporters import excel_exporter, pdf_exporter
 
 df = common.require_data()
