@@ -403,6 +403,8 @@ const CALIB_FEATURES = ["area","fl","asym","balance"];   // 校正で使う特�
 const SCORE_SCALE = 20;                        // 改善(上げ)側の広がり：大きいほど高得点が出にくい
 const DOWN_SCALE  = 42;                         // 悪化(下げ)側の傾き：大きいほど甘い＝下がりにくい
 const MIN_SCORE   = 17.25;                      // スコア下限（0まで落とさない）
+// 総合スコアの重み（合計1.0）。小顔化＝顔の大きさを最重視。黄金比は小さめ、左右差はさらに小さく。
+const W_AREA=0.55, W_FL=0.25, W_BAL=0.12, W_ASYM=0.08;
 const CALIB_MIN = 12;                          // 校正に必要な最小サンプル数
 // 黄金比／比率バランスの理想値と許容幅（日本人向けに調整可）
 const GR = {
@@ -817,7 +819,7 @@ function analyze(){
   if(calibrated()){
     total = COEF.b0 + CALIB_FEATURES.reduce((s,k)=> s + (COEF[k]||0)*rv[k], 0);
   }else{
-    const improvement = 0.4*areaRate + 0.25*flRate + 0.15*asymRate + 0.2*balanceRate;
+    const improvement = W_AREA*areaRate + W_FL*flRate + W_ASYM*asymRate + W_BAL*balanceRate;
     total = scoreCurve(improvement);
   }
   total = round1(clamp(total, MIN_SCORE, 100));
