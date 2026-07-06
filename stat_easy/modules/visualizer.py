@@ -12,12 +12,14 @@ import pandas as pd
 
 from .common import setup_japanese_font
 
-setup_japanese_font()
-
 import matplotlib.pyplot as plt  # noqa: E402
 import seaborn as sns  # noqa: E402
 
+# 先に seaborn のスタイルを適用してから日本語フォントを設定する。
+# （sns.set_style/set_theme は font.family を 'sans-serif' に戻すため、
+#  順序を逆にすると同梱フォント設定が上書きされ豆腐 □ が発生する。）
 sns.set_style("whitegrid")
+setup_japanese_font()
 
 # ラベル辞書（日本語 / 英語切り替え）
 _LABELS = {
@@ -61,7 +63,8 @@ def histogram(df, col, bins=30, kde=True, lang="ja", title=None):
 def boxplot(df, value_col, group_col=None, strip=True, lang="ja", title=None):
     fig, ax = plt.subplots(figsize=(7, 4.5))
     if group_col:
-        sns.boxplot(data=df, x=group_col, y=value_col, ax=ax, palette="Blues")
+        sns.boxplot(data=df, x=group_col, y=value_col, ax=ax, hue=group_col,
+                    palette="Blues", legend=False)
         if strip:
             sns.stripplot(data=df, x=group_col, y=value_col, ax=ax, color="#1A1A2E",
                           alpha=0.4, size=3)
@@ -77,7 +80,8 @@ def boxplot(df, value_col, group_col=None, strip=True, lang="ja", title=None):
 def violin(df, value_col, group_col=None, lang="ja", title=None):
     fig, ax = plt.subplots(figsize=(7, 4.5))
     if group_col:
-        sns.violinplot(data=df, x=group_col, y=value_col, ax=ax, palette="Blues")
+        sns.violinplot(data=df, x=group_col, y=value_col, ax=ax, hue=group_col,
+                       palette="Blues", legend=False)
     else:
         sns.violinplot(data=df, y=value_col, ax=ax, color="#1E6091")
     ax.set_title(title or f"{value_col} のバイオリンプロット")

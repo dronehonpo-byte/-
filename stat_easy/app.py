@@ -31,8 +31,6 @@ descriptive = st.Page("pages/03_descriptive.py", title="記述統計・Table 1",
 hypothesis = st.Page("pages/04_hypothesis.py", title="群の違いを調べる", icon="⚖️")
 effect = st.Page("pages/05_effect.py", title="効果量・信頼区間", icon="📏")
 
-regression = st.Page("pages/06_regression.py", title="変数間の関係を調べる", icon="🔗")
-ml = st.Page("pages/07_ml.py", title="予測モデルを作る", icon="🤖")
 cluster = st.Page("pages/08_clustering.py", title="グループに分ける", icon="🧩")
 
 visualization = st.Page("pages/09_visualization.py", title="図表を出力する", icon="🎨")
@@ -42,8 +40,6 @@ nav = st.navigation(
         "はじめに": [home, upload],
         "データを確認したい": [quality, descriptive],
         "群の違いを調べたい": [hypothesis, effect],
-        "変数間の関係を調べたい": [regression],
-        "予測モデルを作りたい": [ml],
         "グループに分けたい": [cluster],
         "図表を出力する": [visualization],
     }

@@ -30,20 +30,54 @@ EFFECT_SIZE_THRESHOLDS = {
 
 
 def setup_japanese_font() -> None:
-    """matplotlib の日本語フォントを設定（文字化け防止）。"""
+    """matplotlib の日本語フォントを設定（文字化け＝豆腐 □ を防ぐ）。
+
+    アプリに同梱した IPAexGothic (assets/fonts/ipaexg.ttf) を最優先で登録する。
+    これによりローカル(Windows)・ブラウザ内実行(stlite/Pyodide) のいずれでも
+    japanize-matplotlib やシステムフォントの有無に依存せず日本語が表示される。
+    """
     import matplotlib
 
     matplotlib.use("Agg")
-    try:
-        import japanize_matplotlib  # noqa: F401
-    except Exception:
-        # japanize-matplotlib が無い環境でも落ちないようにする
-        import matplotlib.pyplot as plt
-
-        for cand in ("IPAexGothic", "Noto Sans CJK JP", "TakaoGothic", "DejaVu Sans"):
-            plt.rcParams["font.family"] = cand
-            break
     import matplotlib.pyplot as plt
+    from matplotlib import font_manager
+
+    family = None
+
+    # ① 同梱フォントを登録（最優先・最も確実）
+    bundled = ASSETS_DIR / "fonts" / "ipaexg.ttf"
+    if bundled.exists():
+        try:
+            font_manager.fontManager.addfont(str(bundled))
+            family = font_manager.FontProperties(fname=str(bundled)).get_name()
+        except Exception:
+            family = None
+
+    # ② japanize-matplotlib があれば利用
+    if family is None:
+        try:
+            import japanize_matplotlib  # noqa: F401
+
+            family = plt.rcParams.get("font.family", ["sans-serif"])[0]
+        except Exception:
+            family = None
+
+    # ③ システムにある日本語フォントを探索
+    if family is None:
+        for cand in ("IPAexGothic", "IPAGothic", "Noto Sans CJK JP",
+                     "Noto Sans JP", "TakaoGothic", "VL Gothic", "Yu Gothic",
+                     "MS Gothic", "Meiryo"):
+            try:
+                path = font_manager.findfont(cand, fallback_to_default=False)
+                if path:
+                    family = cand
+                    break
+            except Exception:
+                continue
+
+    if family:
+        plt.rcParams["font.family"] = family
+        plt.rcParams["font.sans-serif"] = [family] + plt.rcParams.get("font.sans-serif", [])
 
     plt.rcParams["axes.unicode_minus"] = False
     plt.rcParams["figure.dpi"] = 110

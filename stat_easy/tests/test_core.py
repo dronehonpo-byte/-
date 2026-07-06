@@ -136,6 +136,24 @@ def test_visualizer_png_svg(experiment):
     assert b"<svg" in svg[:300]
 
 
+def test_japanese_font_no_tofu(experiment):
+    """日本語ラベルの図で欠落グリフ（豆腐 □）が発生しないこと。"""
+    import warnings
+
+    figs = [
+        visualizer.boxplot(experiment, "post_score", "group"),
+        visualizer.histogram(experiment, "pre_score"),
+        visualizer.violin(experiment, "age", "group"),
+    ]
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
+        for fig in figs:
+            visualizer.fig_to_bytes(fig, "png")
+            visualizer.fig_to_bytes(fig, "svg")
+    tofu = [w for w in caught if "missing from font" in str(w.message)]
+    assert not tofu, f"豆腐（欠落グリフ）が発生: {[str(w.message) for w in tofu][:3]}"
+
+
 def test_exporters(experiment):
     num = descriptive_stats.describe_numeric(experiment)
     xlsx = excel_exporter.export_tables({"記述統計": num})

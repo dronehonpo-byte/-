@@ -8,11 +8,15 @@ stat_easy 配下の全ファイルを 1 枚の静的 HTML に埋め込み、Verc
 """
 from __future__ import annotations
 
+import base64
 import json
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent  # stat_easy/
 OUT = ROOT / "web" / "index.html"
+
+# 同梱する日本語フォント（豆腐 □ 防止・バイナリ埋め込み）
+FONT_REL = "assets/fonts/ipaexg.ttf"
 
 # 仮想ファイルシステムに載せるファイル（stat_easy/ からの相対パス）
 INCLUDE = [
@@ -25,7 +29,6 @@ INCLUDE = [
     "modules/hypothesis_test.py",
     "modules/effect_size.py",
     "modules/correlation.py",
-    "modules/ml_compare.py",
     "modules/clustering.py",
     "modules/visualizer.py",
     "exporters/__init__.py",
@@ -38,8 +41,6 @@ INCLUDE = [
     "pages/03_descriptive.py",
     "pages/04_hypothesis.py",
     "pages/05_effect.py",
-    "pages/06_regression.py",
-    "pages/07_ml.py",
     "pages/08_clustering.py",
     "pages/09_visualization.py",
     "sample_data/sample_experiment.csv",
@@ -79,6 +80,9 @@ def build() -> None:
     files_json = files_json.replace("</", "<\\/")
     reqs_json = json.dumps(REQUIREMENTS)
 
+    # 日本語フォント（バイナリ）を base64 で埋め込む
+    font_b64 = base64.b64encode((ROOT / FONT_REL).read_bytes()).decode("ascii")
+
     html = f"""<!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -114,6 +118,11 @@ def build() -> None:
   <script src="https://cdn.jsdelivr.net/npm/@stlite/mountable@{STLITE_VERSION}/build/stlite.js"></script>
   <script>
     const files = {files_json};
+    // 日本語フォント（バイナリ）を仮想FSにマウント（豆腐 □ 防止）
+    const fontB64 = "{font_b64}";
+    files["{FONT_REL}"] = {{
+      data: Uint8Array.from(atob(fontB64), function (c) {{ return c.charCodeAt(0); }})
+    }};
     stlite.mount(
       {{
         requirements: {reqs_json},
