@@ -1,0 +1,45 @@
+/* ホーム */
+"home.title" = "きょうもがんばろう！";
+"home.comingSoon" = "じゅんびちゅう";
+
+/* はみがき */
+"tooth.start" = "はをみがいてみよう！";
+"tooth.complete" = "ぴかぴか！えらい！";
+"tooth.gargle" = "のどもスッキリ！";
+
+/* かたづけ */
+"cleanup.start" = "おかたづけしてみよう！";
+"cleanup.complete" = "おへやぴかぴか！";
+
+/* しょくじ */
+"meal.start" = "ごはんをたべさせてあげよう！";
+"meal.complete" = "ごちそうさまでした！";
+"meal.complete.all" = "きらいなものがなくてえらい！すごいね！！";
+
+/* きがえ */
+"dressing.start" = "おきがえしてみよう！";
+"dressing.complete" = "じぶんできれたね！かっこいい！";
+
+/* 共通 */
+"common.sceneClear" = "できた！";
+"common.complete" = "すごいね！！";
+"common.again" = "もういちど";
+"common.next" = "つぎへ";
+"common.home" = "ホームへ";
+"common.close" = "とじる";
+"common.cancel" = "キャンセル";
+
+/* 設定 */
+"settings.title" = "せってい";
+"settings.bgm" = "おんがく";
+"settings.se" = "こうかおん";
+
+/* サブスクリプション */
+"subscription.title" = "もっとあそぼう！";
+"subscription.description" = "サブスクリプションにはいると\nしょくじ・きがえ・てあらい・じゅんびが\nあそべるようになるよ！";
+"subscription.purchase" = "はじめる";
+"subscription.restore" = "こうにゅうをふっこうする";
+"subscription.active" = "サブスクリプションかにゅうちゅう";
+"subscription.parentalGate.title" = "おとなのかたへ";
+"subscription.parentalGate.message" = "こうにゅうにはおとなのかたのかくにんがひつようです。こたえをいれてください。";
+"subscription.parentalGate.ok" = "かくにん";

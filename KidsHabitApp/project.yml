@@ -1,0 +1,54 @@
+name: KidsHabitApp
+options:
+  bundleIdPrefix: com.miyabee
+  deploymentTarget:
+    iOS: "16.0"
+  createIntermediateGroups: true
+
+settings:
+  base:
+    SWIFT_VERSION: "5.9"
+    TARGETED_DEVICE_FAMILY: "1,2"   # iPhone / iPad
+    DEVELOPMENT_LANGUAGE: ja
+
+targets:
+  KidsHabitApp:
+    type: application
+    platform: iOS
+    sources:
+      - path: App
+      - path: Models
+      - path: Views
+      - path: GameScenes
+      - path: Audio
+      - path: Localization
+      - path: Resources
+    info:
+      path: App/Info.plist
+      properties:
+        CFBundleDisplayName: きっずしゅうかん
+        CFBundleShortVersionString: "1.0.0"
+        CFBundleVersion: "1"
+        UILaunchScreen: {}
+        # ランドスケープ固定
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+        UISupportedInterfaceOrientations~ipad:
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+        UIRequiresFullScreen: true
+        UIStatusBarHidden: true
+        CFBundleDevelopmentRegion: ja
+        CFBundleLocalizations:
+          - ja
+          - en
+          - ko
+          - zh-Hans
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.miyabee.kidshabitapp
+        INFOPLIST_KEY_UIStatusBarHidden: true
+    scheme:
+      testTargets: []
+      storeKitConfiguration: KidsHabitApp.storekit
