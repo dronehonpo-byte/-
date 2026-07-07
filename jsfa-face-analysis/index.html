@@ -6,25 +6,25 @@
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <meta name="apple-mobile-web-app-title" content="JSFA 顔解析" />
-<meta name="theme-color" content="#1D4ED8" />
+<meta name="theme-color" content="#A9852F" />
 <link rel="manifest" href="manifest.json" />
 <title>JSFA Small Face Analysis｜日本小顔矯正認定協会 顔解析システム</title>
 <style>
   :root{
-    --brand:#2563EB;
-    --brand2:#6D5DF6;
-    --brand-dark:#1E3A8A;
-    --grad:linear-gradient(135deg,#2563EB 0%,#6D5DF6 55%,#8B5CF6 100%);
-    --ok:#0EA971;
-    --accent:#E85C8A;
-    --bg:#F6F8FD;
+    --brand:#A9852F;          /* アンティークゴールド（ロゴ準拠） */
+    --brand2:#C7A24A;         /* ライトゴールド */
+    --brand-dark:#7C5E1E;     /* ディープゴールド／ブロンズ */
+    --grad:linear-gradient(135deg,#D4B968 0%,#B8912F 48%,#8A6A22 100%);
+    --ok:#4E8B5B;             /* ボタニカルグリーン（改善） */
+    --accent:#B0894A;
+    --bg:#FBF8F1;             /* アイボリー */
     --surface:#FFFFFF;
-    --line:rgba(15,23,42,.08);
-    --text:#111827;
-    --muted:#6B7280;
-    --danger:#DC2626;
-    --shadow:0 14px 40px rgba(37,60,120,.12);
-    --shadow-sm:0 6px 18px rgba(37,60,120,.09);
+    --line:rgba(124,94,30,.14);
+    --text:#3A2E1B;           /* ディープブラウン */
+    --muted:#8A7A5E;          /* ウォームグレー */
+    --danger:#B4472E;
+    --shadow:0 16px 42px rgba(124,94,30,.14);
+    --shadow-sm:0 6px 18px rgba(124,94,30,.10);
     --radius:22px;
   }
   *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
@@ -33,9 +33,9 @@
     font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Noto Sans JP",sans-serif;
     color:var(--text);
     background:
-      radial-gradient(1100px 620px at 108% -8%, rgba(109,93,246,.14), transparent 60%),
-      radial-gradient(880px 520px at -12% 112%, rgba(232,92,138,.10), transparent 55%),
-      linear-gradient(180deg,#F7F9FE 0%,#EEF1FA 100%);
+      radial-gradient(1100px 620px at 108% -8%, rgba(201,162,74,.20), transparent 60%),
+      radial-gradient(880px 520px at -12% 112%, rgba(124,94,30,.09), transparent 55%),
+      linear-gradient(180deg,#FCFAF3 0%,#F2EAD8 100%);
     background-attachment:fixed;
     overscroll-behavior:none; -webkit-user-select:none; user-select:none;
     -webkit-font-smoothing:antialiased;
@@ -51,9 +51,10 @@
   }
   .brand{ display:flex; align-items:center; gap:10px; padding:9px 0; }
   .brand-mark{
-    width:34px; height:34px; border-radius:11px; background:var(--grad); color:#fff;
-    display:flex; align-items:center; justify-content:center; font-size:17px; font-weight:800;
-    box-shadow:0 6px 16px rgba(109,93,246,.4); flex:none;
+    width:36px; height:36px; border-radius:50%; background:var(--grad); color:#fff;
+    display:flex; align-items:center; justify-content:center; font-size:20px; font-weight:700;
+    font-family:Georgia,'Times New Roman',serif; font-style:italic;
+    box-shadow:0 6px 16px rgba(169,133,47,.42); flex:none;
   }
   header.appbar .ttl{ font-size:15px; font-weight:800; line-height:1.15; letter-spacing:.2px; text-align:left;
     background:var(--grad); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; color:transparent; }
@@ -74,13 +75,13 @@
     transition:transform .12s cubic-bezier(.22,.61,.36,1), box-shadow .2s ease, opacity .15s ease, background .2s ease;
   }
   .btn:active{ transform:scale(.97); }
-  .btn-primary{ background:var(--grad); color:#fff; box-shadow:0 12px 26px rgba(70,80,220,.34); }
-  .btn-primary:active{ box-shadow:0 6px 16px rgba(70,80,220,.3); }
+  .btn-primary{ background:var(--grad); color:#fff; box-shadow:0 12px 26px rgba(138,106,34,.34); }
+  .btn-primary:active{ box-shadow:0 6px 16px rgba(138,106,34,.3); }
   .btn-primary:disabled{ background:#C3CBDD; color:#EDF1F8; box-shadow:none; cursor:not-allowed; }
   .btn-lg{ font-size:21px; min-height:66px; width:100%; max-width:420px; }
-  .btn-ghost{ background:rgba(255,255,255,.9); color:var(--brand); border:1.5px solid rgba(37,99,235,.28); box-shadow:var(--shadow-sm); }
+  .btn-ghost{ background:rgba(255,255,255,.9); color:var(--brand); border:1.5px solid rgba(169,133,47,.32); box-shadow:var(--shadow-sm); }
   .btn-ghost:disabled{ color:#9AA6BD; border-color:var(--line); box-shadow:none; opacity:.85; }
-  .btn-danger{ background:rgba(255,255,255,.9); color:var(--danger); border:1.5px solid rgba(220,38,38,.3); box-shadow:var(--shadow-sm); }
+  .btn-danger{ background:rgba(255,255,255,.9); color:var(--danger); border:1.5px solid rgba(180,71,46,.3); box-shadow:var(--shadow-sm); }
   .btn-sm{ font-size:15px; min-height:48px; padding:12px 18px; border-radius:13px; }
   .btn-row{ display:flex; gap:12px; width:100%; max-width:520px; }
   .btn-row .btn{ flex:1; }
@@ -90,9 +91,14 @@
     position:relative; width:96px; height:96px; border-radius:28px; background:var(--grad);
     display:flex; align-items:center; justify-content:center; color:#fff;
     font-weight:800; font-size:30px; letter-spacing:1px;
-    box-shadow:0 20px 44px rgba(109,93,246,.42), inset 0 1px 0 rgba(255,255,255,.35);
+    box-shadow:0 20px 44px rgba(169,133,47,.42), inset 0 1px 0 rgba(255,255,255,.35);
   }
-  .home-logo::after{ content:""; position:absolute; inset:-7px; border-radius:34px; border:1.5px solid rgba(109,93,246,.28); }
+  .home-logo::after{ content:""; position:absolute; inset:-7px; border-radius:34px; border:1.5px solid rgba(169,133,47,.30); }
+  .brand-hero{ width:154px; height:154px; display:flex; align-items:center; justify-content:center; }
+  .brand-hero-img{ width:154px; height:154px; object-fit:contain; filter:drop-shadow(0 10px 22px rgba(124,94,30,.22)); }
+  .brand-emblem svg{ width:150px; height:150px; filter:drop-shadow(0 10px 24px rgba(124,94,30,.22)); }
+  .brand-word{ font-family:Georgia,'Times New Roman',serif; font-weight:800; font-size:30px; letter-spacing:8px; padding-left:8px;
+    background:var(--grad); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; color:transparent; margin-top:-8px; }
   .home-title{ font-size:25px; font-weight:800; letter-spacing:.2px; }
   .home-sub{ color:var(--muted); font-size:15px; line-height:1.7; max-width:400px; }
   .home-actions{ display:flex; flex-direction:column; gap:12px; width:100%; max-width:420px; margin-top:4px; }
@@ -133,15 +139,15 @@
   .stage.busy .spin-overlay{ display:flex; }
 
   .badge-step{
-    align-self:center; background:rgba(37,99,235,.10); color:var(--brand); font-weight:800;
+    align-self:center; background:rgba(169,133,47,.12); color:var(--brand); font-weight:800;
     padding:6px 15px; border-radius:999px; font-size:12px; letter-spacing:.5px; margin-bottom:12px;
-    border:1px solid rgba(37,99,235,.16);
+    border:1px solid rgba(169,133,47,.22);
   }
   .cap-title{ text-align:center; font-size:21px; font-weight:800; margin:2px 0 14px; letter-spacing:.2px; }
   .cap-actions{ margin-top:18px; display:flex; justify-content:center; align-items:center; gap:18px; }
   .shutter{
     width:76px; height:76px; border-radius:50%; background:var(--grad);
-    border:5px solid #fff; box-shadow:0 0 0 3px rgba(109,93,246,.5), 0 10px 24px rgba(70,80,220,.4);
+    border:5px solid #fff; box-shadow:0 0 0 3px rgba(169,133,47,.5), 0 10px 24px rgba(138,106,34,.4);
     cursor:pointer; flex:none; transition:transform .12s ease, box-shadow .2s ease;
   }
   .shutter:active{ transform:scale(.93); }
@@ -186,7 +192,7 @@
     font-size:14px; box-shadow:var(--shadow-sm);
   }
   table.metrics th, table.metrics td{ padding:13px 12px; text-align:center; border-bottom:1px solid var(--line); }
-  table.metrics thead th{ background:rgba(37,99,235,.05); font-size:11px; font-weight:800; letter-spacing:.6px; color:var(--muted); text-transform:uppercase; }
+  table.metrics thead th{ background:rgba(169,133,47,.06); font-size:11px; font-weight:800; letter-spacing:.6px; color:var(--muted); text-transform:uppercase; }
   table.metrics tbody tr:nth-child(even) td{ background:rgba(15,23,42,.015); }
   table.metrics tbody tr:last-child td{ border-bottom:none; }
   table.metrics td.name{ text-align:left; font-weight:700; }
@@ -217,7 +223,7 @@
   .modal-title{ font-size:19px; font-weight:800; color:#B45309; text-align:center; margin-bottom:12px; }
   .modal-body{ font-size:14px; line-height:1.7; color:var(--text); text-align:center; margin-bottom:18px; }
   .calib{
-    max-width:560px; margin:18px auto 0; background:rgba(255,255,255,.7); border:1px dashed rgba(109,93,246,.4);
+    max-width:560px; margin:18px auto 0; background:rgba(255,255,255,.7); border:1px dashed rgba(169,133,47,.42);
     border-radius:18px; padding:18px; box-shadow:var(--shadow-sm);
   }
   .calib-h{ font-weight:800; font-size:15px; margin-bottom:12px; color:var(--brand-dark); }
@@ -249,14 +255,35 @@
 <div id="app">
   <header class="appbar">
     <div class="brand">
-      <span class="brand-mark">小</span>
+      <span class="brand-mark">J</span>
       <div class="ttl">JSFA Small Face Analysis<small>日本小顔矯正認定協会 顔解析システム</small></div>
     </div>
   </header>
 
   <!-- STEP1: Home -->
   <section id="screen-home" class="screen center active">
-    <div class="home-logo">JSFA</div>
+    <div class="brand-hero">
+      <img id="heroLogo" class="brand-hero-img hidden" src="logo.png" alt="JSFA ロゴ"
+           onload="this.classList.remove('hidden'); var f=document.getElementById('heroFallback'); if(f) f.classList.add('hidden'); var w=document.getElementById('brandWord'); if(w) w.classList.add('hidden');"
+           onerror="this.remove()" />
+      <div id="heroFallback" class="brand-emblem">
+        <svg viewBox="0 0 120 120" aria-hidden="true">
+          <defs><linearGradient id="goldg" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#D8BE72"/><stop offset=".5" stop-color="#B8912F"/><stop offset="1" stop-color="#8A6A22"/>
+          </linearGradient></defs>
+          <circle cx="60" cy="60" r="55" fill="none" stroke="url(#goldg)" stroke-width="1.6"/>
+          <circle cx="60" cy="60" r="48.5" fill="none" stroke="url(#goldg)" stroke-width="1"/>
+          <g fill="url(#goldg)">
+            <circle cx="60" cy="3.2" r="2.5"/><circle cx="60" cy="116.8" r="2.5"/>
+            <circle cx="3.2" cy="60" r="2.5"/><circle cx="116.8" cy="60" r="2.5"/>
+            <circle cx="20.5" cy="20.5" r="1.9"/><circle cx="99.5" cy="20.5" r="1.9"/>
+            <circle cx="20.5" cy="99.5" r="1.9"/><circle cx="99.5" cy="99.5" r="1.9"/>
+          </g>
+          <text x="61" y="83" text-anchor="middle" font-family="Georgia,'Times New Roman',serif" font-style="italic" font-weight="700" font-size="64" fill="url(#goldg)">J</text>
+        </svg>
+      </div>
+    </div>
+    <div id="brandWord" class="brand-word">JSFA</div>
     <div class="kicker">Premium Face Analysis</div>
     <div class="home-title">小顔矯正 Before / After 解析</div>
     <div class="home-sub">大会運用：先に全員の <b>Before</b> を撮影・保存し、あとで <b>After</b> を番号で呼び出して解析できます。（カメラ撮影・写真アップロード両対応）</div>
@@ -966,7 +993,7 @@ async function saveResult(){
   const ctx=c.getContext("2d");
   ctx.fillStyle="#fff"; ctx.fillRect(0,0,W,H);
   const hg=ctx.createLinearGradient(0,0,W,headerH);
-  hg.addColorStop(0,"#2563EB"); hg.addColorStop(.55,"#6D5DF6"); hg.addColorStop(1,"#8B5CF6");
+  hg.addColorStop(0,"#C6A24A"); hg.addColorStop(.5,"#A9852F"); hg.addColorStop(1,"#836420");
   ctx.fillStyle=hg; ctx.fillRect(0,0,W,headerH);
   ctx.fillStyle="#fff"; ctx.textAlign="center";
   ctx.font="bold 40px sans-serif"; ctx.fillText("JSFA Small Face Analysis", W/2, 62);
@@ -976,13 +1003,13 @@ async function saveResult(){
   const py=headerH+20;
   drawCover(ctx,imgB,pad,py,photoW,photoH);
   drawCover(ctx,imgA,pad*2+photoW,py,photoW,photoH);
-  ctx.fillStyle="#334155"; ctx.font="bold 30px sans-serif"; ctx.textAlign="center";
+  ctx.fillStyle="#5A4A2C"; ctx.font="bold 30px sans-serif"; ctx.textAlign="center";
   ctx.fillText("Before", pad+photoW/2, py+photoH+44);
   ctx.fillText("After",  pad*2+photoW*1.5, py+photoH+44);
   let y=py+photoH+70+20;
-  ctx.fillStyle="#64748B"; ctx.font="26px sans-serif"; ctx.fillText("総合スコア", W/2, y+10);
-  ctx.fillStyle="#1D4ED8"; ctx.font="bold 64px sans-serif"; ctx.fillText(`50.0点 → ${m.totalScore.toFixed(1)}点`, W/2, y+72);
-  ctx.fillStyle=m.up<0?"#64748B":"#16A34A"; ctx.font="bold 40px sans-serif";
+  ctx.fillStyle="#8A7A5E"; ctx.font="26px sans-serif"; ctx.fillText("総合スコア", W/2, y+10);
+  ctx.fillStyle="#8A6A22"; ctx.font="bold 64px sans-serif"; ctx.fillText(`50.0点 → ${m.totalScore.toFixed(1)}点`, W/2, y+72);
+  ctx.fillStyle=m.up<0?"#8A7A5E":"#4E8B5B"; ctx.font="bold 40px sans-serif";
   ctx.fillText(m.up>=0?`＋${m.up.toFixed(1)}点UP!`:`${m.up.toFixed(1)}点`, W/2, y+120);
   y=y+scoreH+10;
   const rows=[
@@ -996,15 +1023,15 @@ async function saveResult(){
   ctx.font="27px sans-serif";
   rows.forEach((r,i)=>{
     const ry=y+i*52;
-    ctx.textAlign="left"; ctx.fillStyle="#334155"; ctx.fillText(r[0], pad+20, ry);
-    ctx.textAlign="center"; ctx.fillStyle=r[1].startsWith("-")?"#64748B":"#16A34A"; ctx.fillText(r[1], W/2+120, ry);
-    ctx.textAlign="right"; ctx.fillStyle="#1D4ED8"; ctx.font="bold 27px sans-serif"; ctx.fillText(`${r[2].toFixed(1)}点`, W-pad-20, ry);
+    ctx.textAlign="left"; ctx.fillStyle="#5A4A2C"; ctx.fillText(r[0], pad+20, ry);
+    ctx.textAlign="center"; ctx.fillStyle=r[1].startsWith("-")?"#8A7A5E":"#4E8B5B"; ctx.fillText(r[1], W/2+120, ry);
+    ctx.textAlign="right"; ctx.fillStyle="#8A6A22"; ctx.font="bold 27px sans-serif"; ctx.fillText(`${r[2].toFixed(1)}点`, W-pad-20, ry);
     ctx.font="27px sans-serif";
-    ctx.strokeStyle="#E2E8F0"; ctx.beginPath(); ctx.moveTo(pad,ry+16); ctx.lineTo(W-pad,ry+16); ctx.stroke();
+    ctx.strokeStyle="#EADFC6"; ctx.beginPath(); ctx.moveTo(pad,ry+16); ctx.lineTo(W-pad,ry+16); ctx.stroke();
   });
-  ctx.textAlign="center"; ctx.fillStyle="#0F172A"; ctx.font="bold 28px sans-serif";
+  ctx.textAlign="center"; ctx.fillStyle="#3A2E1B"; ctx.font="bold 28px sans-serif";
   ctx.fillText("日本小顔矯正認定協会", W/2, H-46);
-  ctx.fillStyle="#94A3B8"; ctx.font="22px sans-serif"; ctx.fillText(dateStr(), W/2, H-14);
+  ctx.fillStyle="#B0A183"; ctx.font="22px sans-serif"; ctx.fillText(dateStr(), W/2, H-14);
   const url=c.toDataURL("image/jpeg",0.92);
   const noPart = state.currentNo ? `No${pad2(state.currentNo)}_` : "";
   const aTag=document.createElement("a"); aTag.href=url; aTag.download=`jsfa_${noPart}${dateCompact()}.jpg`;
