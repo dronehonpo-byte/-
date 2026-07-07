@@ -4,7 +4,7 @@
      - HTML/アプリ資産（同一オリジン）＝ネットワーク優先。更新を必ず反映し、
        オフライン時のみキャッシュにフォールバック。
      - MediaPipe（CDN/wasm/モデル）＝キャッシュ優先。バージョン付きURLで安全＆高速。*/
-const CACHE = "jsfa-face-v2";
+const CACHE = "jsfa-face-v3";
 const APP_SHELL = [
   "./",
   "./index.html",
