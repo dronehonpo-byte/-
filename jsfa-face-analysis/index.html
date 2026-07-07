@@ -191,7 +191,8 @@
     background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); overflow:hidden;
     font-size:14px; box-shadow:var(--shadow-sm);
   }
-  table.metrics th, table.metrics td{ padding:13px 12px; text-align:center; border-bottom:1px solid var(--line); }
+  table.metrics th, table.metrics td{ padding:9px 12px; text-align:center; border-bottom:1px solid var(--line); }
+  table.metrics td .unit{ font-size:11px; font-weight:700; color:var(--muted); margin-left:1px; }
   table.metrics thead th{ background:rgba(169,133,47,.06); font-size:11px; font-weight:800; letter-spacing:.6px; color:var(--muted); text-transform:uppercase; }
   table.metrics tbody tr:nth-child(even) td{ background:rgba(15,23,42,.015); }
   table.metrics tbody tr:last-child td{ border-bottom:none; }
@@ -387,7 +388,7 @@
       <div class="up" id="scoreUp">＋0点UP!</div>
     </div>
     <table class="metrics">
-      <thead><tr><th>指標</th><th>改善率</th><th>点数(100点)</th></tr></thead>
+      <thead><tr><th>要因（小顔化）</th><th>改善度</th><th>点数(10点満点)</th></tr></thead>
       <tbody id="metricRows"></tbody>
     </table>
     <div class="result-actions">
@@ -414,9 +415,9 @@
       <div class="calib-note">保存されるのは数値（各指標と正解スコア）のみで、顔写真は保存されません。</div>
     </div>
     <div class="footnote">
-      ※ 総合スコアは顔面積・フェイスライン・左右差・黄金比バランスから算出。頬の幅・エラの幅は詳細の参考値です。<br>
-      ※「黄金比バランス」は顔の比率（縦横比・五分割・三分割・口鼻比）の理想への近さを0〜100で表す絶対評価の参考値で、改善率列は Before比の増減（点）です。理想値は目安であり、医学的・人種的に唯一の正解ではありません。<br>
-      ※ 各改善率は顔のパーツを「目の間隔」基準で正規化して比較（写真サイズ・撮影距離の違いを吸収）。<br>
+      ※ 総合スコア（100点満点）＝小顔に関わる10要因の改善度を各10点満点で採点し合計したものです。無変化＝各5点（計50点）を基準に、改善で加点・悪化で減点します。<br>
+      ※ ①〜⑧の「改善度」は Before比の縮小率（＋＝小さくなった＝改善）、⑨左右対称性は左右差の縮小率、⑩黄金比バランスは顔比率の整い度（0〜100の絶対評価）の増減（点）です。理想値は目安であり、医学的・人種的に唯一の正解ではありません。<br>
+      ※ 各要因は顔のパーツを「目の間隔」基準で正規化して比較（写真サイズ・撮影距離の違いを吸収）。<br>
       本スコアはランドマーク座標の相対的な変化率に基づく数値であり、医学的な変化量を保証するものではありません。<br>
       画像・解析データは端末内でのみ処理され、外部サーバーへは送信されません。
     </div>
@@ -464,15 +465,27 @@ const FRAME_BUF_MAX = 9;                      // #1 多フレーム中央値：�
 const Q_DARK_LUMA = 45;                       // #6 品質：これ未満で「暗い」
 const Q_BLUR_VAR  = 6;                        // #6 品質：これ未満で「ぶれ/ピンボケ」
 
-// #4 スコア係数：totalScore = b0 + area*areaRate + fl*flRate + asym*asymRate
-// 既定は従来式（重み0.5/0.3/0.2・0%→50点/10%改善→100点）と等価
-const DEFAULT_COEF = { b0:50, area:2.5, fl:1.5, asym:1.0, balance:1.0 };
-const CALIB_FEATURES = ["area","fl","asym","balance"];   // 校正で使う特徴量
-const SCORE_SCALE = 20;                        // 改善(上げ)側の広がり：大きいほど高得点が出にくい
-const DOWN_SCALE  = 42;                         // 悪化(下げ)側の傾き：大きいほど甘い＝下がりにくい
-const MIN_SCORE   = 17.25;                      // スコア下限（0まで落とさない）
-// 総合スコアの重み（合計1.0）。小顔化＝顔の大きさを最重視。黄金比は小さめ、左右差はさらに小さく。
-const W_AREA=0.55, W_FL=0.25, W_BAL=0.12, W_ASYM=0.08;
+// 小顔に関わる10要因（各10点満点・合計100点）。
+//   type:"size"    … 小さく（縮小）なるほど加点＝Before比の縮小率で採点
+//   type:"balance" … 顔比率の整い度（0〜100の絶対評価）の増加で加点
+// scale … 採点カーブの広がり（小さいほど少しの改善で点が動く＝敏感）。要因ごとの変化量に合わせて調整。
+const FACTORS = [
+  { key:"area",     label:"顔の面積",         scale:7,   type:"size" },
+  { key:"cheek",    label:"頬骨の幅",         scale:4,   type:"size" },
+  { key:"jawW",     label:"エラの幅",         scale:4.5, type:"size" },
+  { key:"chinW",    label:"あご先の幅",       scale:4,   type:"size" },
+  { key:"templeW",  label:"こめかみの幅",     scale:4,   type:"size" },
+  { key:"peri",     label:"フェイスライン",   scale:5,   type:"size" },
+  { key:"lowerLen", label:"下顔面の長さ",     scale:4.5, type:"size" },
+  { key:"whRatio",  label:"顔の丸み(縦横比)", scale:4,   type:"size" },
+  { key:"asym",     label:"左右対称性",       scale:12,  type:"size" },
+  { key:"balance",  label:"黄金比バランス",   scale:6,   type:"balance" },
+];
+const FACTOR_MIN = 1.5;                        // 各要因スコアの下限（0点まで落とさない＝悪化しても急落させない）
+const TOTAL_MIN  = 15;                         // 合計スコアの下限
+// #4 スコア係数（校正時のみ使用）：total = b0 + Σ coef[要因]*改善率
+const DEFAULT_COEF = { b0:50 };
+const CALIB_FEATURES = FACTORS.map(f=>f.key);  // 校正で使う特徴量（10要因の改善率）
 const CALIB_MIN = 12;                          // 校正に必要な最小サンプル数
 // 黄金比／比率バランスの理想値と許容幅（日本人向けに調整可）
 const GR = {
@@ -844,10 +857,12 @@ function storeAndConfirm(payload){
 function clamp(v,mn,mx){ return Math.min(mx, Math.max(mn, v)); }
 function round1(x){ return Math.round(x*10)/10; }
 function round2(x){ return Math.round(x*100)/100; }
-// 改善率(%) → 点数。上げ側と下げ側で傾きが非対称（下げは緩やか）＝悪化しても急落しない。
-function scoreCurve(x){ const s = x>=0 ? SCORE_SCALE : DOWN_SCALE; return 50 + 50*Math.tanh(x/s); }
-// 各指標の改善率(%) → 100点満点スコア（下限 MIN_SCORE）。
-function metricScore(rate){ return clamp(scoreCurve(rate), MIN_SCORE, 100); }
+// 改善度 → 10点満点スコア。無変化=5点、改善で上振れ・悪化で下振れ。
+// 上げ側と下げ側で傾きが非対称（下げは約2.2倍ゆるやか）＝悪化しても急落しない。下限 FACTOR_MIN。
+function factorScore10(rate, scaleUp){
+  const s = rate>=0 ? scaleUp : scaleUp*2.2;
+  return clamp(5 + 5*Math.tanh(rate/s), FACTOR_MIN, 10);
+}
 function dist(lm,a,b,w,h){ return Math.hypot((lm[a].x-lm[b].x)*w, (lm[a].y-lm[b].y)*h); }
 // 理想値への近さ（0〜100）。ideal で100点、離れるほどガウス状に減衰。
 function closeness(val, ideal, tol){ const z=(val-ideal)/tol; return 100*Math.exp(-0.5*z*z); }
@@ -867,50 +882,50 @@ function balanceScore(lm, w, h){
 }
 function measure(cap){
   const { landmarks:lm, w, h } = cap;
-  const s = faceScale(lm, w, h);          // 合成スケール（px）＝正規化基準
+  const s = faceScale(lm, w, h);          // 合成スケール（px）＝正規化基準（撮影距離・写真サイズを吸収）
+  const cheekW  = dist(lm,234,454,w,h);   // 頬骨の横幅（顔最大幅）
+  const faceH   = dist(lm,10,152,w,h);    // 顔の縦（額上→顎先）
   return {
-    area:  polygonArea(lm, CONTOUR, w, h) / (s*s),   // 顔面積（スケール²で正規化）
-    peri:  pathLength(lm, JAW, w, h) / s,             // フェイスライン周囲長
-    asym:  asymmetry(lm, w, h) / s,                   // 左右差
-    cheek: dist(lm,234,454,w,h) / s,                  // 頬の幅
-    jaw:   dist(lm,172,397,w,h) / s,                  // エラ（下顎角）の幅
-    balance: balanceScore(lm, w, h),                  // 黄金比バランス（0〜100・絶対）
+    area:     polygonArea(lm, CONTOUR, w, h) / (s*s), // ①顔の面積（スケール²で正規化）
+    cheek:    cheekW / s,                             // ②頬骨の幅
+    jawW:     dist(lm,172,397,w,h) / s,               // ③エラ（下顎角）の幅
+    chinW:    dist(lm,176,400,w,h) / s,               // ④あご先の幅
+    templeW:  dist(lm,127,356,w,h) / s,               // ⑤こめかみの幅
+    peri:     pathLength(lm, JAW, w, h) / s,          // ⑥フェイスライン周囲長
+    lowerLen: dist(lm,2,152,w,h) / s,                 // ⑦下顔面の長さ（鼻下→顎先）
+    whRatio:  cheekW / (faceH || 1),                  // ⑧顔の丸み（幅/高さ・比率＝スケール不変）
+    asym:     asymmetry(lm, w, h) / s,                // ⑨左右差
+    balance:  balanceScore(lm, w, h),                 // ⑩黄金比バランス（0〜100・絶対）
   };
 }
 function pctChange(bv,av){ return bv>0 ? (bv-av)/bv*100 : 0; }  // 減少=プラス（改善）
 function analyze(){
   const b = measure(state.captured.before);
   const a = measure(state.captured.after);
-  const areaRate  = pctChange(b.area,  a.area);
-  const flRate    = pctChange(b.peri,  a.peri);
-  const asymRate  = pctChange(b.asym,  a.asym);
-  const cheekRate = pctChange(b.cheek, a.cheek);
-  const jawRate   = pctChange(b.jaw,   a.jaw);
-  const beforeBalance = b.balance, afterBalance = a.balance;
-  const balanceRate = afterBalance - beforeBalance;   // 整い度の改善（点・Before基準）
-  const rv = { area:areaRate, fl:flRate, asym:asymRate, balance:balanceRate };
-  // 総合スコア：校正済みなら線形モデル、未校正なら加重平均をtanhで広げる
-  let total;
+  // 10要因それぞれの改善度と 0〜10点スコアを算出
+  const factors = FACTORS.map(f=>{
+    // size … Before比の縮小率(%)（縮小=プラス）／ balance … 整い度の増分(点)
+    const rate = f.type==="balance" ? (a[f.key]-b[f.key]) : pctChange(b[f.key], a[f.key]);
+    return { key:f.key, label:f.label, type:f.type, rate, score: round1(factorScore10(rate, f.scale)) };
+  });
+  const rv = {}; factors.forEach(f=> rv[f.key]=f.rate);   // 校正・記録用（改善率の生値）
+  // 合計スコア（100点満点）＝各要因スコアの総和。校正済みのときのみ線形モデルで上書き。
+  let total = factors.reduce((s,f)=> s + f.score, 0);
   if(calibrated()){
-    total = COEF.b0 + CALIB_FEATURES.reduce((s,k)=> s + (COEF[k]||0)*rv[k], 0);
-  }else{
-    const improvement = W_AREA*areaRate + W_FL*flRate + W_ASYM*asymRate + W_BAL*balanceRate;
-    total = scoreCurve(improvement);
+    total = COEF.b0 + CALIB_FEATURES.reduce((s,k)=> s + (COEF[k]||0)*(rv[k]||0), 0);
   }
-  total = round1(clamp(total, MIN_SCORE, 100));
-  const scores = {
-    area:  round1(metricScore(areaRate)),
-    fl:    round1(metricScore(flRate)),
-    asym:  round1(metricScore(asymRate)),
-    cheek: round1(metricScore(cheekRate)),
-    jaw:   round1(metricScore(jawRate)),
-    balance: round1(afterBalance),      // 絶対評価（現在の整い度）
-  };
-  return { areaRate, flRate, asymRate, cheekRate, jawRate, balanceRate,
-           beforeBalance:round1(beforeBalance), afterBalance:round1(afterBalance),
-           scores, totalScore: total, up: round1(total-50) };
+  total = round1(clamp(total, TOTAL_MIN, 100));
+  return { factors, rv,
+           beforeBalance:round1(b.balance), afterBalance:round1(a.balance),
+           totalScore: total, up: round1(total-50) };
 }
 function fmtPct(v){ return (v>=0?"+":"") + v.toFixed(2) + "%"; }
+// 要因の改善度セル用テキスト（size=%、balance=点）
+function factorRateText(f){
+  return f.type==="balance"
+    ? `${f.rate>=0?"+":""}${f.rate.toFixed(1)}点`
+    : fmtPct(f.rate);
+}
 
 function renderResult(m){
   $("resNo").textContent = state.currentNo ? `No.${pad2(state.currentNo)}` : "";
@@ -930,22 +945,12 @@ function renderResult(m){
   up.textContent = (m.up>=0 ? "＋"+m.up.toFixed(1)+"点UP!" : m.up.toFixed(1)+"点");
   up.classList.toggle("neg", m.up<0);
 
-  const rows = [
-    { name:"顔面積",        r:m.areaRate,  sc:m.scores.area  },
-    { name:"フェイスライン", r:m.flRate,    sc:m.scores.fl    },
-    { name:"左右差",        r:m.asymRate,  sc:m.scores.asym  },
-    { name:"頬の幅",        r:m.cheekRate, sc:m.scores.cheek },
-    { name:"エラの幅",      r:m.jawRate,   sc:m.scores.jaw   },
-    { name:"黄金比バランス", r:m.balanceRate, sc:m.scores.balance, pts:true },
-  ];
+  // 10要因（各10点満点）を一覧表示
   const tbody=$("metricRows"); tbody.innerHTML="";
-  for(const row of rows){
+  for(const f of m.factors){
     const tr=document.createElement("tr");
-    // 黄金比バランスは絶対評価：改善率列は「Before→After 点」、点数列は現在の整い度
-    const rateCell = row.pts
-      ? `<td class="rate ${row.r<0?"neg":""}">${row.r>=0?"+":""}${row.r.toFixed(1)}点</td>`
-      : `<td class="rate ${row.r<0?"neg":""}">${fmtPct(row.r)}</td>`;
-    tr.innerHTML = `<td class="name">${row.name}</td>${rateCell}<td>${row.sc.toFixed(1)}</td>`;
+    const rateCell = `<td class="rate ${f.rate<0?"neg":""}">${factorRateText(f)}</td>`;
+    tr.innerHTML = `<td class="name">${f.label}</td>${rateCell}<td>${f.score.toFixed(1)}<span class="unit">/10</span></td>`;
     tbody.appendChild(tr);
   }
   if(isCalib){ $("calibPanel").classList.remove("hidden"); $("calibLabel").value=""; updateCalibStatus(); }
@@ -987,7 +992,8 @@ async function saveResult(){
   const [imgB,imgA] = await Promise.all([ loadImage(state.captured.before.dataUrl), loadImage(state.captured.after.dataUrl) ]);
   const W=1200, pad=40;
   const photoW=(W-pad*3)/2, photoH=photoW*4/3;
-  const headerH=150, scoreH=150, tableH=372, footerH=90;
+  const rowGap=44;
+  const headerH=150, scoreH=150, tableH=rowGap*FACTORS.length+40, footerH=90;
   const H=headerH+photoH+70+scoreH+tableH+footerH;
   const c=document.createElement("canvas"); c.width=W; c.height=H;
   const ctx=c.getContext("2d");
@@ -1011,23 +1017,15 @@ async function saveResult(){
   ctx.fillStyle="#8A6A22"; ctx.font="bold 64px sans-serif"; ctx.fillText(`50.0点 → ${m.totalScore.toFixed(1)}点`, W/2, y+72);
   ctx.fillStyle=m.up<0?"#8A7A5E":"#4E8B5B"; ctx.font="bold 40px sans-serif";
   ctx.fillText(m.up>=0?`＋${m.up.toFixed(1)}点UP!`:`${m.up.toFixed(1)}点`, W/2, y+120);
-  y=y+scoreH+10;
-  const rows=[
-    ["顔面積", fmtPct(m.areaRate), m.scores.area],
-    ["フェイスライン", fmtPct(m.flRate), m.scores.fl],
-    ["左右差", fmtPct(m.asymRate), m.scores.asym],
-    ["頬の幅", fmtPct(m.cheekRate), m.scores.cheek],
-    ["エラの幅", fmtPct(m.jawRate), m.scores.jaw],
-    ["黄金比バランス", `${m.balanceRate>=0?"+":""}${m.balanceRate.toFixed(1)}点`, m.scores.balance],
-  ];
-  ctx.font="27px sans-serif";
-  rows.forEach((r,i)=>{
-    const ry=y+i*52;
-    ctx.textAlign="left"; ctx.fillStyle="#5A4A2C"; ctx.fillText(r[0], pad+20, ry);
-    ctx.textAlign="center"; ctx.fillStyle=r[1].startsWith("-")?"#8A7A5E":"#4E8B5B"; ctx.fillText(r[1], W/2+120, ry);
-    ctx.textAlign="right"; ctx.fillStyle="#8A6A22"; ctx.font="bold 27px sans-serif"; ctx.fillText(`${r[2].toFixed(1)}点`, W-pad-20, ry);
-    ctx.font="27px sans-serif";
-    ctx.strokeStyle="#EADFC6"; ctx.beginPath(); ctx.moveTo(pad,ry+16); ctx.lineTo(W-pad,ry+16); ctx.stroke();
+  y=y+scoreH+6;
+  ctx.font="24px sans-serif";
+  m.factors.forEach((f,i)=>{
+    const ry=y+i*rowGap;
+    const rateTxt=factorRateText(f);
+    ctx.textAlign="left"; ctx.fillStyle="#5A4A2C"; ctx.font="24px sans-serif"; ctx.fillText(f.label, pad+20, ry);
+    ctx.textAlign="center"; ctx.fillStyle=f.rate<0?"#8A7A5E":"#4E8B5B"; ctx.fillText(rateTxt, W/2+130, ry);
+    ctx.textAlign="right"; ctx.fillStyle="#8A6A22"; ctx.font="bold 24px sans-serif"; ctx.fillText(`${f.score.toFixed(1)} / 10`, W-pad-20, ry);
+    ctx.strokeStyle="#EADFC6"; ctx.beginPath(); ctx.moveTo(pad,ry+14); ctx.lineTo(W-pad,ry+14); ctx.stroke();
   });
   ctx.textAlign="center"; ctx.fillStyle="#3A2E1B"; ctx.font="bold 28px sans-serif";
   ctx.fillText("日本小顔矯正認定協会", W/2, H-46);
@@ -1053,7 +1051,7 @@ function saveSamples(a){ localStorage.setItem("jsfa_calib_samples", JSON.stringi
 function collectSample(label){
   const m=state.lastMetrics; if(!m) return null;
   const s=getSamples();
-  s.push({ area:m.areaRate, fl:m.flRate, asym:m.asymRate, balance:m.balanceRate, label, ts:Date.now() }); // 数値のみ・写真は保存しない
+  s.push({ ...m.rv, label, ts:Date.now() }); // 10要因の改善率のみ・写真は保存しない
   saveSamples(s); return s.length;
 }
 // Ax=b をガウス消去で解く
@@ -1092,8 +1090,9 @@ function applyCoef(c){ COEF=c; localStorage.setItem("jsfa_calib_coef", JSON.stri
 function resetCoef(){ COEF={...DEFAULT_COEF}; localStorage.removeItem("jsfa_calib_coef"); }
 function exportCalibCSV(){
   const s=getSamples();
-  const head="areaRate,flRate,asymRate,label,timestamp\n";
-  const body=s.map(r=>`${r.area.toFixed(4)},${r.fl.toFixed(4)},${r.asym.toFixed(4)},${r.label},${new Date(r.ts).toISOString()}`).join("\n");
+  const keys=CALIB_FEATURES;
+  const head=keys.join(",")+",label,timestamp\n";
+  const body=s.map(r=>keys.map(k=>(r[k]??0).toFixed(4)).join(",")+`,${r.label},${new Date(r.ts).toISOString()}`).join("\n");
   const blob=new Blob([head+body],{type:"text/csv"});
   const url=URL.createObjectURL(blob);
   const a=document.createElement("a"); a.href=url; a.download="jsfa_calibration.csv"; a.click(); URL.revokeObjectURL(url);
@@ -1102,7 +1101,7 @@ function calibrated(){ return !!localStorage.getItem("jsfa_calib_coef"); }
 function updateCalibStatus(extra){
   const n=getSamples().length;
   const c=COEF;
-  const base = `記録 ${n}件 ／ 係数 b0=${c.b0.toFixed(2)} 面積=${c.area.toFixed(2)} FL=${c.fl.toFixed(2)} 左右=${c.asym.toFixed(2)} 黄金比=${(c.balance??0).toFixed(2)} ${calibrated()?"（校正済）":"（既定）"}`;
+  const base = `記録 ${n}件 ／ b0=${(c.b0??50).toFixed(2)}・要因${CALIB_FEATURES.length} ${calibrated()?"（校正済）":"（既定：10要因×10点の合計）"}`;
   $("calibStatus").textContent = extra ? (extra+" ｜ "+base) : base;
 }
 
