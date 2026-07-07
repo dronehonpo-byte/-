@@ -1,0 +1,15 @@
+{
+  "name": "JSFA Small Face Analysis",
+  "short_name": "JSFA 顔解析",
+  "description": "日本小顔矯正認定協会 小顔矯正 Before/After 顔解析システム",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#FBF8F1",
+  "theme_color": "#A9852F",
+  "lang": "ja",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}
