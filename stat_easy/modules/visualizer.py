@@ -134,7 +134,9 @@ def correlation_heatmap(corr, lang="ja", title=None):
     fig, ax = plt.subplots(figsize=(max(5, len(corr) * 0.8), max(4, len(corr) * 0.7)))
     sns.heatmap(corr, annot=True, fmt=".2f", cmap="RdBu_r", center=0, vmin=-1, vmax=1,
                 square=True, ax=ax, cbar_kws={"shrink": 0.8})
-    ax.set_title(title or ("相関ヒートマップ" if lang == "ja" else "Correlation heatmap"))
+    # 図内タイトルはページ見出しと重複するため既定では付けない（依頼者PDF指示）
+    if title:
+        ax.set_title(title)
     fig.tight_layout()
     return fig
 
@@ -170,7 +172,9 @@ def bar_with_error(df, group_col, value_col, lang="ja", title=None):
 def missing_heatmap(df, lang="ja", title=None):
     fig, ax = plt.subplots(figsize=(8, 4.5))
     sns.heatmap(df.isna(), cbar=False, cmap="Greys", ax=ax)
-    ax.set_title(title or ("欠損値ヒートマップ" if lang == "ja" else "Missing value heatmap"))
+    # 図内タイトルはページ見出しと重複するため既定では付けない（依頼者PDF指示）
+    if title:
+        ax.set_title(title)
     fig.tight_layout()
     return fig
 
@@ -220,8 +224,10 @@ def pca_scatter(coords, labels, explained=None, lang="ja", title=None):
     yl = "PC2" if explained is None else f"PC2 ({explained[1]*100:.1f}%)"
     ax.set_xlabel(xl)
     ax.set_ylabel(yl)
-    ax.set_title(title or ("PCA 散布図（クラスタ色分け）" if lang == "ja" else "PCA scatter"))
-    legend = ax.legend(*sc.legend_elements(), title=_LABELS[lang]["cluster"])
+    # 図内タイトル・凡例タイトルはページ見出しと重複するため付けない（依頼者PDF指示）
+    if title:
+        ax.set_title(title)
+    legend = ax.legend(*sc.legend_elements())
     ax.add_artist(legend)
     fig.tight_layout()
     return fig
