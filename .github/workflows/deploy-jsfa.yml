@@ -17,9 +17,6 @@ concurrency:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    env:
-      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
     steps:
       - uses: actions/checkout@v4
 
@@ -30,10 +27,15 @@ jobs:
       - name: Install Vercel CLI
         run: npm install -g vercel@latest
 
+      # プロジェクト名とチーム(scope)名で既存プロジェクトへ紐づけてデプロイ。
+      # これにより ORG_ID / PROJECT_ID を用意せず VERCEL_TOKEN だけで完結する。
       - name: Deploy jsfa-face-analysis to production
         working-directory: jsfa-face-analysis
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
         run: |
-          vercel pull --yes --environment=production --token="$VERCEL_TOKEN"
+          vercel link --yes \
+            --project=jsfa-face-analysis \
+            --scope=dronehonpo-5147s-projects \
+            --token="$VERCEL_TOKEN"
           vercel deploy --prod --yes --token="$VERCEL_TOKEN"
