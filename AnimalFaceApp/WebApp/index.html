@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>動物顔診断（仮）— Web版</title>
+<meta name="description" content="顔写真からあなたの動物顔タイプを診断！写真はブラウザ内でのみ解析され、アップロードされません。">
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; }
+  body {
+    margin: 0; background: #F3E7D3; color: #3D2E20;
+    font-family: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic UI", "Yu Gothic", "Noto Sans JP", system-ui, sans-serif;
+    line-height: 1.7; font-size: 15px;
+    display: flex; justify-content: center;
+  }
+  .app {
+    width: 100%; max-width: 430px; min-height: 100dvh;
+    background: #FFF8ED; display: flex; flex-direction: column;
+    box-shadow: 0 0 40px rgba(97,62,26,0.15);
+  }
+  .appbar {
+    flex-shrink: 0; padding: max(10px, env(safe-area-inset-top)) 18px 10px;
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    background: #FFF8ED; border-bottom: 1px solid #F0E2C8;
+  }
+  .appbar .brand { font-weight: 900; font-size: 15px; }
+  .appbar .brand small { display: block; font-size: 9.5px; font-weight: 700; color: #B08A5A; letter-spacing: 0.06em; }
+  .appbar .plan {
+    font-size: 10.5px; font-weight: 800; padding: 4px 10px; border-radius: 999px;
+    background: rgba(79,163,216,0.16); color: #2E7DB3; white-space: nowrap;
+  }
+  .appbar .plan.premium { background: linear-gradient(90deg,#F2762E,#F6B93F); color: #fff; }
+  .body { flex: 1; overflow-y: auto; padding: 14px 18px 20px; display: flex; flex-direction: column; }
+  .navrow { display: flex; align-items: center; min-height: 30px; margin-bottom: 6px; }
+  .navbtn { background: none; border: none; color: #F2762E; font-weight: 800; font-size: 14px; cursor: pointer; padding: 4px 8px 4px 0; font-family: inherit; }
+
+  .card {
+    background: #fff; border-radius: 18px; padding: 16px;
+    box-shadow: 0 3px 12px rgba(97,62,26,0.08); margin-bottom: 12px;
+  }
+  .btn {
+    display: block; width: 100%; border: none; cursor: pointer; font-family: inherit;
+    font-weight: 800; font-size: 15.5px; padding: 16px 12px; border-radius: 16px; margin-top: 10px;
+  }
+  .btn.primary { background: #F2762E; color: #fff; }
+  .btn.primary:active { background: #DD5F17; }
+  .btn.soft { background: rgba(79,163,216,0.14); color: #2E7DB3; }
+  .btn.gold { background: rgba(246,185,63,0.30); color: #7A5A10; }
+  .btn:disabled { opacity: 0.5; cursor: default; }
+  .btn:focus-visible { outline: 3px solid #4FA3D8; outline-offset: 2px; }
+  .note { font-size: 10.5px; color: #9A8468; text-align: center; margin: 12px 4px 0; line-height: 1.7; }
+
+  .menu-item {
+    display: flex; align-items: center; gap: 12px; width: 100%; background: #fff;
+    border: none; border-radius: 18px; padding: 15px 14px; margin-bottom: 10px;
+    box-shadow: 0 3px 12px rgba(97,62,26,0.08); cursor: pointer; text-align: left;
+    font-family: inherit; color: #3D2E20;
+  }
+  .menu-item .mi-icon { font-size: 28px; }
+  .menu-item .mi-title { font-weight: 800; font-size: 15px; }
+  .menu-item .mi-sub { font-size: 11.5px; color: #9A8468; }
+  .tag { font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 7px; background: rgba(246,185,63,0.35); color: #7A5A10; margin-left: 6px; vertical-align: 2px; }
+  .tag.free { background: rgba(79,163,216,0.18); color: #2E7DB3; }
+  .lock { margin-left: auto; font-size: 17px; color: #B9A98F; }
+  .premium-strip {
+    display: block; width: 100%; border: none; border-radius: 16px; padding: 13px 16px;
+    background: linear-gradient(90deg,#F2762E,#F6B93F); color: #fff; cursor: pointer;
+    font-family: inherit; font-weight: 800; font-size: 13px; margin-bottom: 12px; text-align: left;
+  }
+
+  .guide li { font-size: 13px; padding: 2px 0; }
+  .photo-input { display: none; }
+  .preview-box { text-align: center; }
+  .preview-box img { max-width: 100%; max-height: 260px; border-radius: 14px; }
+
+  .center-fill { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; text-align: center; padding: 24px; }
+  @keyframes wiggle { 0%,100% { transform: rotate(-10deg); } 50% { transform: rotate(10deg); } }
+  .loading-emoji { font-size: 58px; animation: wiggle 0.9s ease-in-out infinite; }
+  @media (prefers-reduced-motion: reduce) { .loading-emoji { animation: none; } .ring .bar, .spec-dot { transition: none !important; } }
+
+  .ring-holder { position: relative; width: 140px; height: 140px; margin: 6px auto; }
+  .ring { transform: rotate(-90deg); }
+  .ring .track { stroke: rgba(246,185,63,0.3); }
+  .ring .bar { stroke: #F2762E; stroke-linecap: round; transition: stroke-dashoffset 0.9s cubic-bezier(.2,.7,.3,1); }
+  .ring-label { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  .ring-label .pct { font-size: 33px; font-weight: 900; font-variant-numeric: tabular-nums; }
+  .ring-label .cap { font-size: 10.5px; color: #9A8468; font-weight: 700; }
+  .chips { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; margin: 6px 0; }
+  .chip { font-size: 11px; font-weight: 800; background: rgba(246,185,63,0.3); color: #7A5A10; padding: 3px 11px; border-radius: 10px; }
+  .spec-bar { position: relative; height: 20px; border-radius: 999px; margin: 14px 8px 6px; background: linear-gradient(90deg,#4FA3D8,#F2762E); }
+  .spec-dot { position: absolute; top: 50%; width: 24px; height: 24px; border-radius: 50%; background: #fff; border: 3px solid #F2762E; transform: translate(-50%,-50%); transition: left 0.9s cubic-bezier(.2,.7,.3,1); }
+  .spec-ends { display: flex; justify-content: space-between; font-size: 11px; font-weight: 800; color: #9A8468; padding: 0 8px; }
+
+  .share-card { border-radius: 18px; padding: 18px 14px; text-align: center; color: #fff; background: linear-gradient(135deg,#F2762E,#F6B93F); margin-top: 12px; }
+  .share-card .sc-app { font-size: 10.5px; font-weight: 800; opacity: 0.92; letter-spacing: 0.05em; }
+  .share-card .sc-emoji { font-size: 52px; margin: 4px 0; }
+  .share-card .sc-name { font-size: 21px; font-weight: 900; }
+  .share-card .sc-pct { font-size: 30px; font-weight: 900; font-variant-numeric: tabular-nums; }
+  .share-card .sc-text { font-size: 11.5px; opacity: 0.95; margin-top: 4px; }
+  .share-card .sc-tags { font-size: 10px; opacity: 0.85; margin-top: 8px; }
+
+  .fake-ad { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; background: #26303A; color: #EAF2F8; text-align: center; padding: 24px; border-radius: 20px; margin: 8px 0; }
+  .fake-ad .ad-mark { font-size: 10px; font-weight: 800; letter-spacing: 0.2em; color: #8FB4CC; }
+
+  .banner-ad { flex-shrink: 0; height: 48px; background: #EFE3CC; color: #9A8468; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; letter-spacing: 0.06em; padding-bottom: env(safe-area-inset-bottom); }
+
+  .error-emoji { font-size: 54px; }
+  .status { font-size: 11.5px; color: #9A8468; }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="appbar">
+    <div class="brand">🐾 動物顔診断（仮）<small>Web版 — iOSアプリと同一の診断エンジン</small></div>
+    <span class="plan" id="planBadge">無料プラン</span>
+  </div>
+  <div class="body" id="body"></div>
+  <div class="banner-ad" id="bannerAd">AD — バナー広告（無料プランのみ・モック）</div>
+</div>
+
+<script type="module">
+/* ================================================================
+   動物顔診断 Web版
+   - 顔解析: MediaPipe FaceLandmarker（ブラウザ内 WASM・写真は端末外に送信しない）
+   - スコアリング: iOSアプリ ScoringEngine.swift と同一ロジック・同一JSON設定
+   - 決定論: 乱数不使用（同じ写真 → 同じ結果）
+   ================================================================ */
+
+/* ---- iOSアプリと同一の設定 (animal_profiles.json / diagnosis_content.json) ---- */
+const FEATURE_KEYS = ["faceAspectRatio","eyeSize","eyeSlant","faceWidth","jawSharpness","cheekFullness","mouthSize","featureProminence"];
+const MATCH = { percentMin: 62, percentMax: 98 };
+const FEATURE_WEIGHTS = { faceAspectRatio:1.2, eyeSize:1.1, eyeSlant:1.1, faceWidth:0.8, jawSharpness:1.0, cheekFullness:1.0, mouthSize:0.8, featureProminence:0.9 };
+const ANIMALS = [
+  { id:"tanuki", nameJa:"たぬき顔", emoji:"🦝", impressionWords:["優しそう","親しみやすい"], profile:{faceAspectRatio:0.20,eyeSize:0.85,eyeSlant:0.40,faceWidth:0.70,jawSharpness:0.20,cheekFullness:0.90,mouthSize:0.50,featureProminence:0.60} },
+  { id:"kitsune", nameJa:"きつね顔", emoji:"🦊", impressionWords:["知的","大人っぽい"], profile:{faceAspectRatio:0.85,eyeSize:0.40,eyeSlant:0.80,faceWidth:0.35,jawSharpness:0.90,cheekFullness:0.20,mouthSize:0.40,featureProminence:0.50} },
+  { id:"inu", nameJa:"犬顔", emoji:"🐶", impressionWords:["誠実","話しやすい"], profile:{faceAspectRatio:0.50,eyeSize:0.65,eyeSlant:0.15,faceWidth:0.55,jawSharpness:0.35,cheekFullness:0.60,mouthSize:0.60,featureProminence:0.55} },
+  { id:"neko", nameJa:"猫顔", emoji:"🐱", impressionWords:["ミステリアス","個性的"], profile:{faceAspectRatio:0.55,eyeSize:0.60,eyeSlant:0.90,faceWidth:0.30,jawSharpness:0.70,cheekFullness:0.30,mouthSize:0.40,featureProminence:0.70} },
+  { id:"usagi", nameJa:"うさぎ顔", emoji:"🐰", impressionWords:["可愛い","癒される"], profile:{faceAspectRatio:0.45,eyeSize:0.90,eyeSlant:0.35,faceWidth:0.45,jawSharpness:0.30,cheekFullness:0.55,mouthSize:0.20,featureProminence:0.60} },
+  { id:"risu", nameJa:"リス顔", emoji:"🐿️", impressionWords:["明るい","元気"], profile:{faceAspectRatio:0.35,eyeSize:0.85,eyeSlant:0.50,faceWidth:0.60,jawSharpness:0.25,cheekFullness:0.85,mouthSize:0.45,featureProminence:0.65} },
+  { id:"shika", nameJa:"鹿顔", emoji:"🦌", impressionWords:["上品","清楚"], profile:{faceAspectRatio:0.90,eyeSize:0.75,eyeSlant:0.50,faceWidth:0.30,jawSharpness:0.60,cheekFullness:0.25,mouthSize:0.35,featureProminence:0.50} },
+  { id:"ookami", nameJa:"狼顔", emoji:"🐺", impressionWords:["かっこいい","頼りになる"], profile:{faceAspectRatio:0.70,eyeSize:0.55,eyeSlant:0.70,faceWidth:0.55,jawSharpness:0.95,cheekFullness:0.15,mouthSize:0.55,featureProminence:0.80} },
+  { id:"hamster", nameJa:"ハムスター顔", emoji:"🐹", impressionWords:["可愛い","若く見える"], profile:{faceAspectRatio:0.15,eyeSize:0.70,eyeSlant:0.40,faceWidth:0.75,jawSharpness:0.15,cheekFullness:0.95,mouthSize:0.35,featureProminence:0.50} },
+  { id:"lion", nameJa:"ライオン顔", emoji:"🦁", impressionWords:["リーダー的","堂々"], profile:{faceAspectRatio:0.60,eyeSize:0.80,eyeSlant:0.60,faceWidth:0.65,jawSharpness:0.75,cheekFullness:0.40,mouthSize:0.75,featureProminence:0.95} },
+];
+const ANIMAL_TEXTS = {
+  tanuki:"あなたは親しみやすさ満点のたぬき顔タイプ！まわりをほっとさせる優しい雰囲気の持ち主です。",
+  kitsune:"あなたは知的でクールなきつね顔タイプ！大人っぽい雰囲気で一目置かれる存在です。",
+  inu:"あなたは誠実さがにじみ出る犬顔タイプ！話しかけやすい雰囲気でみんなの人気者です。",
+  neko:"あなたはミステリアスな魅力の猫顔タイプ！スッと通った個性が印象に残るタイプです。",
+  usagi:"あなたは癒しの存在うさぎ顔タイプ！ぱっちりした目元でまわりをキュンとさせます。",
+  risu:"あなたは元気いっぱいリス顔タイプ！愛嬌たっぷりの笑顔で場をパッと明るくします。",
+  shika:"あなたは上品で清楚な鹿顔タイプ！すらっとした印象で思わず振り返られる存在です。",
+  ookami:"あなたは頼れるかっこよさの狼顔タイプ！キリッとした目力でまわりを引っ張ります。",
+  hamster:"あなたは愛されキャラのハムスター顔タイプ！ふんわり若々しい印象で癒しをふりまきます。",
+  lion:"あなたは堂々たる存在感のライオン顔タイプ！パーツの華やかさでその場の主役になれます。",
+};
+const ITEMS = [
+  { id:"animal", title:"動物顔診断", subtitle:"あなたはどの動物タイプ？全10種類から判定！", icon:"🐾", isPremium:false, kind:"animalMatch" },
+  { id:"seiso", title:"清楚系度診断", subtitle:"あなたの清楚系オーラを数値化！", icon:"🌸", isPremium:false, kind:"percentage",
+    scoring:{bias:0.50, weights:{featureProminence:-0.25,mouthSize:-0.12,cheekFullness:-0.08,jawSharpness:0.12,faceAspectRatio:0.15,eyeSlant:-0.08}, percentMin:8, percentMax:98},
+    bands:[{min:80,text:"透明感あふれる清楚オーラの印象が強いです！すれ違った人が振り返るレベルかも。"},{min:60,text:"上品で清潔感のある印象が強いです。初対面での好感度もばっちり！"},{min:40,text:"清楚さと親しみやすさのいいとこ取りな印象です。バランス感覚が光ります！"},{min:0,text:"清楚系よりも、華やかで印象に残るタイプの魅力が強いようです！"}] },
+  { id:"marriage", title:"結婚適正度診断", subtitle:"あなたの\"あたたかみ\"を数値化！", icon:"💍", isPremium:true, kind:"percentage",
+    scoring:{bias:0.52, weights:{cheekFullness:0.18,eyeSlant:-0.15,mouthSize:0.10,jawSharpness:-0.08,eyeSize:0.08}, percentMin:20, percentMax:98},
+    bands:[{min:80,text:"あたたかく安心感のある印象が強いです。一緒にいるとホッとすると言われるタイプかも！"},{min:60,text:"穏やかで信頼感のある印象です。長く一緒にいたくなる雰囲気の持ち主！"},{min:40,text:"自分の世界も大切にしながら寄り添える、バランス型の印象です！"},{min:0,text:"刺激的でドキドキさせる魅力の印象が強いようです。恋のスパイス担当かも！"}] },
+  { id:"shoyu_sauce", title:"醤油顔/ソース顔度診断", subtitle:"あなたはあっさり派？こってり派？", icon:"🥢", isPremium:true, kind:"spectrum",
+    spectrum:{low:"醤油顔", high:"ソース顔"},
+    scoring:{bias:0.45, weights:{featureProminence:0.35,eyeSize:0.15,mouthSize:0.10,eyeSlant:-0.08,faceAspectRatio:-0.08}, percentMin:5, percentMax:95},
+    bands:[{min:75,text:"しっかりソース顔！パーツの存在感が際立つ、華やかで印象的なお顔立ちです。"},{min:55,text:"ややソース顔寄り。ほどよい華やかさで写真映えする印象です！"},{min:30,text:"やや醤油顔寄り。すっきり上品な和風の魅力が光る印象です！"},{min:0,text:"きれいな醤油顔！あっさり整った、飽きのこない正統派の印象です。"}] },
+  { id:"babyface", title:"童顔度診断", subtitle:"あなたの若見え度をチェック！", icon:"🍼", isPremium:true, kind:"percentage",
+    scoring:{bias:0.50, weights:{faceAspectRatio:-0.22,eyeSize:0.15,cheekFullness:0.15,jawSharpness:-0.12}, percentMin:10, percentMax:98},
+    bands:[{min:80,text:"フレッシュな童顔の印象がとても強いです！いつまでも若々しいと言われそう。"},{min:60,text:"やわらかく若見えする印象です。実年齢より下に見られること、ありませんか？"},{min:40,text:"若々しさと大人っぽさをあわせ持つ、いいとこ取りの印象です！"},{min:0,text:"落ち着いた大人の魅力の印象が強いようです。頼れる雰囲気が素敵！"}] },
+  { id:"first_impression", title:"第一印象好感度診断", subtitle:"初対面でどう見られてる？", icon:"✨", isPremium:true, kind:"percentage",
+    scoring:{bias:0.55, weights:{eyeSize:0.15,mouthSize:0.10,cheekFullness:0.10,eyeSlant:-0.10,featureProminence:0.05}, percentMin:35, percentMax:98},
+    bands:[{min:85,text:"初対面から好感度ばつぐんの印象です！自然と人が集まってくるタイプかも。"},{min:65,text:"親しみやすく話しかけやすい印象です。第一印象で損しないタイプ！"},{min:45,text:"落ち着いた印象で、知るほどに好かれるスルメタイプの魅力です！"},{min:0,text:"クールでミステリアスな第一印象。ギャップで一気に距離を縮められるタイプです！"}] },
+];
+const DISCLAIMER = "本診断はエンタメ目的であり、医学的・専門的な判定ではありません。";
+const ACCURACY_NOTE = "加工・マスク・強いメイクのお写真は診断の精度が下がることがあります。";
+const HASHTAGS = "#顔診断 #動物顔診断";
+
+/* Vision 生特徴量 → 0..1 正規化レンジ（MediaPipe用にチューニング・調整可能） */
+const NORMALIZATION = {
+  faceAspectRatio: [1.25, 1.60],
+  eyeSize: [0.006, 0.022],
+  eyeSlant: [-0.12, 0.20],
+  faceWidth: [0.60, 0.92],
+  jawSharpness: [0.12, 0.42],
+  cheekFullness: [0.78, 1.02],
+  mouthSize: [0.32, 0.52],
+  featureProminence: [0.05, 0.13],
+};
+
+/* ---- ScoringEngine.swift の移植 ---- */
+function similarity(f, profile) {
+  let ws = 0, tw = 0;
+  for (const k of FEATURE_KEYS) {
+    const w = FEATURE_WEIGHTS[k] ?? 1;
+    const d = f[k] - profile[k];
+    ws += w * d * d; tw += w;
+  }
+  return 1 - Math.min(Math.max(Math.sqrt(ws / tw), 0), 1);
+}
+function matchAnimal(f) {
+  let best = null;
+  for (const a of ANIMALS) {
+    const sim = similarity(f, a.profile);
+    if (best && sim <= best.sim) continue;
+    best = { animal: a, sim };
+  }
+  const pct = Math.round(MATCH.percentMin + best.sim * (MATCH.percentMax - MATCH.percentMin));
+  return { animal: best.animal, percent: Math.min(Math.max(pct, MATCH.percentMin), MATCH.percentMax) };
+}
+function percentageScore(f, spec) {
+  let s = spec.bias;
+  for (const [k, w] of Object.entries(spec.weights)) s += w * (f[k] ?? 0);
+  return Math.min(Math.max(Math.round(s * 100), spec.percentMin), spec.percentMax);
+}
+function bandText(pct, bands) {
+  return [...bands].sort((a, b) => b.min - a.min).find(b => pct >= b.min)?.text ?? "";
+}
+function diagnose(item, f) {
+  if (item.kind === "animalMatch") {
+    const m = matchAnimal(f);
+    return { item, percent: m.percent, animal: m.animal, text: ANIMAL_TEXTS[m.animal.id] };
+  }
+  const pct = percentageScore(f, item.scoring);
+  return { item, percent: pct, animal: null, text: bandText(pct, item.bands) };
+}
+
+/* ---- 顔解析: MediaPipe FaceLandmarker（VisionFaceAnalysisProvider.swift 相当） ---- */
+let landmarkerPromise = null;
+async function getLandmarker() {
+  if (!landmarkerPromise) {
+    landmarkerPromise = (async () => {
+      const { FaceLandmarker, FilesetResolver } =
+        await import("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14");
+      const fileset = await FilesetResolver.forVisionTasks(
+        "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm");
+      return FaceLandmarker.createFromOptions(fileset, {
+        baseOptions: {
+          modelAssetPath: "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task",
+        },
+        runningMode: "IMAGE",
+        numFaces: 4, // 複数人が写る場合は最大の顔を対象にする
+      });
+    })().catch(err => { landmarkerPromise = null; throw err; });
+  }
+  return landmarkerPromise;
+}
+
+const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+const norm01 = (v, [lo, hi]) => Math.min(Math.max((v - lo) / (hi - lo), 0), 1);
+
+/** ランドマーク(478点・画像ピクセル座標) → 8特徴量（すべて顔サイズ比＝撮影距離に不変・決定論） */
+function extractFeatures(pts) {
+  const p = i => pts[i];
+  const faceW = dist(p(234), p(454));           // 上部の顔幅
+  const faceH = dist(p(10), p(152));            // 額上端〜顎先
+  if (faceW < 4 || faceH < 4) return null;
+  const faceArea = faceW * faceH;
+
+  // 目（画像左側の目: 33外/133内/159上/145下、画像右側の目: 263外/362内/386上/374下）
+  const eyeW_L = dist(p(33), p(133)), eyeH_L = dist(p(159), p(145));
+  const eyeW_R = dist(p(263), p(362)), eyeH_R = dist(p(386), p(374));
+  const eyeSizeRaw = ((eyeW_L * eyeH_L) + (eyeW_R * eyeH_R)) / 2 / faceArea;
+
+  // 目尻の傾き（y は下向き正 → 外側コーナーが上にあるほど正＝つり目）
+  const slantL = (p(133).y - p(33).y) / Math.max(eyeW_L, 1);
+  const slantR = (p(362).y - p(263).y) / Math.max(eyeW_R, 1);
+  const eyeSlantRaw = (slantL + slantR) / 2;
+
+  // 輪郭
+  const lowerW = dist(p(132), p(361));          // エラ付近の幅
+  const faceWidthRaw = lowerW / faceH;
+  const cheekFullnessRaw = lowerW / faceW;
+
+  // 顎の鋭さ: 顎先(152)から両サイド(172/397)への角度 θ → 1 - θ/π
+  const chin = p(152), jl = p(172), jr = p(397);
+  const v1 = { x: jl.x - chin.x, y: jl.y - chin.y }, v2 = { x: jr.x - chin.x, y: jr.y - chin.y };
+  const l1 = Math.hypot(v1.x, v1.y), l2 = Math.hypot(v2.x, v2.y);
+  let jawSharpnessRaw = 0;
+  if (l1 > 0.5 && l2 > 0.5) {
+    const cos = Math.min(Math.max((v1.x * v2.x + v1.y * v2.y) / (l1 * l2), -1), 1);
+    jawSharpnessRaw = 1 - Math.acos(cos) / Math.PI;
+  }
+
+  // 口
+  const mouthW = dist(p(61), p(291));
+  const mouthH = dist(p(0), p(17));
+  const mouthSizeRaw = mouthW / faceW;
+
+  // パーツの存在感
+  const prominenceRaw = (eyeW_L * eyeH_L + eyeW_R * eyeH_R + mouthW * mouthH) / faceArea;
+
+  return {
+    faceAspectRatio: norm01(faceH / faceW, NORMALIZATION.faceAspectRatio),
+    eyeSize: norm01(eyeSizeRaw, NORMALIZATION.eyeSize),
+    eyeSlant: norm01(eyeSlantRaw, NORMALIZATION.eyeSlant),
+    faceWidth: norm01(faceWidthRaw, NORMALIZATION.faceWidth),
+    jawSharpness: norm01(jawSharpnessRaw, NORMALIZATION.jawSharpness),
+    cheekFullness: norm01(cheekFullnessRaw, NORMALIZATION.cheekFullness),
+    mouthSize: norm01(mouthSizeRaw, NORMALIZATION.mouthSize),
+    featureProminence: norm01(prominenceRaw, NORMALIZATION.featureProminence),
+  };
+}
+
+/** 画像 → 特徴量。顔なしは null。写真はメモリ上でのみ処理し、どこにも送信・保存しない */
+async function analyzeImage(img) {
+  const landmarker = await getLandmarker();
+  // 大きすぎる画像は縮小して解析（比率ベースの特徴量なので結果は不変）
+  const maxSide = 1024;
+  const scale = Math.min(1, maxSide / Math.max(img.naturalWidth, img.naturalHeight));
+  const w = Math.round(img.naturalWidth * scale), h = Math.round(img.naturalHeight * scale);
+  const canvas = document.createElement("canvas");
+  canvas.width = w; canvas.height = h;
+  canvas.getContext("2d").drawImage(img, 0, 0, w, h);
+
+  const res = landmarker.detect(canvas);
+  const faces = res?.faceLandmarks ?? [];
+  if (!faces.length) return null;
+
+  // 複数人が写る場合は最も大きく写っている顔を対象（iOS実装と同じ方針）
+  let best = null;
+  for (const lm of faces) {
+    let minX = 1, maxX = 0, minY = 1, maxY = 0;
+    for (const q of lm) {
+      if (q.x < minX) minX = q.x; if (q.x > maxX) maxX = q.x;
+      if (q.y < minY) minY = q.y; if (q.y > maxY) maxY = q.y;
+    }
+    const area = (maxX - minX) * (maxY - minY);
+    if (!best || area > best.area) best = { lm, area };
+  }
+  const pts = best.lm.map(q => ({ x: q.x * w, y: q.y * h }));
+  return extractFeatures(pts);
+}
+
+/* ================= UI ================= */
+const state = { premium: false, count: 0, item: null, features: null, result: null, pendingItem: null, paywallCtx: null };
+const body = document.getElementById("body");
+const esc = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+function syncChrome() {
+  const badge = document.getElementById("planBadge");
+  badge.textContent = state.premium ? "プレミアム✨" : "無料プラン";
+  badge.className = "plan" + (state.premium ? " premium" : "");
+  document.getElementById("bannerAd").style.display = state.premium ? "none" : "flex";
+}
+function navrow(backTo) {
+  return `<div class="navrow"><button class="navbtn" data-go="${backTo}">‹ 戻る</button></div>`;
+}
+
+const screens = {
+  home() {
+    const strip = state.premium ? "" :
+      `<button class="premium-strip" data-act="paywall-menu">✨ プレミアムプラン — 全診断解放・広告なし（月額200円・モック）</button>`;
+    const rows = ITEMS.map((it, i) => {
+      const locked = it.isPremium && !state.premium;
+      return `<button class="menu-item" data-item="${i}">
+        <span class="mi-icon">${it.icon}</span>
+        <span style="flex:1;min-width:0">
+          <span class="mi-title">${esc(it.title)}<span class="tag ${it.isPremium ? "" : "free"}">${it.isPremium ? (state.premium ? "解放中" : "有料") : "無料"}</span></span><br>
+          <span class="mi-sub">${esc(it.subtitle)}</span>
+        </span>
+        <span class="lock">${locked ? "🔒" : "›"}</span>
+      </button>`;
+    }).join("");
+    body.innerHTML = strip + rows + `
+      <p class="note">写真はブラウザの中だけで解析され、診断後すぐに破棄されます。<br>
+      サーバーへのアップロードは一切ありません。<br>${esc(DISCLAIMER)}</p>`;
+  },
+
+  capture() {
+    const it = state.item;
+    body.innerHTML = navrow("home") + `
+      <div class="card">
+        <b>${it.icon} ${esc(it.title)}</b>
+        <p style="font-size:12px;color:#9A8468;margin:4px 0 0">${esc(it.subtitle)}</p>
+      </div>
+      <div class="card">
+        <b style="font-size:13.5px">うまく診断するコツ</b>
+        <ul class="guide" style="margin:8px 0 0;padding-left:20px">
+          <li>😀 正面を向いた写真を使う</li>
+          <li>💡 明るい場所で撮る</li>
+          <li>🙋 写っているのは1人だけ（複数の場合は最大の顔を診断）</li>
+          <li>👀 前髪やマスクで顔が隠れていない</li>
+        </ul>
+        <p style="font-size:11px;color:#9A8468;margin:8px 0 0">${esc(ACCURACY_NOTE)}</p>
+      </div>
+      <input type="file" accept="image/*" capture="user" class="photo-input" id="cameraInput">
+      <input type="file" accept="image/*" class="photo-input" id="albumInput">
+      <button class="btn primary" data-act="camera">📸 カメラで撮影する</button>
+      <button class="btn soft" data-act="album">🖼 アルバムから選ぶ</button>
+      <p class="note">写真は端末（ブラウザ）内でのみ解析。送信・保存されません。</p>`;
+    document.getElementById("cameraInput").addEventListener("change", onPhotoPicked);
+    document.getElementById("albumInput").addEventListener("change", onPhotoPicked);
+  },
+
+  loading() {
+    body.innerHTML = `<div class="center-fill">
+      <div class="loading-emoji">🔍</div>
+      <b>あなたのお顔を分析中…</b>
+      <span class="status" id="loadStatus">顔解析エンジンを準備しています</span>
+    </div>`;
+  },
+
+  faceError(message) {
+    body.innerHTML = navrow("home") + `<div class="center-fill">
+      <div class="error-emoji">😢</div>
+      <b style="max-width:280px">${esc(message)}</b>
+      <div style="width:100%"><button class="btn primary" data-act="retry">もう一度写真を選ぶ</button></div>
+    </div>`;
+  },
+
+  adgate() {
+    body.innerHTML = `<div class="center-fill">
+      <div style="font-size:56px">🎉</div>
+      <b style="font-size:18px">診断結果の準備ができました！</b>
+      <div style="width:100%;margin-top:8px">
+        <button class="btn primary" data-act="watch-ad">▶ 広告を見て結果を見る</button>
+        <button class="btn gold" data-act="paywall-adskip">✨ 有料プランで広告なしで見る</button>
+      </div>
+      <span class="status">広告の読み込みに失敗した場合も、そのまま結果へ進みます</span>
+    </div>`;
+  },
+
+  interstitial() {
+    body.innerHTML = `<div class="fake-ad">
+      <span class="ad-mark">AD — インタースティシャル（モック）</span>
+      <div style="font-size:46px">📺</div>
+      <b>広告デモ</b>
+      <span style="font-size:12px;color:#B9CFDE">iOSアプリでは AdMob を表示（開発中はテストID）。<br>表示失敗時は何も出さずに結果へ進みます。</span>
+      <button class="btn soft" style="max-width:220px" id="adCloseBtn" disabled>閉じる（3）</button>
+    </div>`;
+    let left = 3;
+    const btn = document.getElementById("adCloseBtn");
+    const t = setInterval(() => {
+      left--;
+      if (left <= 0) { clearInterval(t); btn.disabled = false; btn.textContent = "閉じる ✕"; btn.dataset.act = "close-ad"; }
+      else btn.textContent = `閉じる（${left}）`;
+    }, 1000);
+  },
+
+  result() {
+    const r = state.result, it = r.item;
+    let visual;
+    if (it.kind === "spectrum") {
+      visual = `
+        <div style="font-size:24px;font-weight:900;font-variant-numeric:tabular-nums">${esc(it.spectrum.high)}度 ${r.percent}%</div>
+        <div class="spec-bar"><div class="spec-dot" id="specDot" style="left:0%"></div></div>
+        <div class="spec-ends"><span>${esc(it.spectrum.low)}</span><span>${esc(it.spectrum.high)}</span></div>`;
+    } else {
+      const R = 58, C = (2 * Math.PI * R).toFixed(1);
+      visual = `<div class="ring-holder">
+        <svg class="ring" width="140" height="140" viewBox="0 0 140 140" role="img" aria-label="${r.percent}%">
+          <circle class="track" cx="70" cy="70" r="${R}" fill="none" stroke-width="12"/>
+          <circle class="bar" id="ringBar" cx="70" cy="70" r="${R}" fill="none" stroke-width="12"
+            stroke-dasharray="${C}" stroke-dashoffset="${C}"/>
+        </svg>
+        <div class="ring-label"><span class="pct">${r.percent}%</span>${r.animal ? '<span class="cap">マッチ率</span>' : ""}</div>
+      </div>`;
+    }
+    const animalBlock = r.animal ? `
+      <div style="font-size:70px;line-height:1.1">${r.animal.emoji}</div>
+      <div style="font-size:26px;font-weight:900;color:#F2762E">${esc(r.animal.nameJa)}</div>
+      <div class="chips">${r.animal.impressionWords.map(w => `<span class="chip">${esc(w)}</span>`).join("")}</div>`
+      : `<div style="font-size:56px">${it.icon}</div>`;
+
+    body.innerHTML = navrow("home") + `
+      <div class="card" style="text-align:center">
+        <div style="font-size:12.5px;font-weight:800;color:#9A8468">${esc(it.title)}</div>
+        ${animalBlock}${visual}
+        <p style="font-size:13px;margin:12px 4px 2px">${esc(r.text)}</p>
+      </div>
+      <div class="share-card" id="shareCard">
+        <div class="sc-app">🐾 動物顔診断（仮）</div>
+        <div class="sc-emoji">${r.animal ? r.animal.emoji : it.icon}</div>
+        <div class="sc-name">${esc(r.animal ? r.animal.nameJa : it.title)}</div>
+        <div class="sc-pct">${it.kind === "spectrum" ? esc(it.spectrum.high) + "度 " : ""}${r.percent}%</div>
+        <div class="sc-text">${esc(r.text)}</div>
+        <div class="sc-tags">${esc(HASHTAGS)}${r.animal ? " #" + esc(r.animal.nameJa) : ""}</div>
+      </div>
+      <button class="btn primary" data-act="share">📤 結果をシェアする</button>
+      <button class="btn soft" data-go="home">ほかの診断もしてみる</button>
+      <p class="note">${esc(DISCLAIMER)}<br>${esc(ACCURACY_NOTE)}</p>`;
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      const bar = document.getElementById("ringBar");
+      if (bar) bar.style.strokeDashoffset = (2 * Math.PI * 58 * (1 - r.percent / 100)).toFixed(1);
+      const dot = document.getElementById("specDot");
+      if (dot) dot.style.left = r.percent + "%";
+    }));
+  },
+
+  paywall() {
+    body.innerHTML = navrow(state.paywallCtx === "adSkip" ? "adgate" : "home") + `
+      <div style="text-align:center;font-size:46px;margin:4px 0">✨</div>
+      <div style="text-align:center;font-size:20px;font-weight:900">プレミアムプラン</div>
+      <div class="card" style="margin-top:12px">
+        <p style="margin:4px 0;font-weight:700">🔓 有料診断4種類がぜんぶ解放</p>
+        <p style="margin:4px 0;font-weight:700">🚫 広告が完全に非表示に</p>
+        <p style="margin:4px 0;font-weight:700">♾️ 診断回数は無制限</p>
+      </div>
+      <div style="text-align:center;font-size:18px;font-weight:900;margin:4px 0">¥200 / 月</div>
+      <button class="btn primary" data-act="purchase">プレミアムをはじめる（モック購入）</button>
+      <button class="btn soft" data-go="${state.paywallCtx === "adSkip" ? "adgate" : "home"}">今回はやめておく</button>
+      <p class="note">Web版の課金はモックです。iOSアプリでは StoreKit 2 を使用し、
+        Transaction.currentEntitlements を単一の真実源として管理。復元購入は設定画面から。<br>
+        サブスクは期間終了24時間前までに解約しない限り自動更新されます。</p>`;
+  },
+};
+
+function go(name, arg) { screens[name](arg); body.scrollTop = 0; window.scrollTo(0, 0); }
+
+/* 写真選択 → 実解析 */
+async function onPhotoPicked(e) {
+  const file = e.target.files?.[0];
+  e.target.value = "";
+  if (!file) return;
+  go("loading");
+  const url = URL.createObjectURL(file);
+  try {
+    const img = new Image();
+    await new Promise((ok, ng) => { img.onload = ok; img.onerror = ng; img.src = url; });
+    const status = document.getElementById("loadStatus");
+    if (status) status.textContent = "お顔の特徴を読み取っています…";
+    const started = performance.now();
+    const features = await analyzeImage(img);
+    // 演出用の最低表示時間
+    const waitMs = Math.max(0, 900 - (performance.now() - started));
+    await new Promise(ok => setTimeout(ok, waitMs));
+    if (!features) {
+      go("faceError", "お顔をうまく見つけられませんでした🙇 正面を向いて、明るい場所の写真でもう一度試してみてください！");
+      return;
+    }
+    state.features = features;
+    state.result = diagnose(state.item, features);
+    const secondOrLater = state.count + 1 >= 2;
+    state.count++;
+    go(!state.premium && secondOrLater ? "adgate" : "result");
+  } catch (err) {
+    console.error(err);
+    go("faceError", "解析エンジンの読み込みに失敗しました。通信環境をご確認のうえ、もう一度お試しください。");
+  } finally {
+    URL.revokeObjectURL(url); // 画像参照を即時破棄（保存しない）
+  }
+}
+
+/* シェア（Web Share API → 失敗時はテキストコピー） */
+async function shareResult() {
+  const r = state.result;
+  const label = r.animal ? `${r.animal.nameJa}（マッチ率${r.percent}%）`
+    : r.item.kind === "spectrum" ? `${r.item.spectrum.high}度${r.percent}%` : `${r.percent}%`;
+  const text = `私は「${r.item.title}」で ${label} でした！ あなたも診断してみて👀\n${HASHTAGS}${r.animal ? " #" + r.animal.nameJa : ""}\n${location.href}`;
+  try {
+    if (navigator.share) { await navigator.share({ text }); return; }
+    await navigator.clipboard.writeText(text);
+    alert("シェア文をコピーしました！SNSに貼り付けてください📋");
+  } catch (_) { /* ユーザーキャンセル等は無視 */ }
+}
+
+/* イベント委譲 */
+document.addEventListener("click", e => {
+  const t = e.target.closest("[data-go],[data-item],[data-act]");
+  if (!t) return;
+  if (t.dataset.go) { go(t.dataset.go); return; }
+  if (t.dataset.item !== undefined) {
+    const it = ITEMS[Number(t.dataset.item)];
+    if (it.isPremium && !state.premium) { state.pendingItem = it; state.paywallCtx = "lockedItem"; go("paywall"); }
+    else { state.item = it; go("capture"); }
+    return;
+  }
+  switch (t.dataset.act) {
+    case "camera": document.getElementById("cameraInput").click(); break;
+    case "album": document.getElementById("albumInput").click(); break;
+    case "retry": go("capture"); break;
+    case "watch-ad": go("interstitial"); break;
+    case "close-ad": go("result"); break;
+    case "paywall-menu": state.paywallCtx = "menu"; go("paywall"); break;
+    case "paywall-adskip": state.paywallCtx = "adSkip"; go("paywall"); break;
+    case "purchase":
+      state.premium = true; syncChrome();
+      if (state.paywallCtx === "lockedItem" && state.pendingItem) { state.item = state.pendingItem; state.pendingItem = null; go("capture"); }
+      else if (state.paywallCtx === "adSkip") go("result");
+      else go("home");
+      break;
+    case "share": shareResult(); break;
+  }
+});
+
+syncChrome();
+go("home");
+/* バックグラウンドで解析エンジンを先読み（失敗しても診断時に再試行） */
+getLandmarker().catch(() => {});
+</script>
+</body>
+</html>
