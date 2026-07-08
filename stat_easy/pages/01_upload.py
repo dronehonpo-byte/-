@@ -39,7 +39,6 @@ st.subheader("または サンプルデータを使う")
 SAMPLES = {
     "実験データ (sample_experiment.csv)": "sample_experiment.csv",
     "アンケートデータ (sample_survey.csv)": "sample_survey.csv",
-    "時系列データ (sample_timeseries.csv)": "sample_timeseries.csv",
 }
 scol1, scol2 = st.columns([3, 1])
 with scol1:

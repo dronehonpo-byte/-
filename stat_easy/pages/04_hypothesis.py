@@ -17,7 +17,7 @@ common.setup_japanese_font()
 
 df = common.require_data()
 
-st.title("グループごとの違いを調べる")
+st.title("群の違いを調べる")
 st.markdown(
     "手法名を知らなくても大丈夫。目的を選ぶだけで最適な検定が自動で選ばれ、"
     "まず結論、続いてその根拠を分かりやすく表示します。"
@@ -476,8 +476,8 @@ st.divider()
 purpose = st.radio(
     "何を調べたいですか？（目的を選んでください）",
     [
-        "グループごとの点数・測定値に差があるか調べる",
-        "2つの分類項目に関係があるか調べる",
+        "2群以上の数値の差を比較したい",
+        "カテゴリの関連を調べたい",
     ],
 )
 
@@ -485,7 +485,7 @@ numeric_cols = data_loader.numeric_columns(df)
 categorical_cols = data_loader.categorical_columns(df)
 
 # ============ 数値比較パス ============
-if purpose.startswith("グループごとの点数"):
+if purpose.startswith("2群以上の数値"):
     if not numeric_cols:
         st.warning("数値の列が見つかりません。数値データを含むファイルをお使いください。")
     elif not categorical_cols:

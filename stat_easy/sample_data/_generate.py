@@ -73,27 +73,9 @@ def make_survey() -> pd.DataFrame:
     return df
 
 
-def make_timeseries() -> pd.DataFrame:
-    # 月次 5 年分 = 60 ヶ月 × カテゴリ数。500 行になるよう調整。
-    months = pd.date_range("2020-01-01", periods=100, freq="MS")
-    categories = ["A", "B", "C", "D", "E"]
-    rows = []
-    for cat in categories:
-        trend = RNG.uniform(0.5, 2.0)
-        level = RNG.uniform(50, 100)
-        season_amp = RNG.uniform(5, 15)
-        for t, d in enumerate(months):
-            season = season_amp * np.sin(2 * np.pi * (d.month / 12))
-            value = level + trend * t + season + RNG.normal(0, 5)
-            rows.append({"date": d.strftime("%Y-%m-%d"), "value": round(value, 2), "category": cat})
-    df = pd.DataFrame(rows)
-    return df
-
-
 def main() -> None:
     make_experiment().to_csv(HERE / "sample_experiment.csv", index=False, encoding="utf-8-sig")
     make_survey().to_csv(HERE / "sample_survey.csv", index=False, encoding="utf-8-sig")
-    make_timeseries().to_csv(HERE / "sample_timeseries.csv", index=False, encoding="utf-8-sig")
     print("サンプルデータを生成しました。")
 
 

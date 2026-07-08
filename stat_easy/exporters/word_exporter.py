@@ -70,7 +70,7 @@ def export_report(tables: dict[str, pd.DataFrame], images: list[tuple] | None = 
         doc.add_paragraph(METHODS_TEMPLATE)
 
     doc.add_paragraph("")
-    footer = doc.add_paragraph("考案：土居拓務 ／ 制作：株式会社Miyabee")
+    footer = doc.add_paragraph("開発：土居拓務・株式会社Miyabee")
     footer.alignment = 1
 
     buf = BytesIO()

@@ -189,14 +189,42 @@ def test_visualizer_png_svg(experiment):
     assert b"<svg" in svg[:300]
 
 
-def test_japanese_font_no_tofu(experiment):
-    """日本語ラベルの図で欠落グリフ（豆腐 □）が発生しないこと。"""
+def test_japanese_font_no_tofu_all_figures(experiment):
+    """全種類の図で欠落グリフ（豆腐 □）が発生しないこと（全分析箇所の確認）。"""
     import warnings
 
+    from modules import correlation, clustering
+
+    # 日本語列名でも豆腐にならないことを確認するため列名を日本語化
+    jp = experiment.rename(columns={
+        "pre_score": "介入前スコア", "post_score": "介入後スコア",
+        "age": "年齢", "group": "群", "gender": "性別",
+    })
+
+    corr, _ = correlation.correlation_matrix(jp, columns=["介入前スコア", "介入後スコア", "年齢"])
+    logit = correlation.logistic_regression(jp, "群", ["介入前スコア", "介入後スコア"])
+    fpr, tpr = logit.diagnostics["roc"]
+    linreg = correlation.linear_regression(jp, "介入後スコア", ["介入前スコア", "年齢"])
+    sug = clustering.suggest_k(jp, features=["介入前スコア", "介入後スコア", "年齢"],
+                               k_range=range(2, 5))
+    km = clustering.kmeans(jp, k=2, features=["介入前スコア", "介入後スコア", "年齢"])
+    hi = clustering.hierarchical(jp, k=2, features=["介入前スコア", "介入後スコア", "年齢"])
+    fi = __import__("pandas").DataFrame({"特徴量": ["年齢", "介入前スコア"], "重要度": [0.6, 0.4]})
+
     figs = [
-        visualizer.boxplot(experiment, "post_score", "group"),
-        visualizer.histogram(experiment, "pre_score"),
-        visualizer.violin(experiment, "age", "group"),
+        visualizer.histogram(jp, "年齢"),
+        visualizer.boxplot(jp, "介入後スコア", "群"),
+        visualizer.violin(jp, "介入前スコア", "群"),
+        visualizer.scatter_regression(jp, "介入前スコア", "介入後スコア"),
+        visualizer.correlation_heatmap(corr),
+        visualizer.roc_curve_plot({"モデル": (fpr, tpr, logit.diagnostics["auc"])}),
+        visualizer.bar_with_error(jp, "群", "介入後スコア"),
+        visualizer.missing_heatmap(jp),
+        visualizer.feature_importance_plot(fi),
+        visualizer.residual_plots(linreg.diagnostics["fitted"], linreg.diagnostics["residuals"]),
+        visualizer.dendrogram_plot(hi.extra["linkage"]),
+        visualizer.pca_scatter(km.pca_coords, km.labels, km.pca_explained),
+        visualizer.elbow_silhouette(sug),
     ]
     with warnings.catch_warnings(record=True) as caught:
         warnings.simplefilter("always")

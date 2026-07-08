@@ -14,7 +14,7 @@ from pathlib import Path
 import numpy as np
 
 # クレジット表記（必ずフッターに表示する）
-CREDIT_TEXT = "考案：土居拓務 ／ 制作：株式会社Miyabee"
+CREDIT_TEXT = "開発：土居拓務・株式会社Miyabee"
 
 ROOT_DIR = Path(__file__).resolve().parent.parent
 ASSETS_DIR = ROOT_DIR / "assets"
@@ -156,7 +156,7 @@ def render_sidebar_credit() -> None:
 
     st.sidebar.markdown("---")
     st.sidebar.markdown(
-        "<div style='font-size:0.8rem;color:#5A6B7B;'>考案：土居拓務<br>制作：株式会社Miyabee</div>",
+        "<div style='font-size:0.8rem;color:#5A6B7B;'>開発：土居拓務<br>株式会社Miyabee</div>",
         unsafe_allow_html=True,
     )
 

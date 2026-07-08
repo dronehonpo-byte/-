@@ -74,7 +74,7 @@ def export_report(tables: dict[str, pd.DataFrame], images: list[tuple] | None = 
             elements.append(Spacer(1, 10))
 
     elements.append(Spacer(1, 16))
-    elements.append(Paragraph("考案：土居拓務 ／ 制作：株式会社Miyabee", normal))
+    elements.append(Paragraph("開発：土居拓務・株式会社Miyabee", normal))
 
     doc.build(elements)
     buf.seek(0)

@@ -51,7 +51,6 @@ st.caption("実際のデータがなくても、用意したサンプルです�
 SAMPLES = [
     ("実験データ", "sample_experiment.csv", "2 群以上の比較・効果量の体験に。"),
     ("アンケートデータ", "sample_survey.csv", "カテゴリ集計・相関の体験に。"),
-    ("時系列データ", "sample_timeseries.csv", "推移の記述・可視化の体験に。"),
 ]
 
 
@@ -65,7 +64,7 @@ def _load_sample(filename: str) -> None:
     st.switch_page("pages/02_quality.py")
 
 
-scols = st.columns(3)
+scols = st.columns(len(SAMPLES))
 for col, (label, filename, desc) in zip(scols, SAMPLES):
     with col:
         st.markdown(f"**{label}**")
@@ -79,12 +78,13 @@ for col, (label, filename, desc) in zip(scols, SAMPLES):
 st.divider()
 
 # ---- 機能の概要カード ----
-st.subheader("できること")
+st.subheader("できること（7 つの機能）")
 FEATURES = [
     ("品質診断", "欠損・外れ値・重複を自動チェックし、対処のヒントを提示。"),
     ("記述統計", "数値・カテゴリの要約や APA 形式の Table 1 を作成。"),
     ("仮説検定", "2 群／多群を自動判定し、前提確認のうえ最適な検定を選択。"),
     ("効果量", "Cohen's d・η²・Cramér's V などを信頼区間つきで算出。"),
+    ("相関・回帰", "相関行列、線形・ロジスティック回帰、VIF まで対応。"),
     ("クラスタリング", "最適なクラスタ数の提案・k-means・階層クラスタリング。"),
     ("図表出力", "図は PNG / SVG、表は Excel / Word / PDF で出力。"),
 ]

@@ -41,11 +41,11 @@ INCLUDE = [
     "pages/03_descriptive.py",
     "pages/04_hypothesis.py",
     "pages/05_effect.py",
+    "pages/06_regression.py",
     "pages/08_clustering.py",
     "pages/09_visualization.py",
     "sample_data/sample_experiment.csv",
     "sample_data/sample_survey.csv",
-    "sample_data/sample_timeseries.csv",
     "assets/style.css",
     ".streamlit/config.toml",
 ]
@@ -112,7 +112,7 @@ def build() -> None:
       <div><b>StatEasy</b> を起動しています…</div>
       <div class="sub">初回はブラウザ内に統計ライブラリ（SciPy / statsmodels / scikit-learn 等）を<br>
       読み込むため 1〜2 分ほどかかります。そのままお待ちください。</div>
-      <div class="sub">考案：土居拓務 ／ 制作：株式会社Miyabee</div>
+      <div class="sub">開発：土居拓務・株式会社Miyabee</div>
     </div>
   </div>
   <script src="https://cdn.jsdelivr.net/npm/@stlite/mountable@{STLITE_VERSION}/build/stlite.js"></script>
