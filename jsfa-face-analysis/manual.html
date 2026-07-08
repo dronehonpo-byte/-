@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<title>JSFA 顔解析アプリ 操作マニュアル</title>
+<style>
+  @page { size: A4; margin: 16mm; }
+  body{ font-family:-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif; color:#0F172A; line-height:1.7; font-size:13px; }
+  h1{ color:#1D4ED8; font-size:22px; border-bottom:3px solid #1D4ED8; padding-bottom:8px; margin-bottom:4px; }
+  .sub{ color:#64748B; font-size:12px; margin-bottom:18px; }
+  h2{ color:#1E3A8A; font-size:15px; margin:22px 0 8px; border-left:5px solid #1D4ED8; padding-left:10px; }
+  ol{ padding-left:22px; } ol li{ margin-bottom:7px; }
+  .step{ background:#EFF6FF; color:#1D4ED8; font-weight:700; border-radius:4px; padding:1px 7px; margin-right:4px; font-size:12px; }
+  table{ border-collapse:collapse; width:100%; margin:10px 0; font-size:12px; }
+  th,td{ border:1px solid #CBD5E1; padding:7px 9px; text-align:left; }
+  th{ background:#F1F5F9; }
+  .note{ background:#FEF9C3; border:1px solid #FDE68A; border-radius:8px; padding:10px 14px; margin:14px 0; font-size:12px; }
+  .tip{ background:#ECFDF5; border:1px solid #A7F3D0; border-radius:8px; padding:10px 14px; margin:14px 0; font-size:12px; }
+  .footer{ margin-top:26px; border-top:1px solid #E2E8F0; padding-top:10px; color:#94A3B8; font-size:11px; }
+  .pb{ page-break-before:always; }
+</style>
+</head>
+<body>
+  <h1>JSFA 顔解析アプリ 操作マニュアル（簡易版）</h1>
+  <div class="sub">日本小顔矯正認定協会 顔解析システム／iPad Air（Safari）用</div>
+
+  <h2>はじめに・準備</h2>
+  <ol>
+    <li>iPad の <b>Safari</b> で、納品された <b>URL</b> を開きます。</li>
+    <li>初回のみカメラの利用許可を「<b>許可</b>」してください。</li>
+    <li>画面上部に「JSFA Small Face Analysis」と表示され、「<b>計測スタート</b>」ボタンが押せる状態になれば準備完了です。</li>
+  </ol>
+  <div class="tip"><b>おすすめ：</b>Safari の共有ボタン →「ホーム画面に追加」でアプリのように起動できます。一度読み込めば、Wi-Fiがなくても動作します。</div>
+
+  <h2>計測の流れ（1人あたり約2分）</h2>
+  <table>
+    <tr><th>STEP</th><th>操作</th></tr>
+    <tr><td><span class="step">1</span>ホーム</td><td>「計測スタート」をタップ。</td></tr>
+    <tr><td><span class="step">2</span>Before撮影</td><td>お客様の顔を<b>楕円ガイド枠</b>に合わせます。正面を向き、枠が<b>緑色</b>になると撮影ボタンが押せます。タップして撮影。</td></tr>
+    <tr><td><span class="step">3</span>Before確認</td><td>写真を確認し、「OK」で次へ。ブレていたら「撮り直す」。</td></tr>
+    <tr><td><span class="step">4</span>After撮影</td><td>施術後、同様に撮影。<b>薄く重なったBeforeの顔</b>に位置を合わせると精度が上がります。</td></tr>
+    <tr><td><span class="step">5</span>After確認</td><td>写真を確認し、「OK」で解析へ。</td></tr>
+    <tr><td><span class="step">6</span>解析中</td><td>数秒で自動計算します（約3秒）。</td></tr>
+    <tr><td><span class="step">7</span>結果表示</td><td>Before/Afterの比較とスコア（4指標）が表示されます。</td></tr>
+    <tr><td><span class="step">8</span>保存</td><td>「保存」をタップ → 比較画像がカメラロールに保存されます。</td></tr>
+    <tr><td>次の人へ</td><td>「次の人へ」をタップ → 確認後、最初の画面に戻ります。</td></tr>
+  </table>
+
+  <h2>スコアの見方</h2>
+  <table>
+    <tr><th>指標</th><th>意味</th></tr>
+    <tr><td>総合スコア</td><td>3指標を総合した点数。50点が基準で、点数が高いほど小顔方向に変化。</td></tr>
+    <tr><td>顔面積</td><td>顔全体の面積の変化。小さくなるほど改善率(%)がプラス。</td></tr>
+    <tr><td>フェイスライン</td><td>下顎ラインの長さの変化。短くなるほど改善率(%)がプラス。</td></tr>
+    <tr><td>左右差</td><td>顔の左右バランス。左右差が縮まるほど改善率(%)がプラス。</td></tr>
+  </table>
+
+  <div class="note"><b>撮影のコツ：</b>①明るい場所で ②髪で輪郭を隠さず ③Before/Afterで<b>iPadとの距離をできるだけ同じ</b>に保つと、正確な結果になります。</div>
+
+  <h2>うまくいかないとき</h2>
+  <table>
+    <tr><th>症状</th><th>対処</th></tr>
+    <tr><td>撮影ボタンが押せない</td><td>顔を枠内に入れ、正面を向いてください（枠が緑になればOK）。</td></tr>
+    <tr><td>「顔が検出できません」</td><td>明るさを確保し、顔全体が枠に入るよう距離を調整。</td></tr>
+    <tr><td>カメラが映らない</td><td>Safari設定でカメラ許可を確認し、ページを再読み込み。</td></tr>
+    <tr><td>動作が重い</td><td>他のアプリ・タブを閉じてから再度開いてください。</td></tr>
+  </table>
+
+  <div class="note">本アプリのスコアは相対的な変化率に基づく数値であり、医学的な変化量を保証するものではありません。撮影画像・データは端末内でのみ処理され、外部には送信されません。</div>
+
+  <div class="footer">株式会社Miyabee ／ JSFA 顔解析アプリ 操作マニュアル ver.1.0<br>
+  ※このHTMLをSafari/ChromeでA4・PDFとして印刷すると、配布用PDFになります。</div>
+</body>
+</html>

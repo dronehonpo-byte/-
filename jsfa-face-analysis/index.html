@@ -1,0 +1,1252 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="JSFA 顔解析" />
+<meta name="theme-color" content="#A9852F" />
+<link rel="manifest" href="manifest.json" />
+<title>JSFA Small Face Analysis｜日本小顔矯正認定協会 顔解析システム</title>
+<style>
+  :root{
+    --brand:#A9852F;          /* アンティークゴールド（ロゴ準拠） */
+    --brand2:#C7A24A;         /* ライトゴールド */
+    --brand-dark:#7C5E1E;     /* ディープゴールド／ブロンズ */
+    --grad:linear-gradient(135deg,#D4B968 0%,#B8912F 48%,#8A6A22 100%);
+    --ok:#4E8B5B;             /* ボタニカルグリーン（改善） */
+    --accent:#B0894A;
+    --bg:#FBF8F1;             /* アイボリー */
+    --surface:#FFFFFF;
+    --line:rgba(124,94,30,.14);
+    --text:#3A2E1B;           /* ディープブラウン */
+    --muted:#8A7A5E;          /* ウォームグレー */
+    --danger:#B4472E;
+    --shadow:0 16px 42px rgba(124,94,30,.14);
+    --shadow-sm:0 6px 18px rgba(124,94,30,.10);
+    --radius:22px;
+  }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body{ margin:0; padding:0; height:100%; }
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Noto Sans JP",sans-serif;
+    color:var(--text);
+    background:
+      radial-gradient(1100px 620px at 108% -8%, rgba(201,162,74,.20), transparent 60%),
+      radial-gradient(880px 520px at -12% 112%, rgba(124,94,30,.09), transparent 55%),
+      linear-gradient(180deg,#FCFAF3 0%,#F2EAD8 100%);
+    background-attachment:fixed;
+    overscroll-behavior:none; -webkit-user-select:none; user-select:none;
+    -webkit-font-smoothing:antialiased;
+  }
+  #app{ min-height:100dvh; display:flex; flex-direction:column; }
+  header.appbar{
+    position:sticky; top:0; z-index:20;
+    background:rgba(255,255,255,.70);
+    -webkit-backdrop-filter:saturate(1.6) blur(14px); backdrop-filter:saturate(1.6) blur(14px);
+    border-bottom:1px solid var(--line);
+    padding:env(safe-area-inset-top) 16px 0; min-height:58px;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .brand{ display:flex; align-items:center; gap:10px; padding:9px 0; }
+  .brand-mark{
+    width:36px; height:36px; border-radius:50%; background:var(--grad); color:#fff;
+    display:flex; align-items:center; justify-content:center; font-size:20px; font-weight:700;
+    font-family:Georgia,'Times New Roman',serif; font-style:italic;
+    box-shadow:0 6px 16px rgba(169,133,47,.42); flex:none;
+  }
+  header.appbar .ttl{ font-size:15px; font-weight:800; line-height:1.15; letter-spacing:.2px; text-align:left;
+    background:var(--grad); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; color:transparent; }
+  header.appbar .ttl small{ display:block; font-size:10.5px; font-weight:600; margin-top:2px;
+    -webkit-text-fill-color:var(--muted); color:var(--muted); letter-spacing:0; }
+
+  .screen{ flex:1; display:none; flex-direction:column; padding:20px 16px; min-height:0; overflow-y:auto; -webkit-overflow-scrolling:touch; }
+  .screen.active{ display:flex; animation:screenIn .38s cubic-bezier(.22,.61,.36,1) both; }
+  @keyframes screenIn{ from{ opacity:0; transform:translateY(10px); } to{ opacity:1; transform:none; } }
+  .center{ align-items:center; justify-content:safe center; text-align:center; gap:18px; }
+  .kicker{ font-size:11px; font-weight:800; letter-spacing:3px; text-transform:uppercase; color:var(--brand2); opacity:.9; }
+
+  /* Buttons */
+  .btn{
+    appearance:none; border:none; border-radius:16px; font-weight:700;
+    font-size:18px; padding:16px 22px; min-height:56px; min-width:44px;
+    cursor:pointer; letter-spacing:.2px;
+    transition:transform .12s cubic-bezier(.22,.61,.36,1), box-shadow .2s ease, opacity .15s ease, background .2s ease;
+  }
+  .btn:active{ transform:scale(.97); }
+  .btn-primary{ background:var(--grad); color:#fff; box-shadow:0 12px 26px rgba(138,106,34,.34); }
+  .btn-primary:active{ box-shadow:0 6px 16px rgba(138,106,34,.3); }
+  .btn-primary:disabled{ background:#C3CBDD; color:#EDF1F8; box-shadow:none; cursor:not-allowed; }
+  .btn-lg{ font-size:21px; min-height:66px; width:100%; max-width:420px; }
+  .btn-ghost{ background:rgba(255,255,255,.9); color:var(--brand); border:1.5px solid rgba(169,133,47,.32); box-shadow:var(--shadow-sm); }
+  .btn-ghost:disabled{ color:#9AA6BD; border-color:var(--line); box-shadow:none; opacity:.85; }
+  .btn-danger{ background:rgba(255,255,255,.9); color:var(--danger); border:1.5px solid rgba(180,71,46,.3); box-shadow:var(--shadow-sm); }
+  .btn-sm{ font-size:15px; min-height:48px; padding:12px 18px; border-radius:13px; }
+  .btn-row{ display:flex; gap:12px; width:100%; max-width:520px; }
+  .btn-row .btn{ flex:1; }
+
+  /* Home */
+  .home-logo{
+    position:relative; width:96px; height:96px; border-radius:28px; background:var(--grad);
+    display:flex; align-items:center; justify-content:center; color:#fff;
+    font-weight:800; font-size:30px; letter-spacing:1px;
+    box-shadow:0 20px 44px rgba(169,133,47,.42), inset 0 1px 0 rgba(255,255,255,.35);
+  }
+  .home-logo::after{ content:""; position:absolute; inset:-7px; border-radius:34px; border:1.5px solid rgba(169,133,47,.30); }
+  .brand-hero{ width:154px; height:154px; display:flex; align-items:center; justify-content:center; }
+  .brand-hero-img{ width:154px; height:154px; object-fit:contain; filter:drop-shadow(0 10px 22px rgba(124,94,30,.22)); }
+  .brand-emblem svg{ width:150px; height:150px; filter:drop-shadow(0 10px 24px rgba(124,94,30,.22)); }
+  .brand-word{ font-family:Georgia,'Times New Roman',serif; font-weight:800; font-size:30px; letter-spacing:8px; padding-left:8px;
+    background:var(--grad); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; color:transparent; margin-top:-8px; }
+  .home-title{ font-size:25px; font-weight:800; letter-spacing:.2px; }
+  .home-sub{ color:var(--muted); font-size:15px; line-height:1.7; max-width:400px; }
+  .home-actions{ display:flex; flex-direction:column; gap:12px; width:100%; max-width:420px; margin-top:4px; }
+  .loading-note{ color:var(--muted); font-size:13.5px; display:flex; gap:10px; align-items:center; }
+
+  /* Capture */
+  .stage{
+    position:relative; width:100%; max-width:520px; margin:0 auto;
+    aspect-ratio:3/4; background:#0B1220; border-radius:26px; overflow:hidden;
+    box-shadow:var(--shadow), inset 0 0 0 1px rgba(255,255,255,.06);
+  }
+  .stage video, .stage img.snap{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+  .overlay-before{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:.45; pointer-events:none; }
+  .guide-svg{ position:absolute; inset:0; width:100%; height:100%; pointer-events:none; }
+  .guide-ellipse{ fill:none; stroke:rgba(255,255,255,.85); stroke-width:3.5; opacity:.95; transition:stroke .25s ease; filter:drop-shadow(0 1px 4px rgba(0,0,0,.4)); }
+  .guide-ellipse.ok{ stroke:#34F5B8; stroke-width:5; filter:drop-shadow(0 0 8px rgba(52,245,184,.7)); }
+  .hint{
+    position:absolute; left:50%; bottom:16px; transform:translateX(-50%);
+    background:rgba(15,23,42,.62); -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px);
+    color:#fff; padding:9px 18px; border-radius:999px;
+    font-size:13.5px; font-weight:600; white-space:nowrap; max-width:92%;
+    box-shadow:0 6px 18px rgba(0,0,0,.25);
+  }
+  .hint.ok{ background:rgba(14,169,113,.85); }
+  .upload-ph{
+    position:absolute; inset:0; display:flex; flex-direction:column; gap:10px;
+    align-items:center; justify-content:center; color:#CBD5E1; text-align:center; padding:24px;
+  }
+  .upload-ph svg{ width:52px; height:52px; opacity:.85; }
+  .upload-ph .t{ font-size:16px; font-weight:700; color:#E5E9F2; }
+  .upload-ph .s{ font-size:13px; opacity:.8; }
+  .stage.busy::after{
+    content:""; position:absolute; inset:0; background:rgba(11,18,32,.55); -webkit-backdrop-filter:blur(2px); backdrop-filter:blur(2px);
+  }
+  .stage .spin-overlay{
+    position:absolute; inset:0; display:none; align-items:center; justify-content:center; z-index:2;
+  }
+  .stage.busy .spin-overlay{ display:flex; }
+
+  .badge-step{
+    align-self:center; background:rgba(169,133,47,.12); color:var(--brand); font-weight:800;
+    padding:6px 15px; border-radius:999px; font-size:12px; letter-spacing:.5px; margin-bottom:12px;
+    border:1px solid rgba(169,133,47,.22);
+  }
+  .cap-title{ text-align:center; font-size:21px; font-weight:800; margin:2px 0 14px; letter-spacing:.2px; }
+  .cap-actions{ margin-top:18px; display:flex; justify-content:center; align-items:center; gap:18px; }
+  .shutter{
+    width:76px; height:76px; border-radius:50%; background:var(--grad);
+    border:5px solid #fff; box-shadow:0 0 0 3px rgba(169,133,47,.5), 0 10px 24px rgba(138,106,34,.4);
+    cursor:pointer; flex:none; transition:transform .12s ease, box-shadow .2s ease;
+  }
+  .shutter:active{ transform:scale(.93); }
+  .shutter:disabled{ background:#AEB6C8; box-shadow:0 0 0 3px rgba(174,182,200,.5); }
+  .cap-secondary{ margin-top:16px; display:flex; gap:12px; justify-content:center; flex-wrap:wrap; }
+  .linkback{
+    margin:18px auto 0; color:var(--muted); font-size:14px; cursor:pointer; background:none; border:none;
+    text-decoration:none; border-bottom:1px solid rgba(107,114,128,.4); padding-bottom:1px;
+  }
+
+  /* Analyzing */
+  .spinner{
+    width:56px; height:56px; border-radius:50%; border:6px solid #DBEAFE;
+    border-top-color:var(--brand); animation:spin 1s linear infinite;
+  }
+  .spinner.sm{ width:34px; height:34px; border-width:4px; border-color:rgba(219,234,254,.4); border-top-color:#fff; }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+
+  /* Result */
+  .result-scroll{ overflow-y:auto; -webkit-overflow-scrolling:touch; padding-bottom:16px; }
+  .compare{ display:flex; gap:12px; max-width:560px; margin:0 auto 16px; }
+  .compare figure{ flex:1; margin:0; }
+  .compare img{ width:100%; aspect-ratio:3/4; object-fit:cover; border-radius:18px; border:1px solid rgba(255,255,255,.7); background:#000; box-shadow:var(--shadow-sm); }
+  .compare figcaption{ text-align:center; font-weight:800; font-size:12px; letter-spacing:1.5px; text-transform:uppercase; margin-top:9px; color:var(--muted); }
+  .headline{
+    position:relative; max-width:560px; margin:0 auto 16px; background:var(--surface);
+    border:1px solid var(--line); border-radius:var(--radius); padding:22px 18px; text-align:center;
+    box-shadow:var(--shadow); overflow:hidden;
+  }
+  .headline::before{ content:""; position:absolute; top:0; left:0; right:0; height:4px; background:var(--grad); }
+  .headline .big{ font-size:12px; color:var(--muted); font-weight:800; letter-spacing:2px; text-transform:uppercase; }
+  .headline .score{ font-size:52px; font-weight:800; line-height:1.05; margin:8px 0 4px; letter-spacing:-1.5px;
+    font-variant-numeric:tabular-nums;
+    background:var(--grad); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; color:transparent; }
+  .headline .score .score-max{ font-size:24px; font-weight:800; color:var(--muted); letter-spacing:0; -webkit-text-fill-color:var(--muted); }
+  .headline .up{ display:inline-block; font-size:18px; font-weight:800; color:#fff;
+    background:linear-gradient(135deg,#0EA971,#12B981); padding:5px 16px; border-radius:999px;
+    box-shadow:0 8px 18px rgba(14,169,113,.32); }
+  .headline .up.neg{ background:#EEF1F7; color:var(--muted); box-shadow:none; }
+  table.metrics{
+    max-width:560px; margin:0 auto 14px; width:100%; border-collapse:separate; border-spacing:0;
+    background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); overflow:hidden;
+    font-size:14px; box-shadow:var(--shadow-sm);
+  }
+  table.metrics th, table.metrics td{ padding:9px 12px; text-align:center; border-bottom:1px solid var(--line); }
+  table.metrics td .unit{ font-size:11px; font-weight:700; color:var(--muted); margin-left:1px; }
+  table.metrics thead th{ background:rgba(169,133,47,.06); font-size:11px; font-weight:800; letter-spacing:.6px; color:var(--muted); text-transform:uppercase; }
+  table.metrics tbody tr:nth-child(even) td{ background:rgba(15,23,42,.015); }
+  table.metrics tbody tr:last-child td{ border-bottom:none; }
+  table.metrics td.name{ text-align:left; font-weight:700; }
+  table.metrics td.rate{ font-weight:800; color:var(--ok); font-variant-numeric:tabular-nums; }
+  table.metrics td.rate.neg{ color:#94A3B8; }
+  table.metrics tbody td:last-child{ font-weight:800; color:var(--brand-dark); font-variant-numeric:tabular-nums; }
+  .result-actions{ max-width:560px; margin:0 auto; }
+
+  .error-box{
+    max-width:460px; background:#FEF2F2; border:1px solid #FECACA; color:var(--danger);
+    border-radius:14px; padding:14px 16px; font-size:14px; line-height:1.6; font-weight:600;
+  }
+  .footnote{ color:var(--muted); font-size:11px; text-align:center; max-width:560px; margin:10px auto 0; line-height:1.6; }
+  .warn-banner{
+    max-width:560px; margin:0 auto 14px; background:linear-gradient(135deg,#FFF9E6,#FEF3D0); border:1px solid #FADF9A;
+    color:#8A5A00; border-radius:16px; padding:12px 16px; font-size:13px; font-weight:700; line-height:1.55; text-align:center;
+    box-shadow:var(--shadow-sm);
+  }
+  .modal{
+    position:fixed; inset:0; z-index:50; display:flex; align-items:center; justify-content:center;
+    background:rgba(15,23,42,.5); -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px); padding:20px;
+    animation:screenIn .25s ease both;
+  }
+  .modal-card{
+    background:var(--surface); border-radius:24px; padding:24px; max-width:440px; width:100%;
+    box-shadow:0 30px 70px rgba(15,23,42,.4); border:1px solid rgba(255,255,255,.6);
+  }
+  .modal-title{ font-size:19px; font-weight:800; color:#B45309; text-align:center; margin-bottom:12px; }
+  .modal-body{ font-size:14px; line-height:1.7; color:var(--text); text-align:center; margin-bottom:18px; }
+  .calib{
+    max-width:560px; margin:18px auto 0; background:rgba(255,255,255,.7); border:1px dashed rgba(169,133,47,.42);
+    border-radius:18px; padding:18px; box-shadow:var(--shadow-sm);
+  }
+  .calib-h{ font-weight:800; font-size:15px; margin-bottom:12px; color:var(--brand-dark); }
+  .calib-row{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+  .calib-row label{ font-size:13px; font-weight:600; flex:1 1 100%; }
+  .calib-row input{ flex:1; min-width:120px; font-size:16px; padding:11px 13px; border:1px solid var(--line); border-radius:12px; background:#fff; }
+  .calib-s{ font-size:12px; color:var(--muted); margin-top:10px; line-height:1.5; word-break:break-all; }
+  .calib-note{ font-size:11px; color:var(--muted); margin-top:8px; }
+
+  /* Before一覧・保存完了 */
+  .list-wrap{ max-width:560px; margin:0 auto; width:100%; display:flex; flex-direction:column; gap:10px; }
+  .list-item{ display:flex; align-items:center; gap:12px; background:var(--surface); border:1px solid var(--line);
+    border-radius:16px; padding:10px 12px; box-shadow:var(--shadow-sm); }
+  .li-thumb{ width:50px; height:66px; object-fit:cover; border-radius:11px; background:#0B1220; flex:none; }
+  .li-info{ flex:1; text-align:left; min-width:0; }
+  .li-no{ font-weight:800; font-size:17px; letter-spacing:.3px;
+    background:var(--grad); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; color:transparent; }
+  .li-date{ font-size:11px; color:var(--muted); margin-top:2px; }
+  .li-actions{ display:flex; gap:6px; flex-direction:column; flex:none; }
+  .li-actions .btn{ min-height:40px; padding:8px 14px; font-size:13px; border-radius:11px; }
+  .saved-check{ width:80px; height:80px; border-radius:50%; background:linear-gradient(135deg,#0EA971,#12B981);
+    color:#fff; font-size:42px; display:flex; align-items:center; justify-content:center; box-shadow:0 16px 34px rgba(14,169,113,.42); }
+  .res-no{ font-size:15px; font-weight:800; color:var(--brand2); margin-left:8px; }
+  .count-pill{ font-weight:800; color:var(--brand2); }
+  .hidden{ display:none !important; }
+</style>
+</head>
+<body>
+<div id="app">
+  <header class="appbar">
+    <div class="brand">
+      <span class="brand-mark">J</span>
+      <div class="ttl">JSFA Small Face Analysis<small>日本小顔矯正認定協会 顔解析システム</small></div>
+    </div>
+  </header>
+
+  <!-- STEP1: Home -->
+  <section id="screen-home" class="screen center active">
+    <div class="brand-hero">
+      <img id="heroLogo" class="brand-hero-img hidden" src="logo.png" alt="JSFA ロゴ"
+           onload="this.classList.remove('hidden'); var f=document.getElementById('heroFallback'); if(f) f.classList.add('hidden'); var w=document.getElementById('brandWord'); if(w) w.classList.add('hidden');"
+           onerror="this.remove()" />
+      <div id="heroFallback" class="brand-emblem">
+        <svg viewBox="0 0 120 120" aria-hidden="true">
+          <defs><linearGradient id="goldg" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#D8BE72"/><stop offset=".5" stop-color="#B8912F"/><stop offset="1" stop-color="#8A6A22"/>
+          </linearGradient></defs>
+          <circle cx="60" cy="60" r="55" fill="none" stroke="url(#goldg)" stroke-width="1.6"/>
+          <circle cx="60" cy="60" r="48.5" fill="none" stroke="url(#goldg)" stroke-width="1"/>
+          <g fill="url(#goldg)">
+            <circle cx="60" cy="3.2" r="2.5"/><circle cx="60" cy="116.8" r="2.5"/>
+            <circle cx="3.2" cy="60" r="2.5"/><circle cx="116.8" cy="60" r="2.5"/>
+            <circle cx="20.5" cy="20.5" r="1.9"/><circle cx="99.5" cy="20.5" r="1.9"/>
+            <circle cx="20.5" cy="99.5" r="1.9"/><circle cx="99.5" cy="99.5" r="1.9"/>
+          </g>
+          <text x="61" y="83" text-anchor="middle" font-family="Georgia,'Times New Roman',serif" font-style="italic" font-weight="700" font-size="64" fill="url(#goldg)">J</text>
+        </svg>
+      </div>
+    </div>
+    <div id="brandWord" class="brand-word">JSFA</div>
+    <div class="kicker">Premium Face Analysis</div>
+    <div class="home-title">小顔矯正 Before / After 解析</div>
+    <div class="home-sub">大会運用：先に全員の <b>Before</b> を撮影・保存し、あとで <b>After</b> を番号で呼び出して解析できます。（カメラ撮影・写真アップロード両対応）</div>
+    <div class="home-actions">
+      <button id="btnRegBefore" class="btn btn-primary btn-lg" disabled>読み込み中…</button>
+      <button id="btnAfterFlow" class="btn btn-ghost" disabled>② After 撮影・解析</button>
+      <button id="btnBeforeList" class="btn btn-ghost btn-sm">保存した Before 一覧<span id="beforeCount" class="count-pill"></span></button>
+      <button id="btnQuick" class="linkback" disabled>その場で Before → After を続けて計測</button>
+    </div>
+    <div id="loadNote" class="loading-note"><span class="spinner" style="width:20px;height:20px;border-width:3px;"></span> 解析エンジンを準備しています…</div>
+    <div id="homeError" class="error-box hidden"></div>
+  </section>
+
+  <!-- Before 一覧（選択・管理） -->
+  <section id="screen-list" class="screen">
+    <div class="cap-title" style="margin-top:4px;">保存した Before</div>
+    <div id="listEmpty" class="home-sub" style="text-align:center; margin:24px auto;">保存された Before はまだありません。<br>ホームの「① Before を撮影・登録」から追加してください。</div>
+    <div id="listItems" class="list-wrap"></div>
+    <div class="btn-row" style="margin-top:18px;">
+      <button id="listClear" class="btn btn-danger btn-sm">すべて削除</button>
+      <button id="listHome" class="btn btn-ghost btn-sm">ホームへ</button>
+    </div>
+  </section>
+
+  <!-- Before 保存完了 -->
+  <section id="screen-saved" class="screen center">
+    <div class="saved-check">✓</div>
+    <div class="cap-title" id="savedTitle">保存しました</div>
+    <div class="home-sub">続けて次の方の Before を撮影できます。</div>
+    <div class="home-actions">
+      <button id="savedNext" class="btn btn-primary btn-lg">続けて次の Before を撮影</button>
+      <button id="savedToAfter" class="btn btn-ghost">After・解析へ進む</button>
+      <button id="savedHome" class="btn btn-ghost btn-sm">ホームへ</button>
+    </div>
+  </section>
+
+  <!-- STEP2/4: Capture (before & after share this; camera OR upload) -->
+  <section id="screen-capture" class="screen">
+    <div class="badge-step" id="capBadge">STEP 2 / Before</div>
+    <div class="cap-title" id="capTitle">Before を撮影／選択</div>
+    <div class="stage" id="stage">
+      <video id="video" playsinline muted autoplay></video>
+      <img id="overlayBefore" class="overlay-before hidden" alt="" />
+      <svg class="guide-svg" id="guideSvg" viewBox="0 0 100 133" preserveAspectRatio="none">
+        <ellipse id="guideEllipse" class="guide-ellipse" cx="50" cy="60" rx="32" ry="42" />
+      </svg>
+      <div class="hint" id="capHint">顔をガイド枠の中に合わせてください</div>
+      <div class="upload-ph hidden" id="uploadPh">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 16V4m0 0L8 8m4-4l4 4"/><path d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2"/></svg>
+        <div class="t">写真を選んでください</div>
+        <div class="s">正面・顔がはっきり写った写真がおすすめです</div>
+      </div>
+      <div class="spin-overlay"><span class="spinner sm"></span></div>
+    </div>
+
+    <div class="cap-actions" id="capActions">
+      <button id="btnShutter" class="shutter" disabled aria-label="撮影"></button>
+    </div>
+    <div class="cap-secondary">
+      <button id="btnPickPhoto" class="btn btn-ghost btn-sm">アルバムから選ぶ</button>
+      <button id="btnUseCamera" class="btn btn-ghost btn-sm hidden">カメラで撮影</button>
+    </div>
+    <input type="file" id="fileInput" accept="image/*" class="hidden" />
+    <div id="capError" class="error-box hidden" style="margin:14px auto 0;"></div>
+    <button class="linkback" id="capHome">← 最初に戻る</button>
+  </section>
+
+  <!-- STEP3/5: Confirm -->
+  <section id="screen-confirm" class="screen center">
+    <div class="badge-step" id="confirmBadge">STEP 3 / Before確認</div>
+    <div class="cap-title" id="confirmTitle">この写真でOKですか？</div>
+    <div class="stage" style="max-width:420px;">
+      <img id="confirmImg" class="snap" alt="撮影プレビュー" />
+    </div>
+    <div id="confirmNote" class="warn-banner hidden" style="margin-top:12px;"></div>
+    <div class="btn-row">
+      <button id="btnRetake" class="btn btn-ghost">撮り直す</button>
+      <button id="btnConfirmOk" class="btn btn-primary">OK</button>
+    </div>
+    <button class="linkback" id="confirmHome">← 最初に戻る</button>
+  </section>
+
+  <!-- STEP6: Analyzing -->
+  <section id="screen-analyzing" class="screen center">
+    <div class="spinner"></div>
+    <div class="cap-title">解析中…</div>
+    <div class="home-sub">顔のランドマークを解析しています。しばらくお待ちください。</div>
+  </section>
+
+  <!-- STEP7: Result -->
+  <section id="screen-result" class="screen result-scroll">
+    <div class="cap-title" style="margin-top:4px;">解析結果<span id="resNo" class="res-no"></span></div>
+    <div id="poseBanner" class="warn-banner hidden"></div>
+    <div class="compare">
+      <figure><img id="resBefore" alt="Before" /><figcaption>Before</figcaption></figure>
+      <figure><img id="resAfter" alt="After" /><figcaption>After</figcaption></figure>
+    </div>
+    <div class="headline">
+      <div class="big">総合スコア</div>
+      <div class="score"><span id="scoreAfter">–</span><span class="score-max"> / 100点</span></div>
+    </div>
+    <table class="metrics">
+      <thead><tr><th>要因（小顔化）</th><th>改善スコア(10点満点)</th></tr></thead>
+      <tbody id="metricRows"></tbody>
+    </table>
+    <div class="result-actions">
+      <div class="btn-row">
+        <button id="btnNext" class="btn btn-danger">次の人へ</button>
+        <button id="btnSave" class="btn btn-primary">保存</button>
+      </div>
+    </div>
+
+    <!-- #4 校正モード（?calib=1 のときのみ表示・施術者用） -->
+    <div id="calibPanel" class="calib hidden">
+      <div class="calib-h">🔧 校正モード（施術者用）</div>
+      <div class="calib-row">
+        <label for="calibLabel">この結果の正解スコア（0〜100）</label>
+        <input id="calibLabel" type="number" min="0" max="100" inputmode="numeric" placeholder="例: 72" />
+        <button id="calibRecord" class="btn btn-ghost btn-sm">記録</button>
+      </div>
+      <div id="calibStatus" class="calib-s"></div>
+      <div class="btn-row" style="margin-top:8px;">
+        <button id="calibFit" class="btn btn-ghost btn-sm">係数を再計算</button>
+        <button id="calibExport" class="btn btn-ghost btn-sm">CSV書き出し</button>
+        <button id="calibReset" class="btn btn-ghost btn-sm">既定に戻す</button>
+      </div>
+      <div class="calib-note">保存されるのは数値（各指標と正解スコア）のみで、顔写真は保存されません。</div>
+    </div>
+    <div class="footnote">
+      ※ 総合スコア（100点満点）＝小顔に関わる10要因を各10点満点で採点し、その合計です。各要因は Before→After の改善度が大きいほど高得点になります。<br>
+      ※ 各要因はパーツの縮小・左右差・顔比率の整いなどの改善度を評価。理想値は目安であり、医学的・人種的に唯一の正解ではありません。<br>
+      ※ 各要因は顔のパーツを「目の間隔」基準で正規化して比較（写真サイズ・撮影距離の違いを吸収）。<br>
+      本スコアはランドマーク座標の相対的な変化率に基づく数値であり、医学的な変化量を保証するものではありません。<br>
+      画像・解析データは端末内でのみ処理され、外部サーバーへは送信されません。
+    </div>
+  </section>
+</div>
+
+<!-- 向きズレ警告モーダル -->
+<div id="poseModal" class="modal hidden">
+  <div class="modal-card">
+    <div class="modal-title">⚠ 顔の向きが違うようです</div>
+    <div class="modal-body" id="poseMsg"></div>
+    <div class="btn-row" style="margin-top:6px;">
+      <button id="poseProceed" class="btn btn-ghost">このまま解析</button>
+      <button id="poseRetake" class="btn btn-primary">Afterを撮り直す</button>
+    </div>
+  </div>
+</div>
+
+<canvas id="workCanvas" class="hidden"></canvas>
+
+<script type="module">
+import { FaceLandmarker, FilesetResolver }
+  from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/vision_bundle.mjs";
+
+/* ---------- Config ---------- */
+const WASM_URL  = "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm";
+const MODEL_URL = "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task";
+const YAW_MAX = 15, PITCH_MAX = 18;          // カメラ撮影：正面判定
+const YAW_MAX_UP = 28, PITCH_MAX_UP = 28;    // アップロード：許容を緩める
+const POSE_DIFF_WARN = 12;                   // Before/After のヨー・ピッチ差がこれ以上で警告（度）
+const BEFORE_OPACITY = 0.45;
+const MAX_UPLOAD_DIM = 1600;                 // アップロード画像の最大辺（メモリ対策）
+
+// 顔輪郭（Shoelace 面積）
+const CONTOUR = [10,338,297,332,284,251,389,356,454,323,361,288,397,365,379,378,400,377,152,148,176,149,150,136,172,58,132,93,234,127,162,21,54,103,67,109];
+// 下顎ライン（フェイスライン周囲長）
+const JAW = [356,454,323,361,288,397,365,379,378,400,377,152,148,176,149,150,136,172,58,132,93,234,127];
+const KEYPTS = [10,152,234,454];             // ガイド枠内チェック点
+// 正規化の基準：目の中心（左右）と口の中心（合成スケール用）
+const L_EYE = [33,133], R_EYE = [362,263], MOUTH = [13,14];
+// 左右差の対称ペア（中心線を挟む：頬・エラ・口角・目尻など）
+const SYM_PAIRS = [[234,454],[93,323],[58,288],[172,397],[136,365],[61,291],[33,263]];
+const OVAL = { cx:0.5, cy:0.45, rx:0.33, ry:0.42 };
+const FRAME_BUF_MAX = 9;                      // #1 多フレーム中央値：バッファ枚数
+const Q_DARK_LUMA = 45;                       // #6 品質：これ未満で「暗い」
+const Q_BLUR_VAR  = 6;                        // #6 品質：これ未満で「ぶれ/ピンボケ」
+
+// 小顔に関わる10要因（各10点満点・合計100点）。
+//   type:"size"    … 小さく（縮小）なるほど加点＝Before比の縮小率で採点
+//   type:"balance" … 顔比率の整い度（0〜100の絶対評価）の増加で加点
+// scale … 採点カーブの広がり（小さいほど少しの改善で点が動く＝敏感）。要因ごとの変化量に合わせて調整。
+const FACTORS = [
+  { key:"area",     label:"顔の面積",         scale:7,   type:"size" },
+  { key:"cheek",    label:"頬骨の幅",         scale:4,   type:"size" },
+  { key:"jawW",     label:"エラの幅",         scale:4.5, type:"size" },
+  { key:"chinW",    label:"あご先の幅",       scale:4,   type:"size" },
+  { key:"templeW",  label:"こめかみの幅",     scale:4,   type:"size" },
+  { key:"peri",     label:"フェイスライン",   scale:5,   type:"size" },
+  { key:"lowerLen", label:"下顔面の長さ",     scale:4.5, type:"size" },
+  { key:"whRatio",  label:"顔の丸み(縦横比)", scale:4,   type:"size" },
+  { key:"asym",     label:"左右対称性",       scale:12,  type:"size" },
+  { key:"balance",  label:"黄金比バランス",   scale:6,   type:"balance" },
+];
+const FACTOR_MIN = 1.5;                        // 各要因スコアの下限（0点まで落とさない＝悪化しても急落させない）
+const TOTAL_MIN  = 15;                         // 合計スコアの下限
+// #4 スコア係数（校正時のみ使用）：total = b0 + Σ coef[要因]*改善率
+const DEFAULT_COEF = { b0:50 };
+const CALIB_FEATURES = FACTORS.map(f=>f.key);  // 校正で使う特徴量（10要因の改善率）
+const CALIB_MIN = 12;                          // 校正に必要な最小サンプル数
+// 黄金比／比率バランスの理想値と許容幅（日本人向けに調整可）
+const GR = {
+  wh:   { ideal:0.72,  tol:0.12 },   // 顔の縦横比（幅/高さ）
+  inter:{ ideal:1.0,   tol:0.25 },   // 目の間隔 / 目の幅（＝1）
+  fifth:{ ideal:5.0,   tol:1.3  },   // 顔の幅 / 目の幅（＝5・五分割）
+  third:{ ideal:1.0,   tol:0.25 },   // 中顔面 : 下顔面（＝1）
+  mn:   { ideal:1.618, tol:0.45 },   // 口の幅 / 鼻の幅（黄金比）
+};
+const isCalib = new URLSearchParams(location.search).has("calib");
+function loadCoef(){ try{ const s=localStorage.getItem("jsfa_calib_coef"); return s?JSON.parse(s):{...DEFAULT_COEF}; }catch(e){ return {...DEFAULT_COEF}; } }
+let COEF = loadCoef();
+
+/* ---------- State ---------- */
+const state = {
+  phase:"home",
+  target:"before",
+  mode:"camera",             // "camera" | "upload"
+  flow:"quick",              // "quick" | "register" | "afterFor"
+  currentNo:null,            // 現在の参加者番号（No.）
+  currentBeforeId:null,      // afterFor時：呼び出したBeforeのIDBキー
+  listForAfter:false,        // 一覧をAfter選択目的で開いたか
+  latest:null,
+  frameBuf:[],               // #1 直近フレームのランドマーク（中央値用）
+  captured:{ before:null, after:null },
+  stream:null, rafId:null, lastTs:-1,
+  lastMetrics:null,
+};
+let landmarker = null;       // VIDEO モード（ライブガイド用）
+let imgLandmarker = null;    // IMAGE モード（アップロード用・遅延生成）
+let fileset = null;
+
+/* ---------- DOM ---------- */
+const $ = (id) => document.getElementById(id);
+const screens = {
+  home:$("screen-home"), capture:$("screen-capture"), confirm:$("screen-confirm"),
+  analyzing:$("screen-analyzing"), result:$("screen-result"),
+  list:$("screen-list"), saved:$("screen-saved"),
+};
+const video = $("video");
+const guideEllipse = $("guideEllipse");
+const overlayBefore = $("overlayBefore");
+const stage = $("stage");
+
+function show(name){
+  Object.values(screens).forEach(s => s.classList.remove("active"));
+  screens[name].classList.add("active");
+  state.phase = name;
+}
+
+/* ---------- Init MediaPipe ---------- */
+async function init(){
+  try{
+    fileset = await FilesetResolver.forVisionTasks(WASM_URL);
+    landmarker = await FaceLandmarker.createFromOptions(fileset, {
+      baseOptions:{ modelAssetPath: MODEL_URL, delegate:"GPU" },
+      runningMode:"VIDEO", numFaces:1, outputFacialTransformationMatrixes:true,
+      minFaceDetectionConfidence:0.6, minFacePresenceConfidence:0.6, minTrackingConfidence:0.6,
+    });
+    ["btnRegBefore","btnAfterFlow","btnQuick"].forEach(id=>$(id).disabled=false);
+    $("btnRegBefore").textContent = "① Before を撮影・登録";
+    $("loadNote").classList.add("hidden");
+    refreshBeforeCount();
+  }catch(err){
+    console.error(err);
+    $("loadNote").classList.add("hidden");
+    const box = $("homeError");
+    box.classList.remove("hidden");
+    box.textContent = "解析エンジンの読み込みに失敗しました。通信環境をご確認のうえ、ページを再読み込みしてください。";
+  }
+}
+async function getImageLandmarker(){
+  if(imgLandmarker) return imgLandmarker;
+  imgLandmarker = await FaceLandmarker.createFromOptions(fileset, {
+    baseOptions:{ modelAssetPath: MODEL_URL, delegate:"GPU" },
+    runningMode:"IMAGE", numFaces:1, outputFacialTransformationMatrixes:true,
+    minFaceDetectionConfidence:0.6, minFacePresenceConfidence:0.6,
+  });
+  return imgLandmarker;
+}
+
+/* ---------- Head pose ---------- */
+function matrixToEuler(m){
+  const r00=m[0], r10=m[1], r20=m[2], r21=m[6], r22=m[10];
+  const sy = Math.hypot(r00, r10);
+  const pitch = sy>1e-6 ? Math.atan2(r21, r22) : 0;
+  const yaw   = Math.atan2(-r20, sy);
+  const roll  = sy>1e-6 ? Math.atan2(r10, r00) : 0;
+  return { pitch: pitch*180/Math.PI, yaw: yaw*180/Math.PI, roll: roll*180/Math.PI };
+}
+function extractPose(result){
+  const mat = result?.facialTransformationMatrixes?.[0]?.data;
+  return mat ? matrixToEuler(mat) : null;
+}
+
+/* ---------- #1 Multi-frame median ---------- */
+function median(arr){
+  const a=[...arr].sort((p,q)=>p-q), m=a.length>>1;
+  return a.length%2 ? a[m] : (a[m-1]+a[m])/2;
+}
+function medianLandmarks(frames){
+  const numPts=frames[0].length, n=frames.length, out=new Array(numPts);
+  const xs=new Array(n), ys=new Array(n);
+  for(let i=0;i<numPts;i++){
+    for(let f=0;f<n;f++){ xs[f]=frames[f][i].x; ys[f]=frames[f][i].y; }
+    out[i]={ x:median(xs), y:median(ys) };
+  }
+  return out;
+}
+
+/* ---------- #6 Image quality (luminance & blur) ---------- */
+function assessQuality(canvas){
+  const tw=160, th=Math.max(1, Math.round(canvas.height/canvas.width*160));
+  const c=document.createElement("canvas"); c.width=tw; c.height=th;
+  c.getContext("2d").drawImage(canvas,0,0,tw,th);
+  let d; try{ d=c.getContext("2d").getImageData(0,0,tw,th).data; }catch(e){ return null; }
+  const g=new Float64Array(tw*th); let sum=0;
+  for(let i=0,j=0;i<d.length;i+=4,j++){ const v=0.299*d[i]+0.587*d[i+1]+0.114*d[i+2]; g[j]=v; sum+=v; }
+  const luma=sum/(tw*th);
+  let mean=0, nn=0;
+  for(let y=1;y<th-1;y++) for(let x=1;x<tw-1;x++){ const i=y*tw+x; mean+=g[i-1]+g[i+1]+g[i-tw]+g[i+tw]-4*g[i]; nn++; }
+  mean/= (nn||1); let v=0;
+  for(let y=1;y<th-1;y++) for(let x=1;x<tw-1;x++){ const i=y*tw+x; const l=g[i-1]+g[i+1]+g[i-tw]+g[i+tw]-4*g[i]; v+=(l-mean)*(l-mean); }
+  const blurVar=v/(nn||1);
+  const issues=[];
+  if(luma < Q_DARK_LUMA) issues.push("暗い");
+  if(blurVar < Q_BLUR_VAR) issues.push("ぶれ／ピンボケの");
+  return issues.length ? `⚠ 写真が${issues.join("・")}可能性があります。撮り直すと精度が上がります。` : null;
+}
+
+/* ---------- Geometry (normalized coords -> pixels) ---------- */
+function polygonArea(lm, idx, w, h){
+  let a=0;
+  for(let i=0;i<idx.length;i++){
+    const p=lm[idx[i]], q=lm[idx[(i+1)%idx.length]];
+    a += (p.x*w)*(q.y*h) - (q.x*w)*(p.y*h);
+  }
+  return Math.abs(a)/2;
+}
+function pathLength(lm, idx, w, h){
+  let d=0;
+  for(let i=0;i<idx.length-1;i++){
+    const p=lm[idx[i]], q=lm[idx[i+1]];
+    d += Math.hypot((p.x-q.x)*w, (p.y-q.y)*h);
+  }
+  return d;
+}
+function centerOf(lm, pair, w, h){
+  return { x:(lm[pair[0]].x+lm[pair[1]].x)/2*w, y:(lm[pair[0]].y+lm[pair[1]].y)/2*h };
+}
+// 合成スケール：目の間隔(横)と 目線中点〜口中心(縦) の幾何平均。
+// 横方向(ヨー)・縦方向(ピッチ)いずれか片方のズレの影響を約半分に抑える。
+function faceScale(lm, w, h){
+  const el=centerOf(lm,L_EYE,w,h), er=centerOf(lm,R_EYE,w,h);
+  const horiz=Math.hypot(el.x-er.x, el.y-er.y);
+  const eyeMid={ x:(el.x+er.x)/2, y:(el.y+er.y)/2 };
+  const mc=centerOf(lm,MOUTH,w,h);
+  const vert=Math.hypot(eyeMid.x-mc.x, eyeMid.y-mc.y);
+  return Math.sqrt(Math.max(horiz*vert, 1));
+}
+// 点(px,py)から直線A-Bへの符号付き垂直距離（回転に不変）
+function pointLineDist(px,py, ax,ay, bx,by){
+  const vx=bx-ax, vy=by-ay, wx=px-ax, wy=py-ay;
+  const len=Math.hypot(vx,vy)||1;
+  return (vx*wy - vy*wx)/len;
+}
+// 左右差：顔の中心線（額10→顎152）に対する、複数の対称ペアの垂直距離差の平均。
+// 中心線ごと回転するためロール不変。複数点の平均で単点ノイズに強い。
+function asymmetry(lm, w, h){
+  const ax=lm[10].x*w,  ay=lm[10].y*h;   // 額中央
+  const bx=lm[152].x*w, by=lm[152].y*h;  // 顎先
+  let sum=0;
+  for(const [li,ri] of SYM_PAIRS){
+    const dL=Math.abs(pointLineDist(lm[li].x*w, lm[li].y*h, ax,ay,bx,by));
+    const dR=Math.abs(pointLineDist(lm[ri].x*w, lm[ri].y*h, ax,ay,bx,by));
+    sum += Math.abs(dL - dR);
+  }
+  return sum / SYM_PAIRS.length;
+}
+
+/* ---------- Validation ---------- */
+function insideOval(x,y){ const dx=(x-OVAL.cx)/OVAL.rx, dy=(y-OVAL.cy)/OVAL.ry; return dx*dx+dy*dy<=1; }
+function evaluateFrame(result){
+  if(!result || !result.faceLandmarks || result.faceLandmarks.length===0)
+    return { valid:false, msg:"顔が検出できません。枠の中に顔を入れてください" };
+  const lm = result.faceLandmarks[0];
+  const allIn = KEYPTS.every(i => insideOval(lm[i].x, lm[i].y));
+  const faceW = Math.abs(lm[454].x - lm[234].x);
+  if(!allIn || faceW < 0.28) return { valid:false, msg:"顔をガイド枠いっぱいに合わせてください" };
+  if(faceW > 0.72) return { valid:false, msg:"少し離れてください" };
+  const mat = result.facialTransformationMatrixes?.[0]?.data;
+  if(mat){
+    const { yaw, pitch } = matrixToEuler(mat);
+    if(Math.abs(yaw) > YAW_MAX || Math.abs(pitch) > PITCH_MAX) return { valid:false, msg:"正面を向いてください" };
+  }
+  return { valid:true, msg:"正面OK！撮影できます" };
+}
+function validateUpload(result){
+  if(!result || !result.faceLandmarks || result.faceLandmarks.length===0)
+    return { valid:false, msg:"顔が検出できませんでした。正面の顔がはっきり写った写真を選んでください。" };
+  const lm = result.faceLandmarks[0];
+  const faceW = Math.abs(lm[454].x - lm[234].x);
+  if(faceW < 0.12) return { valid:false, msg:"顔が小さすぎます。顔が大きく写った写真を選んでください。" };
+  const mat = result.facialTransformationMatrixes?.[0]?.data;
+  if(mat){
+    const { yaw, pitch } = matrixToEuler(mat);
+    if(Math.abs(yaw) > YAW_MAX_UP || Math.abs(pitch) > PITCH_MAX_UP)
+      return { valid:false, msg:"横向き・斜めの写真です。できるだけ正面の写真を選んでください。" };
+  }
+  return { valid:true };
+}
+
+/* ---------- Camera loop ---------- */
+async function startCamera(){
+  $("capError").classList.add("hidden");
+  try{
+    state.stream = await navigator.mediaDevices.getUserMedia({
+      video:{ facingMode:{ ideal:"environment" }, width:{ ideal:1280 }, height:{ ideal:1707 } }, audio:false,
+    });
+  }catch(err){
+    console.error(err);
+    const e=$("capError"); e.classList.remove("hidden");
+    e.textContent = "カメラを起動できませんでした。『アルバムから選ぶ』で写真アップロードもご利用いただけます。";
+    return;
+  }
+  video.srcObject = state.stream;
+  await video.play().catch(()=>{});
+  state.lastTs = -1;
+  loop();
+}
+function loop(){
+  state.rafId = requestAnimationFrame(loop);
+  if(state.mode!=="camera" || !landmarker || video.readyState < 2) return;
+  const ts = performance.now();
+  if(ts <= state.lastTs) return;
+  state.lastTs = ts;
+  let result;
+  try{ result = landmarker.detectForVideo(video, ts); }catch(e){ return; }
+  state.latest = result;
+  const ev = evaluateFrame(result);
+  // #1 正面かつ枠内のフレームのみバッファ（中央値の材料）
+  if(ev.valid && result.faceLandmarks?.[0]){
+    state.frameBuf.push(result.faceLandmarks[0].map(p=>({x:p.x,y:p.y})));
+    if(state.frameBuf.length > FRAME_BUF_MAX) state.frameBuf.shift();
+  }else{
+    state.frameBuf.length = 0;   // 崩れたら貯め直し
+  }
+  guideEllipse.classList.toggle("ok", ev.valid);
+  const hint=$("capHint"); hint.textContent = ev.msg; hint.classList.toggle("ok", ev.valid);
+  $("btnShutter").disabled = !ev.valid;
+}
+function stopCamera(){
+  if(state.rafId){ cancelAnimationFrame(state.rafId); state.rafId=null; }
+  if(state.stream){ state.stream.getTracks().forEach(t=>t.stop()); state.stream=null; }
+  video.srcObject = null;
+}
+
+/* ---------- Capture screen UI ---------- */
+function applyModeUI(){
+  const cam = state.mode==="camera";
+  video.classList.toggle("hidden", !cam);
+  $("guideSvg").classList.toggle("hidden", !cam);
+  $("capHint").classList.toggle("hidden", !cam);
+  $("uploadPh").classList.toggle("hidden", cam);
+  $("capActions").classList.toggle("hidden", !cam);   // シャッターはカメラ時のみ
+  $("btnUseCamera").classList.toggle("hidden", cam);
+  // アップロード時：Before重ねは非表示
+  if(!cam){ overlayBefore.classList.add("hidden"); }
+}
+function enterCapture(target){
+  state.target = target;
+  state.frameBuf.length = 0;      // #1 バッファをリセット
+  const isBefore = target==="before";
+  const noLabel = state.currentNo ? `No.${pad2(state.currentNo)}・` : "";
+  $("capBadge").textContent = noLabel + (isBefore ? "Before" : "After");
+  $("capTitle").textContent = noLabel + (isBefore ? "Before を" : "After を") + (state.mode==="camera" ? "撮影" : "選択");
+  guideEllipse.classList.remove("ok");
+  $("btnShutter").disabled = true;
+  $("capError").classList.add("hidden");
+  stage.classList.remove("busy");
+  // After×カメラ：Before半透明重ね
+  if(!isBefore && state.mode==="camera" && state.captured.before){
+    overlayBefore.src = state.captured.before.dataUrl;
+    overlayBefore.style.opacity = BEFORE_OPACITY;
+    overlayBefore.classList.remove("hidden");
+  }else{
+    overlayBefore.classList.add("hidden"); overlayBefore.removeAttribute("src");
+  }
+  applyModeUI();
+  show("capture");
+  if(state.mode==="camera") startCamera(); else stopCamera();
+}
+function switchToCamera(){
+  state.mode="camera";
+  enterCapture(state.target);
+}
+
+/* ---------- Camera capture ---------- */
+function doCapture(){
+  const result = state.latest;
+  if(!evaluateFrame(result).valid) return;
+  const w=video.videoWidth, h=video.videoHeight;
+  const canvas=$("workCanvas"); canvas.width=w; canvas.height=h;
+  canvas.getContext("2d").drawImage(video,0,0,w,h);
+  const dataUrl = canvas.toDataURL("image/jpeg", 0.92);
+  // #1 直近フレームの中央値でランドマークを安定化（十分貯まっていれば）
+  const lmOverride = state.frameBuf.length>=3 ? medianLandmarks(state.frameBuf) : null;
+  storeAndConfirm(buildPayload(result, dataUrl, w, h, lmOverride, assessQuality(canvas)));
+}
+
+/* ---------- Upload capture ---------- */
+function loadImage(src){
+  return new Promise((res,rej)=>{ const i=new Image(); i.onload=()=>res(i); i.onerror=()=>rej(new Error("画像を読み込めませんでした")); i.src=src; });
+}
+async function handleFile(file){
+  if(!file) return;
+  if(!file.type.startsWith("image/")){
+    showCapError("画像ファイルを選んでください。"); return;
+  }
+  stage.classList.remove("busy");
+  let img;
+  try{
+    const url = URL.createObjectURL(file);
+    img = await loadImage(url);
+    URL.revokeObjectURL(url);
+  }catch(e){ showCapError("画像を読み込めませんでした。別の写真をお試しください。"); return; }
+
+  // 縮小して canvas 化（EXIF 回転はブラウザが <img> 描画時に反映）
+  let w=img.naturalWidth, h=img.naturalHeight;
+  const scale = Math.min(1, MAX_UPLOAD_DIM/Math.max(w,h));
+  w=Math.round(w*scale); h=Math.round(h*scale);
+  const canvas=$("workCanvas"); canvas.width=w; canvas.height=h;
+  canvas.getContext("2d").drawImage(img,0,0,w,h);
+
+  stage.classList.add("busy");
+  let result;
+  try{
+    const lmk = await getImageLandmarker();
+    result = lmk.detect(canvas);
+  }catch(e){ console.error(e); stage.classList.remove("busy"); showCapError("解析に失敗しました。別の写真をお試しください。"); return; }
+  stage.classList.remove("busy");
+
+  const v = validateUpload(result);
+  if(!v.valid){ showCapError(v.msg); return; }
+  const dataUrl = canvas.toDataURL("image/jpeg", 0.92);
+  storeAndConfirm(buildPayload(result, dataUrl, w, h, null, assessQuality(canvas)));
+}
+function showCapError(msg){ const e=$("capError"); e.textContent=msg; e.classList.remove("hidden"); }
+
+/* ---------- Shared: store & go to confirm ---------- */
+function buildPayload(result, dataUrl, w, h, landmarksOverride, qualityMsg){
+  const landmarks = landmarksOverride || result.faceLandmarks[0].map(p=>({x:p.x,y:p.y}));
+  return { dataUrl, w, h, landmarks, pose: extractPose(result), qualityMsg: qualityMsg||null };
+}
+function storeAndConfirm(payload){
+  state.captured[state.target] = payload;
+  stopCamera();
+  const isBefore = state.target==="before";
+  const noLabel = state.currentNo ? `No.${pad2(state.currentNo)}・` : "";
+  $("confirmBadge").textContent = noLabel + (isBefore ? "Before 確認" : "After 確認");
+  $("confirmImg").src = payload.dataUrl;
+  const note=$("confirmNote");
+  if(payload.qualityMsg){ note.textContent = payload.qualityMsg; note.classList.remove("hidden"); }
+  else{ note.classList.add("hidden"); }
+  show("confirm");
+}
+
+/* ---------- Analysis (scale-normalized by inter-ocular distance) ---------- */
+function clamp(v,mn,mx){ return Math.min(mx, Math.max(mn, v)); }
+function round1(x){ return Math.round(x*10)/10; }
+function round2(x){ return Math.round(x*100)/100; }
+// 改善度 → 10点満点スコア。無変化=5点、改善で上振れ・悪化で下振れ。
+// 上げ側と下げ側で傾きが非対称（下げは約2.2倍ゆるやか）＝悪化しても急落しない。下限 FACTOR_MIN。
+function factorScore10(rate, scaleUp){
+  const s = rate>=0 ? scaleUp : scaleUp*2.2;
+  return clamp(5 + 5*Math.tanh(rate/s), FACTOR_MIN, 10);
+}
+function dist(lm,a,b,w,h){ return Math.hypot((lm[a].x-lm[b].x)*w, (lm[a].y-lm[b].y)*h); }
+// 理想値への近さ（0〜100）。ideal で100点、離れるほどガウス状に減衰。
+function closeness(val, ideal, tol){ const z=(val-ideal)/tol; return 100*Math.exp(-0.5*z*z); }
+// 黄金比／比率バランススコア（0〜100・絶対評価）。比率なのでスケール・写真サイズに不変。
+function balanceScore(lm, w, h){
+  const D=(a,b)=>dist(lm,a,b,w,h);
+  const width=D(234,454), height=D(10,152);
+  const eyeW=(D(33,133)+D(362,263))/2 || 1, inter=D(133,362);
+  const mid=D(168,2)||1, lower=D(2,152);
+  const mouthW=D(61,291), noseW=D(48,278)||1;
+  const s1 = closeness(width/height, GR.wh.ideal, GR.wh.tol);
+  const s2 = (closeness(inter/eyeW, GR.inter.ideal, GR.inter.tol)
+            + closeness(width/eyeW, GR.fifth.ideal, GR.fifth.tol)) / 2;
+  const s3 = closeness(lower/mid, GR.third.ideal, GR.third.tol);
+  const s4 = closeness(mouthW/noseW, GR.mn.ideal, GR.mn.tol);
+  return (s1 + s2 + s3 + s4) / 4;
+}
+function measure(cap){
+  const { landmarks:lm, w, h } = cap;
+  const s = faceScale(lm, w, h);          // 合成スケール（px）＝正規化基準（撮影距離・写真サイズを吸収）
+  const cheekW  = dist(lm,234,454,w,h);   // 頬骨の横幅（顔最大幅）
+  const faceH   = dist(lm,10,152,w,h);    // 顔の縦（額上→顎先）
+  return {
+    area:     polygonArea(lm, CONTOUR, w, h) / (s*s), // ①顔の面積（スケール²で正規化）
+    cheek:    cheekW / s,                             // ②頬骨の幅
+    jawW:     dist(lm,172,397,w,h) / s,               // ③エラ（下顎角）の幅
+    chinW:    dist(lm,176,400,w,h) / s,               // ④あご先の幅
+    templeW:  dist(lm,127,356,w,h) / s,               // ⑤こめかみの幅
+    peri:     pathLength(lm, JAW, w, h) / s,          // ⑥フェイスライン周囲長
+    lowerLen: dist(lm,2,152,w,h) / s,                 // ⑦下顔面の長さ（鼻下→顎先）
+    whRatio:  cheekW / (faceH || 1),                  // ⑧顔の丸み（幅/高さ・比率＝スケール不変）
+    asym:     asymmetry(lm, w, h) / s,                // ⑨左右差
+    balance:  balanceScore(lm, w, h),                 // ⑩黄金比バランス（0〜100・絶対）
+  };
+}
+function pctChange(bv,av){ return bv>0 ? (bv-av)/bv*100 : 0; }  // 減少=プラス（改善）
+function analyze(){
+  const b = measure(state.captured.before);
+  const a = measure(state.captured.after);
+  // 10要因それぞれの改善度と 0〜10点スコアを算出
+  const factors = FACTORS.map(f=>{
+    // size … Before比の縮小率(%)（縮小=プラス）／ balance … 整い度の増分(点)
+    const rate = f.type==="balance" ? (a[f.key]-b[f.key]) : pctChange(b[f.key], a[f.key]);
+    return { key:f.key, label:f.label, type:f.type, rate, score: round1(factorScore10(rate, f.scale)) };
+  });
+  const rv = {}; factors.forEach(f=> rv[f.key]=f.rate);   // 校正・記録用（改善率の生値）
+  // 合計スコア（100点満点）＝各要因スコアの総和。校正済みのときのみ線形モデルで上書き。
+  let total = factors.reduce((s,f)=> s + f.score, 0);
+  if(calibrated()){
+    total = COEF.b0 + CALIB_FEATURES.reduce((s,k)=> s + (COEF[k]||0)*(rv[k]||0), 0);
+  }
+  total = round1(clamp(total, TOTAL_MIN, 100));
+  return { factors, rv,
+           beforeBalance:round1(b.balance), afterBalance:round1(a.balance),
+           totalScore: total, up: round1(total-50) };
+}
+
+function renderResult(m){
+  $("resNo").textContent = state.currentNo ? `No.${pad2(state.currentNo)}` : "";
+  $("resBefore").src = state.captured.before.dataUrl;
+  $("resAfter").src  = state.captured.after.dataUrl;
+  const pb=$("poseBanner");
+  if(state.poseInfo && state.poseInfo.warn){
+    const y=Math.round(state.poseInfo.yawDiff), p=Math.round(state.poseInfo.pitchDiff);
+    pb.textContent = `⚠ Before/Afterの向きの差が大きめです（左右${y}°・上下${p}°）。数値は参考値としてご覧ください。`;
+    pb.classList.remove("hidden");
+  }else{
+    pb.classList.add("hidden");
+  }
+  $("scoreAfter").textContent = m.totalScore.toFixed(1);
+
+  // 10要因（各10点満点）を一覧表示：項目名と改善スコアのみ
+  const tbody=$("metricRows"); tbody.innerHTML="";
+  for(const f of m.factors){
+    const tr=document.createElement("tr");
+    tr.innerHTML = `<td class="name">${f.label}</td><td>${f.score.toFixed(1)}<span class="unit">/10</span></td>`;
+    tbody.appendChild(tr);
+  }
+  if(isCalib){ $("calibPanel").classList.remove("hidden"); $("calibLabel").value=""; updateCalibStatus(); }
+  show("result");
+}
+/* ---------- Pose difference gate (Before vs After) ---------- */
+function computePoseInfo(){
+  const pB=state.captured.before?.pose, pA=state.captured.after?.pose;
+  if(!pB || !pA) return { warn:false, yawDiff:null, pitchDiff:null };
+  const yawDiff=Math.abs(pB.yaw-pA.yaw), pitchDiff=Math.abs(pB.pitch-pA.pitch);
+  return { warn: Math.max(yawDiff,pitchDiff) >= POSE_DIFF_WARN, yawDiff, pitchDiff };
+}
+function maybeWarnThenAnalyze(){
+  const info = computePoseInfo();
+  state.poseInfo = info;
+  if(info.warn) showPoseModal(info); else runAnalysis();
+}
+function showPoseModal(info){
+  const y=Math.round(info.yawDiff), p=Math.round(info.pitchDiff);
+  $("poseMsg").innerHTML =
+    `Before と After で顔の向きが違うようです（左右差 約${y}°／上下差 約${p}°）。<br>` +
+    `向きが大きく違うと、実際は変化がなくても数値がずれることがあります。<br>` +
+    `できれば <b>After を撮り直す</b> ことをおすすめします。`;
+  $("poseModal").classList.remove("hidden");
+}
+function hidePoseModal(){ $("poseModal").classList.add("hidden"); }
+
+function runAnalysis(){
+  show("analyzing");
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    try{ const m=analyze(); state.lastMetrics=m; renderResult(m); }
+    catch(err){ console.error(err); alert("解析に失敗しました。もう一度お試しください。"); resetAll(); }
+  }));
+}
+
+/* ---------- Save composite ---------- */
+async function saveResult(){
+  const m=state.lastMetrics;
+  const [imgB,imgA] = await Promise.all([ loadImage(state.captured.before.dataUrl), loadImage(state.captured.after.dataUrl) ]);
+  const W=1200, pad=40;
+  const photoW=(W-pad*3)/2, photoH=photoW*4/3;
+  const rowGap=44;
+  const headerH=150, scoreH=150, tableH=rowGap*FACTORS.length+40, footerH=90;
+  const H=headerH+photoH+70+scoreH+tableH+footerH;
+  const c=document.createElement("canvas"); c.width=W; c.height=H;
+  const ctx=c.getContext("2d");
+  ctx.fillStyle="#fff"; ctx.fillRect(0,0,W,H);
+  const hg=ctx.createLinearGradient(0,0,W,headerH);
+  hg.addColorStop(0,"#C6A24A"); hg.addColorStop(.5,"#A9852F"); hg.addColorStop(1,"#836420");
+  ctx.fillStyle=hg; ctx.fillRect(0,0,W,headerH);
+  ctx.fillStyle="#fff"; ctx.textAlign="center";
+  ctx.font="bold 40px sans-serif"; ctx.fillText("JSFA Small Face Analysis", W/2, 62);
+  ctx.font="24px sans-serif"; ctx.fillText("日本小顔矯正認定協会 顔解析システム", W/2, 104);
+  const noStr = state.currentNo ? `No.${pad2(state.currentNo)}` : "";
+  if(noStr){ ctx.font="bold 26px sans-serif"; ctx.fillText(noStr, W/2, 138); }
+  const py=headerH+20;
+  drawCover(ctx,imgB,pad,py,photoW,photoH);
+  drawCover(ctx,imgA,pad*2+photoW,py,photoW,photoH);
+  ctx.fillStyle="#5A4A2C"; ctx.font="bold 30px sans-serif"; ctx.textAlign="center";
+  ctx.fillText("Before", pad+photoW/2, py+photoH+44);
+  ctx.fillText("After",  pad*2+photoW*1.5, py+photoH+44);
+  let y=py+photoH+70+20;
+  ctx.fillStyle="#8A7A5E"; ctx.font="26px sans-serif"; ctx.fillText("総合スコア", W/2, y+10);
+  ctx.fillStyle="#8A6A22"; ctx.font="bold 72px sans-serif"; ctx.fillText(`${m.totalScore.toFixed(1)} / 100点`, W/2, y+84);
+  y=y+scoreH+6;
+  ctx.font="24px sans-serif";
+  m.factors.forEach((f,i)=>{
+    const ry=y+i*rowGap;
+    ctx.textAlign="left"; ctx.fillStyle="#5A4A2C"; ctx.font="24px sans-serif"; ctx.fillText(f.label, pad+20, ry);
+    ctx.textAlign="right"; ctx.fillStyle="#8A6A22"; ctx.font="bold 24px sans-serif"; ctx.fillText(`${f.score.toFixed(1)} / 10`, W-pad-20, ry);
+    ctx.strokeStyle="#EADFC6"; ctx.beginPath(); ctx.moveTo(pad,ry+14); ctx.lineTo(W-pad,ry+14); ctx.stroke();
+  });
+  ctx.textAlign="center"; ctx.fillStyle="#3A2E1B"; ctx.font="bold 28px sans-serif";
+  ctx.fillText("日本小顔矯正認定協会", W/2, H-46);
+  ctx.fillStyle="#B0A183"; ctx.font="22px sans-serif"; ctx.fillText(dateStr(), W/2, H-14);
+  const url=c.toDataURL("image/jpeg",0.92);
+  const noPart = state.currentNo ? `No${pad2(state.currentNo)}_` : "";
+  const aTag=document.createElement("a"); aTag.href=url; aTag.download=`jsfa_${noPart}${dateCompact()}.jpg`;
+  document.body.appendChild(aTag); aTag.click(); aTag.remove();
+}
+function drawCover(ctx,img,x,y,w,h){
+  const ir=img.width/img.height, tr=w/h; let sw,sh,sx,sy;
+  if(ir>tr){ sh=img.height; sw=sh*tr; sx=(img.width-sw)/2; sy=0; }
+  else{ sw=img.width; sh=sw/tr; sx=0; sy=(img.height-sh)/2; }
+  ctx.drawImage(img,sx,sy,sw,sh,x,y,w,h);
+}
+function pad2(n){ return String(n).padStart(2,"0"); }
+function dateStr(){ const d=new Date(); return `${d.getFullYear()}年${pad2(d.getMonth()+1)}月${pad2(d.getDate())}日`; }
+function dateCompact(){ const d=new Date(); return `${d.getFullYear()}${pad2(d.getMonth()+1)}${pad2(d.getDate())}`; }
+
+/* ---------- #4 Calibration (self-contained, on-device) ---------- */
+function getSamples(){ try{ return JSON.parse(localStorage.getItem("jsfa_calib_samples")||"[]"); }catch(e){ return []; } }
+function saveSamples(a){ localStorage.setItem("jsfa_calib_samples", JSON.stringify(a)); }
+function collectSample(label){
+  const m=state.lastMetrics; if(!m) return null;
+  const s=getSamples();
+  s.push({ ...m.rv, label, ts:Date.now() }); // 10要因の改善率のみ・写真は保存しない
+  saveSamples(s); return s.length;
+}
+// Ax=b をガウス消去で解く
+function solveLinear(A,b){
+  const n=b.length, M=A.map((row,i)=>[...row,b[i]]);
+  for(let i=0;i<n;i++){
+    let p=i; for(let r=i+1;r<n;r++) if(Math.abs(M[r][i])>Math.abs(M[p][i])) p=r;
+    [M[i],M[p]]=[M[p],M[i]];
+    if(Math.abs(M[i][i])<1e-12) return null;
+    for(let r=0;r<n;r++) if(r!==i){ const f=M[r][i]/M[i][i]; for(let k=i;k<=n;k++) M[r][k]-=f*M[i][k]; }
+  }
+  return M.map((row,i)=>row[n]/row[i]);
+}
+// リッジ回帰で係数を推定
+function fitCoefficients(){
+  const s=getSamples();
+  if(s.length < CALIB_MIN) return { ok:false, msg:`データが不足しています（${s.length}件）。${CALIB_MIN}件以上、できれば20件以上を目安に。` };
+  const F=CALIB_FEATURES, d=F.length+1;
+  const feat = r => [1, ...F.map(k=> r[k] ?? 0)];
+  const XtX=Array.from({length:d},()=>new Array(d).fill(0)), Xty=new Array(d).fill(0);
+  for(const r of s){
+    const x=feat(r);
+    for(let i=0;i<d;i++){ for(let j=0;j<d;j++) XtX[i][j]+=x[i]*x[j]; Xty[i]+=x[i]*r.label; }
+  }
+  for(let i=1;i<d;i++) XtX[i][i]+=1.0;  // ridge（切片は正則化しない）
+  const bb=solveLinear(XtX,Xty);
+  if(!bb) return { ok:false, msg:"計算に失敗しました。サンプルの偏りが大きい可能性があります。" };
+  const coef={ b0:bb[0] }; F.forEach((k,i)=> coef[k]=bb[i+1]);
+  const ybar=s.reduce((a,r)=>a+r.label,0)/s.length;
+  let sr=0, ss=0;
+  for(const r of s){ const pred=feat(r).reduce((acc,xi,i)=>acc+xi*bb[i],0); sr+=(r.label-pred)**2; ss+=(r.label-ybar)**2; }
+  const r2 = ss>0 ? 1-sr/ss : 0;
+  return { ok:true, coef, r2, n:s.length };
+}
+function applyCoef(c){ COEF=c; localStorage.setItem("jsfa_calib_coef", JSON.stringify(c)); }
+function resetCoef(){ COEF={...DEFAULT_COEF}; localStorage.removeItem("jsfa_calib_coef"); }
+function exportCalibCSV(){
+  const s=getSamples();
+  const keys=CALIB_FEATURES;
+  const head=keys.join(",")+",label,timestamp\n";
+  const body=s.map(r=>keys.map(k=>(r[k]??0).toFixed(4)).join(",")+`,${r.label},${new Date(r.ts).toISOString()}`).join("\n");
+  const blob=new Blob([head+body],{type:"text/csv"});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a"); a.href=url; a.download="jsfa_calibration.csv"; a.click(); URL.revokeObjectURL(url);
+}
+function calibrated(){ return !!localStorage.getItem("jsfa_calib_coef"); }
+function updateCalibStatus(extra){
+  const n=getSamples().length;
+  const c=COEF;
+  const base = `記録 ${n}件 ／ b0=${(c.b0??50).toFixed(2)}・要因${CALIB_FEATURES.length} ${calibrated()?"（校正済）":"（既定：10要因×10点の合計）"}`;
+  $("calibStatus").textContent = extra ? (extra+" ｜ "+base) : base;
+}
+
+/* ---------- Before ライブラリ（IndexedDB・オフライン永続） ---------- */
+const DB_NAME="jsfa_db", STORE="befores";
+function idbOpen(){ return new Promise((res,rej)=>{
+  const r=indexedDB.open(DB_NAME,1);
+  r.onupgradeneeded=()=>{ const db=r.result; if(!db.objectStoreNames.contains(STORE)) db.createObjectStore(STORE,{keyPath:"id",autoIncrement:true}); };
+  r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error);
+}); }
+function beforeAdd(entry){ return idbOpen().then(db=>new Promise((res,rej)=>{ const tx=db.transaction(STORE,"readwrite"); const rq=tx.objectStore(STORE).add(entry); rq.onsuccess=()=>res(rq.result); rq.onerror=()=>rej(rq.error); })); }
+function beforeAll(){ return idbOpen().then(db=>new Promise((res,rej)=>{ const rq=db.transaction(STORE).objectStore(STORE).getAll(); rq.onsuccess=()=>res(rq.result||[]); rq.onerror=()=>rej(rq.error); })); }
+function beforeDelete(id){ return idbOpen().then(db=>new Promise((res,rej)=>{ const tx=db.transaction(STORE,"readwrite"); const rq=tx.objectStore(STORE).delete(id); rq.onsuccess=()=>res(); rq.onerror=()=>rej(rq.error); })); }
+function beforeClear(){ return idbOpen().then(db=>new Promise((res,rej)=>{ const tx=db.transaction(STORE,"readwrite"); const rq=tx.objectStore(STORE).clear(); rq.onsuccess=()=>res(); rq.onerror=()=>rej(rq.error); })); }
+async function nextNo(){ const all=await beforeAll().catch(()=>[]); return all.reduce((m,e)=>Math.max(m, e.no||0), 0) + 1; }
+async function refreshBeforeCount(){ try{ const all=await beforeAll(); $("beforeCount").textContent = `：${all.length}件`; }catch(e){} }
+
+/* ---------- 大会フロー ---------- */
+async function startRegister(){
+  state.flow="register"; state.mode="camera";
+  state.captured.before=null; state.captured.after=null;
+  state.currentNo = await nextNo();
+  enterCapture("before");
+}
+async function saveBeforeAndDone(){
+  const p=state.captured.before;
+  const entry={ no:state.currentNo, dataUrl:p.dataUrl, w:p.w, h:p.h, landmarks:p.landmarks, pose:p.pose||null, ts:Date.now() };
+  try{ await beforeAdd(entry); }
+  catch(e){ console.error(e); alert("保存に失敗しました。端末の空き容量をご確認ください。"); return; }
+  $("savedTitle").textContent = `No.${pad2(state.currentNo)} を保存しました`;
+  await refreshBeforeCount();
+  show("saved");
+}
+async function continueNextBefore(){
+  state.flow="register"; state.mode="camera";
+  state.captured.before=null;
+  state.currentNo = await nextNo();
+  enterCapture("before");
+}
+async function openBeforeList(forAfter){
+  state.listForAfter=!!forAfter;
+  let all=[]; try{ all=(await beforeAll()).sort((a,b)=>a.no-b.no); }catch(e){}
+  renderList(all);
+  show("list");
+}
+function renderList(all){
+  const wrap=$("listItems"); wrap.innerHTML="";
+  $("listEmpty").classList.toggle("hidden", all.length>0);
+  for(const e of all){
+    const div=document.createElement("div"); div.className="list-item";
+    const img=document.createElement("img"); img.className="li-thumb"; img.src=e.dataUrl; img.alt="";
+    const info=document.createElement("div"); info.className="li-info";
+    info.innerHTML=`<div class="li-no">No.${pad2(e.no)}</div><div class="li-date">${new Date(e.ts).toLocaleString('ja-JP')}</div>`;
+    const acts=document.createElement("div"); acts.className="li-actions";
+    const bA=document.createElement("button"); bA.className="btn btn-primary btn-sm"; bA.textContent="Afterへ";
+    bA.addEventListener("click", ()=>startAfterFor(e));
+    const bD=document.createElement("button"); bD.className="btn btn-ghost btn-sm"; bD.textContent="削除";
+    bD.addEventListener("click", ()=>deleteBefore(e.id));
+    acts.append(bA,bD); div.append(img,info,acts); wrap.appendChild(div);
+  }
+}
+async function deleteBefore(id){
+  if(!confirm("この Before を削除します。よろしいですか？")) return;
+  try{ await beforeDelete(id); }catch(e){}
+  await refreshBeforeCount();
+  openBeforeList(state.listForAfter);
+}
+function startAfterFor(entry){
+  state.flow="afterFor"; state.mode="camera";
+  state.currentNo=entry.no; state.currentBeforeId=entry.id;
+  state.captured.before={ dataUrl:entry.dataUrl, w:entry.w, h:entry.h, landmarks:entry.landmarks, pose:entry.pose||null };
+  state.captured.after=null;
+  enterCapture("after");
+}
+function goHome(){ resetAll(); refreshBeforeCount(); }
+
+/* ---------- Reset ---------- */
+function resetAll(){
+  stopCamera();
+  state.captured.before=null; state.captured.after=null;
+  state.latest=null; state.frameBuf.length=0; state.lastMetrics=null; state.poseInfo=null; state.mode="camera";
+  state.flow="quick"; state.currentNo=null; state.currentBeforeId=null;
+  overlayBefore.classList.add("hidden"); overlayBefore.removeAttribute("src");
+  ["confirmImg","resBefore","resAfter"].forEach(id=>$(id).removeAttribute("src"));
+  $("fileInput").value="";
+  show("home");
+}
+
+/* ---------- Events ---------- */
+// ホーム：大会フロー
+$("btnRegBefore").addEventListener("click", startRegister);
+$("btnAfterFlow").addEventListener("click", async ()=>{
+  const all=await beforeAll().catch(()=>[]);
+  if(!all.length){ alert("先に「① Before を撮影・登録」で Before を保存してください。"); return; }
+  openBeforeList(true);
+});
+$("btnBeforeList").addEventListener("click", ()=> openBeforeList(false));
+$("btnQuick").addEventListener("click", ()=>{ state.flow="quick"; state.currentNo=null; state.mode="camera"; state.captured.before=null; state.captured.after=null; enterCapture("before"); });
+// Before一覧・保存完了
+$("listClear").addEventListener("click", async ()=>{ if(confirm("保存した Before をすべて削除します。よろしいですか？")){ await beforeClear().catch(()=>{}); await refreshBeforeCount(); openBeforeList(state.listForAfter); } });
+$("listHome").addEventListener("click", goHome);
+$("savedNext").addEventListener("click", continueNextBefore);
+$("savedToAfter").addEventListener("click", ()=> openBeforeList(true));
+$("savedHome").addEventListener("click", goHome);
+
+$("btnShutter").addEventListener("click", doCapture);
+$("btnPickPhoto").addEventListener("click", ()=> $("fileInput").click());
+$("btnUseCamera").addEventListener("click", switchToCamera);
+$("fileInput").addEventListener("change", (e)=>{ handleFile(e.target.files[0]); e.target.value=""; });
+$("btnRetake").addEventListener("click", ()=> enterCapture(state.target));
+$("btnConfirmOk").addEventListener("click", ()=>{
+  if(state.target==="before"){
+    if(state.flow==="register") saveBeforeAndDone();
+    else enterCapture("after");            // quick フロー
+  }else{
+    maybeWarnThenAnalyze();
+  }
+});
+$("poseRetake").addEventListener("click", ()=>{ hidePoseModal(); enterCapture("after"); });
+$("poseProceed").addEventListener("click", ()=>{ hidePoseModal(); runAnalysis(); });
+$("btnSave").addEventListener("click", ()=> saveResult().catch(err=>{ console.error(err); alert("保存に失敗しました。"); }));
+$("btnNext").addEventListener("click", async ()=>{
+  if(state.flow==="afterFor"){
+    if(!confirm(`No.${pad2(state.currentNo)} の計測を完了し、保存済み Before から削除して次の方へ進みます。\n（結果画像を残す場合は先に「保存」を押してください）`)) return;
+    if(state.currentBeforeId!=null){ await beforeDelete(state.currentBeforeId).catch(()=>{}); }
+    state.captured.before=null; state.captured.after=null; state.lastMetrics=null; state.currentBeforeId=null; state.currentNo=null;
+    await refreshBeforeCount();
+    openBeforeList(true);
+  }else{
+    if(confirm("次の人の計測を始めます。現在の結果は端末に残りません。よろしいですか？")) resetAll();
+  }
+});
+$("capHome").addEventListener("click", ()=>{ if(confirm("最初の画面に戻ります。撮影中のデータは破棄されます。（保存済みBeforeは消えません）")) goHome(); });
+$("confirmHome").addEventListener("click", ()=>{ if(confirm("最初の画面に戻ります。撮影中のデータは破棄されます。（保存済みBeforeは消えません）")) goHome(); });
+
+// #4 校正モードのイベント
+$("calibRecord").addEventListener("click", ()=>{
+  const v=parseFloat($("calibLabel").value);
+  if(isNaN(v) || v<0 || v>100){ updateCalibStatus("0〜100 の数値を入力してください"); return; }
+  const n=collectSample(v);
+  $("calibLabel").value="";
+  updateCalibStatus(n!=null ? `記録しました（累計 ${n}件）` : "記録できませんでした");
+});
+$("calibFit").addEventListener("click", ()=>{
+  const res=fitCoefficients();
+  if(!res.ok){ updateCalibStatus(res.msg); return; }
+  applyCoef(res.coef);
+  updateCalibStatus(`✅ 係数を更新（${res.n}件・当てはまりR²=${res.r2.toFixed(2)}）。以降の解析に反映されます`);
+});
+$("calibExport").addEventListener("click", exportCalibCSV);
+$("calibReset").addEventListener("click", ()=>{ resetCoef(); updateCalibStatus("既定の係数に戻しました"); });
+
+document.addEventListener("visibilitychange", ()=>{ if(document.hidden && state.phase==="capture") stopCamera(); });
+
+if("serviceWorker" in navigator){
+  window.addEventListener("load", ()=> navigator.serviceWorker.register("sw.js").catch(()=>{}));
+}
+if(navigator.storage && navigator.storage.persist){ navigator.storage.persist().catch(()=>{}); }
+
+refreshBeforeCount();
+init();
+</script>
+</body>
+</html>
