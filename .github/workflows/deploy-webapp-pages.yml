@@ -4,12 +4,12 @@ on:
   workflow_dispatch:
   push:
     branches: ["claude/animal-face-diagnosis-ios-e0i6wq"]
-    paths: ["AnimalFaceApp/WebApp/**"]
+    paths:
+      - "AnimalFaceApp/WebApp/**"
+      - ".github/workflows/deploy-webapp-pages.yml"
 
 permissions:
-  contents: read
-  pages: write
-  id-token: write
+  contents: write
 
 concurrency:
   group: pages
@@ -18,20 +18,14 @@ concurrency:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Setup Pages (auto-enable)
-        uses: actions/configure-pages@v5
+      - name: Publish to gh-pages branch
+        uses: peaceiris/actions-gh-pages@v4
         with:
-          enablement: true
-      - name: Upload static site
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: AnimalFaceApp/WebApp
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: AnimalFaceApp/WebApp
+          publish_branch: gh-pages
+          force_orphan: true
+          commit_message: "deploy: 動物顔診断 Web版"
