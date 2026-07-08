@@ -1,0 +1,39 @@
+name: Deploy JSFA to Vercel
+
+# jsfa-face-analysis/ に変更が入って push されたら、
+# 既存の Vercel プロジェクト（jsfa-face-analysis）へ本番デプロイする。
+# リポジトリ名が "-" で Vercel の Git 連携 UI が使えないための代替手段。
+
+on:
+  push:
+    branches:
+      - claude/app-requirements-document-6vwh2o
+  workflow_dispatch:
+
+concurrency:
+  group: jsfa-deploy
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Vercel CLI
+        run: npm install -g vercel@latest
+
+      - name: Deploy jsfa-face-analysis to production
+        working-directory: jsfa-face-analysis
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          vercel pull --yes --environment=production --token="$VERCEL_TOKEN"
+          vercel deploy --prod --yes --token="$VERCEL_TOKEN"
