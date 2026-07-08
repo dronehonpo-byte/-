@@ -69,7 +69,7 @@ class Config:
     # --- サービス情報 (運営者情報) ---
     SERVICE_NAME = os.environ.get("DAIKO_SERVICE_NAME", "代行の窓口")
     AREA = os.environ.get("DAIKO_AREA", "栃木県宇都宮市")
-    OPERATOR_NAME = os.environ.get("DAIKO_OPERATOR_NAME", "花田 修")
+    OPERATOR_NAME = os.environ.get("DAIKO_OPERATOR_NAME", "Team Rafflesia")
     OPERATOR_PHONE = os.environ.get("DAIKO_OPERATOR_PHONE", "090-7343-8739")
     CONTACT_EMAIL = os.environ.get("DAIKO_CONTACT_EMAIL", "monjal@hotmail.com")
     ACCOUNT_EMAIL = os.environ.get("DAIKO_ACCOUNT_EMAIL", "monjal1@icloud.com")

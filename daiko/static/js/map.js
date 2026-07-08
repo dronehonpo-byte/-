@@ -45,11 +45,23 @@ window.DaikoMap = (function () {
     return {
       setMode,
       locate: () => {
-        if (!navigator.geolocation) return;
-        navigator.geolocation.getCurrentPosition((p) => {
-          map.setView([p.coords.latitude, p.coords.longitude], 16);
-          place({ lat: p.coords.latitude, lng: p.coords.longitude });
-        });
+        if (!navigator.geolocation) {
+          alert('この端末では現在地を取得できません。');
+          return;
+        }
+        navigator.geolocation.getCurrentPosition(
+          (p) => {
+            map.setView([p.coords.latitude, p.coords.longitude], 16);
+            place({ lat: p.coords.latitude, lng: p.coords.longitude });
+          },
+          (err) => {
+            const msg = err.code === 1
+              ? '位置情報がブロックされています。ブラウザ／端末の設定で「位置情報」を許可してから、もう一度お試しください。'
+              : '現在地を取得できませんでした。電波の良い場所でもう一度お試しください。';
+            alert(msg);
+          },
+          { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+        );
       },
       search: (q, which) => {
         setMode(which);
