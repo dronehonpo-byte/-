@@ -182,6 +182,7 @@
   .headline .score{ font-size:52px; font-weight:800; line-height:1.05; margin:8px 0 4px; letter-spacing:-1.5px;
     font-variant-numeric:tabular-nums;
     background:var(--grad); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; color:transparent; }
+  .headline .score .score-max{ font-size:24px; font-weight:800; color:var(--muted); letter-spacing:0; -webkit-text-fill-color:var(--muted); }
   .headline .up{ display:inline-block; font-size:18px; font-weight:800; color:#fff;
     background:linear-gradient(135deg,#0EA971,#12B981); padding:5px 16px; border-radius:999px;
     box-shadow:0 8px 18px rgba(14,169,113,.32); }
@@ -384,11 +385,10 @@
     </div>
     <div class="headline">
       <div class="big">総合スコア</div>
-      <div class="score"><span id="scoreBefore">50</span>点 → <span id="scoreAfter">–</span>点</div>
-      <div class="up" id="scoreUp">＋0点UP!</div>
+      <div class="score"><span id="scoreAfter">–</span><span class="score-max"> / 100点</span></div>
     </div>
     <table class="metrics">
-      <thead><tr><th>要因（小顔化）</th><th>改善度</th><th>点数(10点満点)</th></tr></thead>
+      <thead><tr><th>要因（小顔化）</th><th>改善スコア(10点満点)</th></tr></thead>
       <tbody id="metricRows"></tbody>
     </table>
     <div class="result-actions">
@@ -415,8 +415,8 @@
       <div class="calib-note">保存されるのは数値（各指標と正解スコア）のみで、顔写真は保存されません。</div>
     </div>
     <div class="footnote">
-      ※ 総合スコア（100点満点）＝小顔に関わる10要因の改善度を各10点満点で採点し合計したものです。無変化＝各5点（計50点）を基準に、改善で加点・悪化で減点します。<br>
-      ※ ①〜⑧の「改善度」は Before比の縮小率（＋＝小さくなった＝改善）、⑨左右対称性は左右差の縮小率、⑩黄金比バランスは顔比率の整い度（0〜100の絶対評価）の増減（点）です。理想値は目安であり、医学的・人種的に唯一の正解ではありません。<br>
+      ※ 総合スコア（100点満点）＝小顔に関わる10要因を各10点満点で採点し、その合計です。各要因は Before→After の改善度が大きいほど高得点になります。<br>
+      ※ 各要因はパーツの縮小・左右差・顔比率の整いなどの改善度を評価。理想値は目安であり、医学的・人種的に唯一の正解ではありません。<br>
       ※ 各要因は顔のパーツを「目の間隔」基準で正規化して比較（写真サイズ・撮影距離の違いを吸収）。<br>
       本スコアはランドマーク座標の相対的な変化率に基づく数値であり、医学的な変化量を保証するものではありません。<br>
       画像・解析データは端末内でのみ処理され、外部サーバーへは送信されません。
@@ -919,13 +919,6 @@ function analyze(){
            beforeBalance:round1(b.balance), afterBalance:round1(a.balance),
            totalScore: total, up: round1(total-50) };
 }
-function fmtPct(v){ return (v>=0?"+":"") + v.toFixed(2) + "%"; }
-// 要因の改善度セル用テキスト（size=%、balance=点）
-function factorRateText(f){
-  return f.type==="balance"
-    ? `${f.rate>=0?"+":""}${f.rate.toFixed(1)}点`
-    : fmtPct(f.rate);
-}
 
 function renderResult(m){
   $("resNo").textContent = state.currentNo ? `No.${pad2(state.currentNo)}` : "";
@@ -939,18 +932,13 @@ function renderResult(m){
   }else{
     pb.classList.add("hidden");
   }
-  $("scoreBefore").textContent = "50.0";
   $("scoreAfter").textContent = m.totalScore.toFixed(1);
-  const up=$("scoreUp");
-  up.textContent = (m.up>=0 ? "＋"+m.up.toFixed(1)+"点UP!" : m.up.toFixed(1)+"点");
-  up.classList.toggle("neg", m.up<0);
 
-  // 10要因（各10点満点）を一覧表示
+  // 10要因（各10点満点）を一覧表示：項目名と改善スコアのみ
   const tbody=$("metricRows"); tbody.innerHTML="";
   for(const f of m.factors){
     const tr=document.createElement("tr");
-    const rateCell = `<td class="rate ${f.rate<0?"neg":""}">${factorRateText(f)}</td>`;
-    tr.innerHTML = `<td class="name">${f.label}</td>${rateCell}<td>${f.score.toFixed(1)}<span class="unit">/10</span></td>`;
+    tr.innerHTML = `<td class="name">${f.label}</td><td>${f.score.toFixed(1)}<span class="unit">/10</span></td>`;
     tbody.appendChild(tr);
   }
   if(isCalib){ $("calibPanel").classList.remove("hidden"); $("calibLabel").value=""; updateCalibStatus(); }
@@ -1014,16 +1002,12 @@ async function saveResult(){
   ctx.fillText("After",  pad*2+photoW*1.5, py+photoH+44);
   let y=py+photoH+70+20;
   ctx.fillStyle="#8A7A5E"; ctx.font="26px sans-serif"; ctx.fillText("総合スコア", W/2, y+10);
-  ctx.fillStyle="#8A6A22"; ctx.font="bold 64px sans-serif"; ctx.fillText(`50.0点 → ${m.totalScore.toFixed(1)}点`, W/2, y+72);
-  ctx.fillStyle=m.up<0?"#8A7A5E":"#4E8B5B"; ctx.font="bold 40px sans-serif";
-  ctx.fillText(m.up>=0?`＋${m.up.toFixed(1)}点UP!`:`${m.up.toFixed(1)}点`, W/2, y+120);
+  ctx.fillStyle="#8A6A22"; ctx.font="bold 72px sans-serif"; ctx.fillText(`${m.totalScore.toFixed(1)} / 100点`, W/2, y+84);
   y=y+scoreH+6;
   ctx.font="24px sans-serif";
   m.factors.forEach((f,i)=>{
     const ry=y+i*rowGap;
-    const rateTxt=factorRateText(f);
     ctx.textAlign="left"; ctx.fillStyle="#5A4A2C"; ctx.font="24px sans-serif"; ctx.fillText(f.label, pad+20, ry);
-    ctx.textAlign="center"; ctx.fillStyle=f.rate<0?"#8A7A5E":"#4E8B5B"; ctx.fillText(rateTxt, W/2+130, ry);
     ctx.textAlign="right"; ctx.fillStyle="#8A6A22"; ctx.font="bold 24px sans-serif"; ctx.fillText(`${f.score.toFixed(1)} / 10`, W-pad-20, ry);
     ctx.strokeStyle="#EADFC6"; ctx.beginPath(); ctx.moveTo(pad,ry+14); ctx.lineTo(W-pad,ry+14); ctx.stroke();
   });
