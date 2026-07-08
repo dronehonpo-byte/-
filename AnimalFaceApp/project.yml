@@ -1,0 +1,63 @@
+# XcodeGen プロジェクト定義
+# 使い方: `brew install xcodegen && cd AnimalFaceApp && xcodegen generate`
+# 生成された AnimalFaceApp.xcodeproj を Xcode で開く
+name: AnimalFaceApp
+options:
+  bundleIdPrefix: com.miyabee # TODO(Miyabee): 本番の Bundle ID プレフィックスに差し替え
+  deploymentTarget:
+    iOS: "16.0"
+  createIntermediateGroups: true
+
+settings:
+  base:
+    SWIFT_VERSION: "5.9"
+    MARKETING_VERSION: "1.0.0"
+    CURRENT_PROJECT_VERSION: "1"
+    DEVELOPMENT_TEAM: "" # TODO(Miyabee): クライアントの Apple Developer Team ID を設定
+    CODE_SIGN_STYLE: Automatic
+    ENABLE_USER_SCRIPT_SANDBOXING: YES
+
+# Google Mobile Ads SDK を導入するときは下記のコメントを外して
+# `xcodegen generate` を再実行してください。
+# コードは `#if canImport(GoogleMobileAds)` でガード済みのため、
+# SDK なしでもビルドが通ります（広告はスタブ動作）。
+#
+# packages:
+#   GoogleMobileAds:
+#     url: https://github.com/googleads/swift-package-manager-google-mobile-ads.git
+#     from: 11.0.0
+
+targets:
+  AnimalFaceApp:
+    type: application
+    platform: iOS
+    sources:
+      - path: AnimalFaceApp
+        excludes:
+          - "Resources/Info.plist"
+    # dependencies:
+    #   - package: GoogleMobileAds
+    #     product: GoogleMobileAds
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.miyabee.animalface # TODO(Miyabee): 本番 Bundle ID
+        INFOPLIST_FILE: AnimalFaceApp/Resources/Info.plist
+        GENERATE_INFOPLIST_FILE: NO
+        TARGETED_DEVICE_FAMILY: "1"
+        SUPPORTS_MACCATALYST: NO
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+    scheme:
+      testTargets:
+        - AnimalFaceAppTests
+      storeKitConfiguration: Config.storekit
+
+  AnimalFaceAppTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: Tests
+    dependencies:
+      - target: AnimalFaceApp
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.miyabee.animalface.tests

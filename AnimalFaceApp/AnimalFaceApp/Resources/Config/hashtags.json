@@ -1,0 +1,5 @@
+{
+  "comment": "シェア用ハッシュタグ。main が拡散系（目立たせる）、related は控えめに付与。{animalName} は動物名に置換される",
+  "main": ["#顔診断"],
+  "related": ["#動物顔診断", "#{animalName}", "#mbti", "#診断メーカー"]
+}

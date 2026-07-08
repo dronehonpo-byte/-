@@ -1,0 +1,157 @@
+{
+  "comment": "診断項目の定義・スコアリング重み・結果文。項目追加はここに追記するだけ（コード改変不要）。診断文はすべてプレースホルダ。TODO(Miyabee): 本番の診断文に差し替え（トーン規則: 褒め中心・ユーモアあり・ネガティブ禁止・動物診断以外は断定しない）",
+  "disclaimer": "本診断はエンタメ目的であり、医学的・専門的な判定ではありません。",
+  "items": [
+    {
+      "id": "animal",
+      "title": "動物顔診断",
+      "subtitle": "あなたはどの動物タイプ？全10種類から判定！",
+      "icon": "🐾",
+      "isPremium": false,
+      "kind": "animalMatch",
+      "animalTexts": {
+        "tanuki": "あなたは親しみやすさ満点のたぬき顔タイプ！まわりをほっとさせる優しい雰囲気の持ち主です。",
+        "kitsune": "あなたは知的でクールなきつね顔タイプ！大人っぽい雰囲気で一目置かれる存在です。",
+        "inu": "あなたは誠実さがにじみ出る犬顔タイプ！話しかけやすい雰囲気でみんなの人気者です。",
+        "neko": "あなたはミステリアスな魅力の猫顔タイプ!スッと通った個性が印象に残るタイプです。",
+        "usagi": "あなたは癒しの存在うさぎ顔タイプ!ぱっちりした目元でまわりをキュンとさせます。",
+        "risu": "あなたは元気いっぱいリス顔タイプ!愛嬌たっぷりの笑顔で場をパッと明るくします。",
+        "shika": "あなたは上品で清楚な鹿顔タイプ!すらっとした印象で思わず振り返られる存在です。",
+        "ookami": "あなたは頼れるかっこよさの狼顔タイプ!キリッとした目力でまわりを引っ張ります。",
+        "hamster": "あなたは愛されキャラのハムスター顔タイプ!ふんわり若々しい印象で癒しをふりまきます。",
+        "lion": "あなたは堂々たる存在感のライオン顔タイプ!パーツの華やかさでその場の主役になれます。"
+      }
+    },
+    {
+      "id": "seiso",
+      "title": "清楚系度診断",
+      "subtitle": "あなたの清楚系オーラを数値化！",
+      "icon": "🌸",
+      "isPremium": false,
+      "kind": "percentage",
+      "scoring": {
+        "bias": 0.50,
+        "weights": {
+          "featureProminence": -0.25,
+          "mouthSize": -0.12,
+          "cheekFullness": -0.08,
+          "jawSharpness": 0.12,
+          "faceAspectRatio": 0.15,
+          "eyeSlant": -0.08
+        },
+        "percentMin": 8,
+        "percentMax": 98
+      },
+      "bands": [
+        { "minPercent": 80, "text": "TODO(Miyabee): 差し替え。透明感あふれる清楚オーラの印象が強いです！すれ違った人が振り返るレベルかも。" },
+        { "minPercent": 60, "text": "TODO(Miyabee): 差し替え。上品で清潔感のある印象が強いです。初対面での好感度もばっちり！" },
+        { "minPercent": 40, "text": "TODO(Miyabee): 差し替え。清楚さと親しみやすさのいいとこ取りな印象です。バランス感覚が光ります！" },
+        { "minPercent": 0, "text": "TODO(Miyabee): 差し替え。清楚系よりも、華やかで印象に残るタイプの魅力が強いようです！" }
+      ]
+    },
+    {
+      "id": "marriage",
+      "title": "結婚適正度診断",
+      "subtitle": "あなたの\"あたたかみ\"を数値化！",
+      "icon": "💍",
+      "isPremium": true,
+      "kind": "percentage",
+      "scoring": {
+        "bias": 0.52,
+        "weights": {
+          "cheekFullness": 0.18,
+          "eyeSlant": -0.15,
+          "mouthSize": 0.10,
+          "jawSharpness": -0.08,
+          "eyeSize": 0.08
+        },
+        "percentMin": 20,
+        "percentMax": 98
+      },
+      "bands": [
+        { "minPercent": 80, "text": "TODO(Miyabee): 差し替え。あたたかく安心感のある印象が強いです。一緒にいるとホッとすると言われるタイプかも！" },
+        { "minPercent": 60, "text": "TODO(Miyabee): 差し替え。穏やかで信頼感のある印象です。長く一緒にいたくなる雰囲気の持ち主！" },
+        { "minPercent": 40, "text": "TODO(Miyabee): 差し替え。自分の世界も大切にしながら寄り添える、バランス型の印象です！" },
+        { "minPercent": 0, "text": "TODO(Miyabee): 差し替え。刺激的でドキドキさせる魅力の印象が強いようです。恋のスパイス担当かも！" }
+      ]
+    },
+    {
+      "id": "shoyu_sauce",
+      "title": "醤油顔/ソース顔度診断",
+      "subtitle": "あなたはあっさり派？こってり派？",
+      "icon": "🥢",
+      "isPremium": true,
+      "kind": "spectrum",
+      "spectrum": { "lowLabel": "醤油顔", "highLabel": "ソース顔" },
+      "scoring": {
+        "bias": 0.45,
+        "weights": {
+          "featureProminence": 0.35,
+          "eyeSize": 0.15,
+          "mouthSize": 0.10,
+          "eyeSlant": -0.08,
+          "faceAspectRatio": -0.08
+        },
+        "percentMin": 5,
+        "percentMax": 95
+      },
+      "bands": [
+        { "minPercent": 75, "text": "TODO(Miyabee): 差し替え。しっかりソース顔！パーツの存在感が際立つ、華やかで印象的なお顔立ちです。" },
+        { "minPercent": 55, "text": "TODO(Miyabee): 差し替え。ややソース顔寄り。ほどよい華やかさで写真映えする印象です！" },
+        { "minPercent": 30, "text": "TODO(Miyabee): 差し替え。やや醤油顔寄り。すっきり上品な和風の魅力が光る印象です！" },
+        { "minPercent": 0, "text": "TODO(Miyabee): 差し替え。きれいな醤油顔！あっさり整った、飽きのこない正統派の印象です。" }
+      ]
+    },
+    {
+      "id": "babyface",
+      "title": "童顔度診断",
+      "subtitle": "あなたの若見え度をチェック！",
+      "icon": "🍼",
+      "isPremium": true,
+      "kind": "percentage",
+      "scoring": {
+        "bias": 0.50,
+        "weights": {
+          "faceAspectRatio": -0.22,
+          "eyeSize": 0.15,
+          "cheekFullness": 0.15,
+          "jawSharpness": -0.12
+        },
+        "percentMin": 10,
+        "percentMax": 98
+      },
+      "bands": [
+        { "minPercent": 80, "text": "TODO(Miyabee): 差し替え。フレッシュな童顔の印象がとても強いです！いつまでも若々しいと言われそう。" },
+        { "minPercent": 60, "text": "TODO(Miyabee): 差し替え。やわらかく若見えする印象です。実年齢より下に見られること、ありませんか？" },
+        { "minPercent": 40, "text": "TODO(Miyabee): 差し替え。若々しさと大人っぽさをあわせ持つ、いいとこ取りの印象です！" },
+        { "minPercent": 0, "text": "TODO(Miyabee): 差し替え。落ち着いた大人の魅力の印象が強いようです。頼れる雰囲気が素敵！" }
+      ]
+    },
+    {
+      "id": "first_impression",
+      "title": "第一印象好感度診断",
+      "subtitle": "初対面でどう見られてる？",
+      "icon": "✨",
+      "isPremium": true,
+      "kind": "percentage",
+      "scoring": {
+        "bias": 0.55,
+        "weights": {
+          "eyeSize": 0.15,
+          "mouthSize": 0.10,
+          "cheekFullness": 0.10,
+          "eyeSlant": -0.10,
+          "featureProminence": 0.05
+        },
+        "percentMin": 35,
+        "percentMax": 98
+      },
+      "bands": [
+        { "minPercent": 85, "text": "TODO(Miyabee): 差し替え。初対面から好感度ばつぐんの印象です！自然と人が集まってくるタイプかも。" },
+        { "minPercent": 65, "text": "TODO(Miyabee): 差し替え。親しみやすく話しかけやすい印象です。第一印象で損しないタイプ！" },
+        { "minPercent": 45, "text": "TODO(Miyabee): 差し替え。落ち着いた印象で、知るほどに好かれるスルメタイプの魅力です！" },
+        { "minPercent": 0, "text": "TODO(Miyabee): 差し替え。クールでミステリアスな第一印象。ギャップで一気に距離を縮められるタイプです！" }
+      ]
+    }
+  ]
+}
