@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>動物顔診断（仮）— Web版</title>
-<!-- build: pages-v1 -->
+<!-- build: pages-v2 (15特徴量・3D立体感・眉/鼻/配置対応の高精度スコアリング) -->
 <meta name="description" content="顔写真からあなたの動物顔タイプを診断！写真はブラウザ内でのみ解析され、アップロードされません。">
 <style>
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -113,7 +113,7 @@
 <body>
 <div class="app">
   <div class="appbar">
-    <div class="brand">🐾 動物顔診断（仮）<small>Web版 — iOSアプリと同一の診断エンジン</small></div>
+    <div class="brand">🐾 動物顔診断（仮）<small>Web版 — ブラウザ内AIで15特徴量を解析</small></div>
     <span class="plan" id="planBadge">無料プラン</span>
   </div>
   <div class="body" id="body"></div>
@@ -129,20 +129,27 @@
    ================================================================ */
 
 /* ---- iOSアプリと同一の設定 (animal_profiles.json / diagnosis_content.json) ---- */
-const FEATURE_KEYS = ["faceAspectRatio","eyeSize","eyeSlant","faceWidth","jawSharpness","cheekFullness","mouthSize","featureProminence"];
-const MATCH = { percentMin: 62, percentMax: 98 };
-const FEATURE_WEIGHTS = { faceAspectRatio:1.2, eyeSize:1.1, eyeSlant:1.1, faceWidth:0.8, jawSharpness:1.0, cheekFullness:1.0, mouthSize:0.8, featureProminence:0.9 };
+/* 15特徴量: 目(size/slant/spacing)・眉(gap/slant)・鼻(height=立体/width)・顔の立体感(depth)・
+   縦横比・輪郭(width/jaw)・頬・口・三庭配置(verticalBalance)・パーツ存在感 */
+const FEATURE_KEYS = ["faceAspectRatio","eyeSize","eyeSlant","eyeSpacing","browEyeGap","browSlant","noseHeight","noseWidth","faceDepth","faceWidth","jawSharpness","cheekFullness","mouthSize","verticalBalance","featureProminence"];
+// simLow/simHigh: 実顔の類似度が収まる帯。この帯をマッチ率レンジに引き伸ばし、
+// あいまいな顔は控えめ、特徴のはっきりした顔は高%になるようメリハリを付ける。
+const MATCH = { percentMin: 55, percentMax: 98, simLow: 0.78, simHigh: 0.96 };
+// 類似度の重み: 信頼性の高い/識別力のある特徴を厚く、z依存や眉などノイズの多い特徴は薄く
+const FEATURE_WEIGHTS = { faceAspectRatio:1.4, eyeSize:1.2, eyeSlant:1.2, eyeSpacing:1.0, browEyeGap:0.7, browSlant:0.5, noseHeight:0.9, noseWidth:0.8, faceDepth:0.9, faceWidth:0.9, jawSharpness:1.2, cheekFullness:1.1, mouthSize:0.7, verticalBalance:0.9, featureProminence:1.1 };
+/* 動物10タイプのターゲットプロファイル（15次元・0..1）。各タイプのキーワードに直結する特徴だけを
+   0.5から離し、無関係な特徴は0.5（中立）に。中立値は全タイプ共通なので相対比較で相殺される。 */
 const ANIMALS = [
-  { id:"tanuki", nameJa:"たぬき顔", emoji:"🦝", impressionWords:["優しそう","親しみやすい"], profile:{faceAspectRatio:0.20,eyeSize:0.85,eyeSlant:0.40,faceWidth:0.70,jawSharpness:0.20,cheekFullness:0.90,mouthSize:0.50,featureProminence:0.60} },
-  { id:"kitsune", nameJa:"きつね顔", emoji:"🦊", impressionWords:["知的","大人っぽい"], profile:{faceAspectRatio:0.85,eyeSize:0.40,eyeSlant:0.80,faceWidth:0.35,jawSharpness:0.90,cheekFullness:0.20,mouthSize:0.40,featureProminence:0.50} },
-  { id:"inu", nameJa:"犬顔", emoji:"🐶", impressionWords:["誠実","話しやすい"], profile:{faceAspectRatio:0.50,eyeSize:0.65,eyeSlant:0.15,faceWidth:0.55,jawSharpness:0.35,cheekFullness:0.60,mouthSize:0.60,featureProminence:0.55} },
-  { id:"neko", nameJa:"猫顔", emoji:"🐱", impressionWords:["ミステリアス","個性的"], profile:{faceAspectRatio:0.55,eyeSize:0.60,eyeSlant:0.90,faceWidth:0.30,jawSharpness:0.70,cheekFullness:0.30,mouthSize:0.40,featureProminence:0.70} },
-  { id:"usagi", nameJa:"うさぎ顔", emoji:"🐰", impressionWords:["可愛い","癒される"], profile:{faceAspectRatio:0.45,eyeSize:0.90,eyeSlant:0.35,faceWidth:0.45,jawSharpness:0.30,cheekFullness:0.55,mouthSize:0.20,featureProminence:0.60} },
-  { id:"risu", nameJa:"リス顔", emoji:"🐿️", impressionWords:["明るい","元気"], profile:{faceAspectRatio:0.35,eyeSize:0.85,eyeSlant:0.50,faceWidth:0.60,jawSharpness:0.25,cheekFullness:0.85,mouthSize:0.45,featureProminence:0.65} },
-  { id:"shika", nameJa:"鹿顔", emoji:"🦌", impressionWords:["上品","清楚"], profile:{faceAspectRatio:0.90,eyeSize:0.75,eyeSlant:0.50,faceWidth:0.30,jawSharpness:0.60,cheekFullness:0.25,mouthSize:0.35,featureProminence:0.50} },
-  { id:"ookami", nameJa:"狼顔", emoji:"🐺", impressionWords:["かっこいい","頼りになる"], profile:{faceAspectRatio:0.70,eyeSize:0.55,eyeSlant:0.70,faceWidth:0.55,jawSharpness:0.95,cheekFullness:0.15,mouthSize:0.55,featureProminence:0.80} },
-  { id:"hamster", nameJa:"ハムスター顔", emoji:"🐹", impressionWords:["可愛い","若く見える"], profile:{faceAspectRatio:0.15,eyeSize:0.70,eyeSlant:0.40,faceWidth:0.75,jawSharpness:0.15,cheekFullness:0.95,mouthSize:0.35,featureProminence:0.50} },
-  { id:"lion", nameJa:"ライオン顔", emoji:"🦁", impressionWords:["リーダー的","堂々"], profile:{faceAspectRatio:0.60,eyeSize:0.80,eyeSlant:0.60,faceWidth:0.65,jawSharpness:0.75,cheekFullness:0.40,mouthSize:0.75,featureProminence:0.95} },
+  { id:"tanuki", nameJa:"たぬき顔", emoji:"🦝", impressionWords:["優しそう","親しみやすい"], profile:{faceAspectRatio:0.20,eyeSize:0.85,eyeSlant:0.40,eyeSpacing:0.62,browEyeGap:0.65,browSlant:0.45,noseHeight:0.35,noseWidth:0.55,faceDepth:0.38,faceWidth:0.60,jawSharpness:0.20,cheekFullness:0.90,mouthSize:0.50,verticalBalance:0.45,featureProminence:0.58} },
+  { id:"kitsune", nameJa:"きつね顔", emoji:"🦊", impressionWords:["知的","大人っぽい"], profile:{faceAspectRatio:0.85,eyeSize:0.35,eyeSlant:0.82,eyeSpacing:0.35,browEyeGap:0.45,browSlant:0.68,noseHeight:0.80,noseWidth:0.30,faceDepth:0.75,faceWidth:0.35,jawSharpness:0.85,cheekFullness:0.20,mouthSize:0.40,verticalBalance:0.60,featureProminence:0.45} },
+  { id:"inu", nameJa:"犬顔", emoji:"🐶", impressionWords:["誠実","話しやすい"], profile:{faceAspectRatio:0.45,eyeSize:0.65,eyeSlant:0.15,eyeSpacing:0.58,browEyeGap:0.60,browSlant:0.40,noseHeight:0.45,noseWidth:0.55,faceDepth:0.50,faceWidth:0.55,jawSharpness:0.35,cheekFullness:0.60,mouthSize:0.62,verticalBalance:0.48,featureProminence:0.55} },
+  { id:"neko", nameJa:"猫顔", emoji:"🐱", impressionWords:["ミステリアス","個性的"], profile:{faceAspectRatio:0.55,eyeSize:0.60,eyeSlant:0.92,eyeSpacing:0.40,browEyeGap:0.50,browSlant:0.60,noseHeight:0.60,noseWidth:0.35,faceDepth:0.65,faceWidth:0.28,jawSharpness:0.70,cheekFullness:0.30,mouthSize:0.40,verticalBalance:0.52,featureProminence:0.70} },
+  { id:"usagi", nameJa:"うさぎ顔", emoji:"🐰", impressionWords:["可愛い","癒される"], profile:{faceAspectRatio:0.45,eyeSize:0.92,eyeSlant:0.38,eyeSpacing:0.60,browEyeGap:0.62,browSlant:0.45,noseHeight:0.35,noseWidth:0.45,faceDepth:0.40,faceWidth:0.45,jawSharpness:0.30,cheekFullness:0.55,mouthSize:0.20,verticalBalance:0.45,featureProminence:0.60} },
+  { id:"risu", nameJa:"リス顔", emoji:"🐿️", impressionWords:["明るい","元気"], profile:{faceAspectRatio:0.32,eyeSize:0.85,eyeSlant:0.50,eyeSpacing:0.55,browEyeGap:0.55,browSlant:0.48,noseHeight:0.40,noseWidth:0.55,faceDepth:0.45,faceWidth:0.62,jawSharpness:0.25,cheekFullness:0.85,mouthSize:0.45,verticalBalance:0.42,featureProminence:0.65} },
+  { id:"shika", nameJa:"鹿顔", emoji:"🦌", impressionWords:["上品","清楚"], profile:{faceAspectRatio:0.90,eyeSize:0.75,eyeSlant:0.50,eyeSpacing:0.55,browEyeGap:0.62,browSlant:0.50,noseHeight:0.60,noseWidth:0.30,faceDepth:0.60,faceWidth:0.28,jawSharpness:0.58,cheekFullness:0.25,mouthSize:0.35,verticalBalance:0.65,featureProminence:0.48} },
+  { id:"ookami", nameJa:"狼顔", emoji:"🐺", impressionWords:["かっこいい","頼りになる"], profile:{faceAspectRatio:0.65,eyeSize:0.50,eyeSlant:0.70,eyeSpacing:0.45,browEyeGap:0.35,browSlant:0.70,noseHeight:0.75,noseWidth:0.55,faceDepth:0.80,faceWidth:0.55,jawSharpness:0.92,cheekFullness:0.20,mouthSize:0.52,verticalBalance:0.58,featureProminence:0.78} },
+  { id:"hamster", nameJa:"ハムスター顔", emoji:"🐹", impressionWords:["可愛い","若く見える"], profile:{faceAspectRatio:0.15,eyeSize:0.72,eyeSlant:0.42,eyeSpacing:0.62,browEyeGap:0.70,browSlant:0.45,noseHeight:0.30,noseWidth:0.50,faceDepth:0.35,faceWidth:0.68,jawSharpness:0.15,cheekFullness:0.95,mouthSize:0.40,verticalBalance:0.40,featureProminence:0.55} },
+  { id:"lion", nameJa:"ライオン顔", emoji:"🦁", impressionWords:["リーダー的","堂々"], profile:{faceAspectRatio:0.60,eyeSize:0.80,eyeSlant:0.60,eyeSpacing:0.52,browEyeGap:0.42,browSlant:0.58,noseHeight:0.65,noseWidth:0.65,faceDepth:0.72,faceWidth:0.60,jawSharpness:0.75,cheekFullness:0.42,mouthSize:0.75,verticalBalance:0.55,featureProminence:0.95} },
 ];
 const ANIMAL_TEXTS = {
   tanuki:"あなたは親しみやすさ満点のたぬき顔タイプ！まわりをほっとさせる優しい雰囲気の持ち主です。",
@@ -159,43 +166,59 @@ const ANIMAL_TEXTS = {
 const ITEMS = [
   { id:"animal", title:"動物顔診断", subtitle:"あなたはどの動物タイプ？全10種類から判定！", icon:"🐾", isPremium:false, kind:"animalMatch" },
   { id:"seiso", title:"清楚系度診断", subtitle:"あなたの清楚系オーラを数値化！", icon:"🌸", isPremium:false, kind:"percentage",
-    scoring:{bias:0.50, weights:{featureProminence:-0.25,mouthSize:-0.12,cheekFullness:-0.08,jawSharpness:0.12,faceAspectRatio:0.15,eyeSlant:-0.08}, percentMin:8, percentMax:98},
+    scoring:{bias:0.69, weights:{featureProminence:-0.25,mouthSize:-0.12,cheekFullness:-0.08,jawSharpness:0.12,faceAspectRatio:0.15,eyeSlant:-0.08,noseWidth:-0.08}, percentMin:8, percentMax:98},
     bands:[{min:80,text:"透明感あふれる清楚オーラの印象が強いです！すれ違った人が振り返るレベルかも。"},{min:60,text:"上品で清潔感のある印象が強いです。初対面での好感度もばっちり！"},{min:40,text:"清楚さと親しみやすさのいいとこ取りな印象です。バランス感覚が光ります！"},{min:0,text:"清楚系よりも、華やかで印象に残るタイプの魅力が強いようです！"}] },
   { id:"marriage", title:"結婚適正度診断", subtitle:"あなたの\"あたたかみ\"を数値化！", icon:"💍", isPremium:true, kind:"percentage",
-    scoring:{bias:0.52, weights:{cheekFullness:0.18,eyeSlant:-0.15,mouthSize:0.10,jawSharpness:-0.08,eyeSize:0.08}, percentMin:20, percentMax:98},
+    scoring:{bias:0.49, weights:{cheekFullness:0.18,eyeSlant:-0.15,mouthSize:0.10,jawSharpness:-0.10,eyeSize:0.08,browEyeGap:0.08}, percentMin:20, percentMax:98},
     bands:[{min:80,text:"あたたかく安心感のある印象が強いです。一緒にいるとホッとすると言われるタイプかも！"},{min:60,text:"穏やかで信頼感のある印象です。長く一緒にいたくなる雰囲気の持ち主！"},{min:40,text:"自分の世界も大切にしながら寄り添える、バランス型の印象です！"},{min:0,text:"刺激的でドキドキさせる魅力の印象が強いようです。恋のスパイス担当かも！"}] },
   { id:"shoyu_sauce", title:"醤油顔/ソース顔度診断", subtitle:"あなたはあっさり派？こってり派？", icon:"🥢", isPremium:true, kind:"spectrum",
     spectrum:{low:"醤油顔", high:"ソース顔"},
-    scoring:{bias:0.45, weights:{featureProminence:0.35,eyeSize:0.15,mouthSize:0.10,eyeSlant:-0.08,faceAspectRatio:-0.08}, percentMin:5, percentMax:95},
+    scoring:{bias:0.19, weights:{featureProminence:0.35,noseHeight:0.15,noseWidth:0.10,eyeSize:0.10,faceAspectRatio:-0.08}, percentMin:5, percentMax:95},
     bands:[{min:75,text:"しっかりソース顔！パーツの存在感が際立つ、華やかで印象的なお顔立ちです。"},{min:55,text:"ややソース顔寄り。ほどよい華やかさで写真映えする印象です！"},{min:30,text:"やや醤油顔寄り。すっきり上品な和風の魅力が光る印象です！"},{min:0,text:"きれいな醤油顔！あっさり整った、飽きのこない正統派の印象です。"}] },
   { id:"babyface", title:"童顔度診断", subtitle:"あなたの若見え度をチェック！", icon:"🍼", isPremium:true, kind:"percentage",
-    scoring:{bias:0.50, weights:{faceAspectRatio:-0.22,eyeSize:0.15,cheekFullness:0.15,jawSharpness:-0.12}, percentMin:10, percentMax:98},
+    scoring:{bias:0.60, weights:{faceAspectRatio:-0.20,eyeSize:0.15,cheekFullness:0.15,jawSharpness:-0.10,faceDepth:-0.10,verticalBalance:-0.10}, percentMin:10, percentMax:98},
     bands:[{min:80,text:"フレッシュな童顔の印象がとても強いです！いつまでも若々しいと言われそう。"},{min:60,text:"やわらかく若見えする印象です。実年齢より下に見られること、ありませんか？"},{min:40,text:"若々しさと大人っぽさをあわせ持つ、いいとこ取りの印象です！"},{min:0,text:"落ち着いた大人の魅力の印象が強いようです。頼れる雰囲気が素敵！"}] },
   { id:"first_impression", title:"第一印象好感度診断", subtitle:"初対面でどう見られてる？", icon:"✨", isPremium:true, kind:"percentage",
-    scoring:{bias:0.55, weights:{eyeSize:0.15,mouthSize:0.10,cheekFullness:0.10,eyeSlant:-0.10,featureProminence:0.05}, percentMin:35, percentMax:98},
+    scoring:{bias:0.45, weights:{eyeSize:0.15,mouthSize:0.10,cheekFullness:0.10,eyeSlant:-0.10,featureProminence:0.05,browEyeGap:0.05}, percentMin:35, percentMax:98},
     bands:[{min:85,text:"初対面から好感度ばつぐんの印象です！自然と人が集まってくるタイプかも。"},{min:65,text:"親しみやすく話しかけやすい印象です。第一印象で損しないタイプ！"},{min:45,text:"落ち着いた印象で、知るほどに好かれるスルメタイプの魅力です！"},{min:0,text:"クールでミステリアスな第一印象。ギャップで一気に距離を縮められるタイプです！"}] },
 ];
 const DISCLAIMER = "本診断はエンタメ目的であり、医学的・専門的な判定ではありません。";
 const ACCURACY_NOTE = "加工・マスク・強いメイクのお写真は診断の精度が下がることがあります。";
 const HASHTAGS = "#顔診断 #動物顔診断";
 
-/* Vision 生特徴量 → 0..1 正規化レンジ（MediaPipe用にチューニング・調整可能） */
-const NORMALIZATION = {
-  faceAspectRatio: [1.25, 1.60],
-  eyeSize: [0.006, 0.022],
-  eyeSlant: [-0.12, 0.20],
-  faceWidth: [0.60, 0.92],
-  jawSharpness: [0.12, 0.42],
-  cheekFullness: [0.78, 1.02],
-  mouthSize: [0.32, 0.52],
-  featureProminence: [0.05, 0.13],
+/* 生特徴量 → 0..1 ソフト正規化。各特徴 [center, scale] を持ち、logistic で
+   平均的な顔が ~0.5、違いがなだらかに両端へ広がる（旧: [min,max]線形+クランプ は
+   端に張り付いて結果が均質化＝「適当」に見える原因だった）。center/scale はチューニング可能。 */
+const SOFT_NORM = {
+  faceAspectRatio: [1.42, 0.10],
+  eyeSize:         [0.012, 0.0045],
+  eyeSlant:        [0.03, 0.06],
+  eyeSpacing:      [1.02, 0.16],
+  browEyeGap:      [0.085, 0.03],
+  browSlant:       [0.00, 0.12],
+  noseHeight:      [0.07, 0.05],
+  noseWidth:       [0.26, 0.045],
+  faceDepth:       [0.28, 0.13],
+  faceWidth:       [0.72, 0.10],
+  jawSharpness:    [0.28, 0.10],
+  cheekFullness:   [0.90, 0.10],
+  mouthSize:       [0.42, 0.06],
+  verticalBalance: [1.00, 0.20],
+  featureProminence:[0.14, 0.05],
+};
+const softNorm = (v, key) => {
+  const [c, s] = SOFT_NORM[key];
+  return 1 / (1 + Math.exp(-(v - c) / s));
 };
 
-/* ---- ScoringEngine.swift の移植 ---- */
+/* ---- スコアリング（決定論・乱数なし） ---- */
+// 重み付きユークリッド類似度。各動物の「特徴的な次元(0.5から離れた特徴)」を重視するため
+// プロファイルの中立(0.5)からのズレ dev で重みを増幅 → その動物らしさへの適合度を測る。
 function similarity(f, profile) {
   let ws = 0, tw = 0;
   for (const k of FEATURE_KEYS) {
-    const w = FEATURE_WEIGHTS[k] ?? 1;
+    const dev = Math.abs(profile[k] - 0.5);
+    const w = (FEATURE_WEIGHTS[k] ?? 1) * (0.15 + dev);
     const d = f[k] - profile[k];
     ws += w * d * d; tw += w;
   }
@@ -208,7 +231,9 @@ function matchAnimal(f) {
     if (best && sim <= best.sim) continue;
     best = { animal: a, sim };
   }
-  const pct = Math.round(MATCH.percentMin + best.sim * (MATCH.percentMax - MATCH.percentMin));
+  // 類似度の実効帯(simLow..simHigh)をマッチ率レンジへ引き伸ばす
+  const t = Math.min(Math.max((best.sim - MATCH.simLow) / (MATCH.simHigh - MATCH.simLow), 0), 1);
+  const pct = Math.round(MATCH.percentMin + t * (MATCH.percentMax - MATCH.percentMin));
   return { animal: best.animal, percent: Math.min(Math.max(pct, MATCH.percentMin), MATCH.percentMax) };
 }
 function percentageScore(f, spec) {
@@ -250,31 +275,45 @@ async function getLandmarker() {
 }
 
 const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
-const norm01 = (v, [lo, hi]) => Math.min(Math.max((v - lo) / (hi - lo), 0), 1);
 
-/** ランドマーク(478点・画像ピクセル座標) → 8特徴量（すべて顔サイズ比＝撮影距離に不変・決定論） */
+/** ランドマーク(468点・{x,y,z}ピクセル座標) → 15特徴量。
+ *  すべて顔サイズに対する比率＝撮影距離に不変、乱数なしの決定論。
+ *  z座標(奥行き)を使い「鼻の高さ」「顔の立体感」を実測する。 */
 function extractFeatures(pts) {
   const p = i => pts[i];
-  const faceW = dist(p(234), p(454));           // 上部の顔幅
+  const faceW = dist(p(234), p(454));           // 頬骨あたりの顔幅
   const faceH = dist(p(10), p(152));            // 額上端〜顎先
   if (faceW < 4 || faceH < 4) return null;
   const faceArea = faceW * faceH;
 
-  // 目（画像左側の目: 33外/133内/159上/145下、画像右側の目: 263外/362内/386上/374下）
+  // ---- 目（画像左目: 33外/133内/159上/145下、画像右目: 263外/362内/386上/374下）----
   const eyeW_L = dist(p(33), p(133)), eyeH_L = dist(p(159), p(145));
   const eyeW_R = dist(p(263), p(362)), eyeH_R = dist(p(386), p(374));
+  const eyeWAvg = Math.max((eyeW_L + eyeW_R) / 2, 1);
   const eyeSizeRaw = ((eyeW_L * eyeH_L) + (eyeW_R * eyeH_R)) / 2 / faceArea;
+  // 目尻の傾き（y下向き正 → 外側が上＝つり目で正）
+  const eyeSlantRaw = ((p(133).y - p(33).y) / Math.max(eyeW_L, 1)
+                     + (p(362).y - p(263).y) / Math.max(eyeW_R, 1)) / 2;
+  // 目の間隔（内眼角間の距離 / 目の幅）: 高い=離れ目、低い=寄り目（パーツ配置）
+  const eyeSpacingRaw = dist(p(133), p(362)) / eyeWAvg;
 
-  // 目尻の傾き（y は下向き正 → 外側コーナーが上にあるほど正＝つり目）
-  const slantL = (p(133).y - p(33).y) / Math.max(eyeW_L, 1);
-  const slantR = (p(362).y - p(263).y) / Math.max(eyeW_R, 1);
-  const eyeSlantRaw = (slantL + slantR) / 2;
+  // ---- 眉（左眉: 70外/107内、右眉: 300外/336内、中央 105/334）----
+  // 眉と目の間隔（眉は目の上＝y小さい → 正）
+  const browEyeGapRaw = ((p(159).y - p(105).y) + (p(386).y - p(334).y)) / 2 / faceH;
+  const bwL = Math.max(dist(p(70), p(107)), 1), bwR = Math.max(dist(p(300), p(336)), 1);
+  const browSlantRaw = ((p(107).y - p(70).y) / bwL + (p(336).y - p(300).y) / bwR) / 2;
 
-  // 輪郭
+  // ---- 鼻・立体感（z: 手前ほど小さい）----
+  const zPlane = (p(234).z + p(454).z + p(133).z + p(362).z) / 4; // 頬・目の奥行き基準面
+  const noseHeightRaw = (zPlane - p(4).z) / faceW;                // 鼻先の突出＝鼻の高さ
+  const noseWidthRaw = dist(p(48), p(278)) / faceW;              // 小鼻の幅
+  const zs = [p(4).z, p(234).z, p(454).z, p(152).z, p(10).z, p(168).z];
+  const faceDepthRaw = (Math.max(...zs) - Math.min(...zs)) / faceW; // 奥行きレンジ＝立体感
+
+  // ---- 輪郭 ----
   const lowerW = dist(p(132), p(361));          // エラ付近の幅
   const faceWidthRaw = lowerW / faceH;
   const cheekFullnessRaw = lowerW / faceW;
-
   // 顎の鋭さ: 顎先(152)から両サイド(172/397)への角度 θ → 1 - θ/π
   const chin = p(152), jl = p(172), jr = p(397);
   const v1 = { x: jl.x - chin.x, y: jl.y - chin.y }, v2 = { x: jr.x - chin.x, y: jr.y - chin.y };
@@ -285,23 +324,37 @@ function extractFeatures(pts) {
     jawSharpnessRaw = 1 - Math.acos(cos) / Math.PI;
   }
 
-  // 口
+  // ---- 口 ----
   const mouthW = dist(p(61), p(291));
   const mouthH = dist(p(0), p(17));
   const mouthSizeRaw = mouthW / faceW;
 
-  // パーツの存在感
-  const prominenceRaw = (eyeW_L * eyeH_L + eyeW_R * eyeH_R + mouthW * mouthH) / faceArea;
+  // ---- 三庭（縦配置）: 眉ライン→鼻底(2)→顎先(152) の下庭/中庭比。高い=下重心（大人/面長）----
+  const browY = (p(105).y + p(334).y) / 2;
+  const midThird = Math.max(p(2).y - browY, 1);
+  const lowerThird = Math.max(p(152).y - p(2).y, 1);
+  const verticalBalanceRaw = lowerThird / midThird;
+
+  // ---- パーツの存在感（目+口+鼻の面積 / 顔面積）----
+  const noseArea = noseWidthRaw * faceW * Math.max(p(2).y - p(6).y, 1);
+  const prominenceRaw = (eyeW_L * eyeH_L + eyeW_R * eyeH_R + mouthW * mouthH + noseArea) / faceArea;
 
   return {
-    faceAspectRatio: norm01(faceH / faceW, NORMALIZATION.faceAspectRatio),
-    eyeSize: norm01(eyeSizeRaw, NORMALIZATION.eyeSize),
-    eyeSlant: norm01(eyeSlantRaw, NORMALIZATION.eyeSlant),
-    faceWidth: norm01(faceWidthRaw, NORMALIZATION.faceWidth),
-    jawSharpness: norm01(jawSharpnessRaw, NORMALIZATION.jawSharpness),
-    cheekFullness: norm01(cheekFullnessRaw, NORMALIZATION.cheekFullness),
-    mouthSize: norm01(mouthSizeRaw, NORMALIZATION.mouthSize),
-    featureProminence: norm01(prominenceRaw, NORMALIZATION.featureProminence),
+    faceAspectRatio: softNorm(faceH / faceW, "faceAspectRatio"),
+    eyeSize:         softNorm(eyeSizeRaw, "eyeSize"),
+    eyeSlant:        softNorm(eyeSlantRaw, "eyeSlant"),
+    eyeSpacing:      softNorm(eyeSpacingRaw, "eyeSpacing"),
+    browEyeGap:      softNorm(browEyeGapRaw, "browEyeGap"),
+    browSlant:       softNorm(browSlantRaw, "browSlant"),
+    noseHeight:      softNorm(noseHeightRaw, "noseHeight"),
+    noseWidth:       softNorm(noseWidthRaw, "noseWidth"),
+    faceDepth:       softNorm(faceDepthRaw, "faceDepth"),
+    faceWidth:       softNorm(faceWidthRaw, "faceWidth"),
+    jawSharpness:    softNorm(jawSharpnessRaw, "jawSharpness"),
+    cheekFullness:   softNorm(cheekFullnessRaw, "cheekFullness"),
+    mouthSize:       softNorm(mouthSizeRaw, "mouthSize"),
+    verticalBalance: softNorm(verticalBalanceRaw, "verticalBalance"),
+    featureProminence: softNorm(prominenceRaw, "featureProminence"),
   };
 }
 
@@ -331,7 +384,8 @@ async function analyzeImage(img) {
     const area = (maxX - minX) * (maxY - minY);
     if (!best || area > best.area) best = { lm, area };
   }
-  const pts = best.lm.map(q => ({ x: q.x * w, y: q.y * h }));
+  // z は x と同スケールの相対奥行き → 幅で正規化して立体感/鼻の高さに使う
+  const pts = best.lm.map(q => ({ x: q.x * w, y: q.y * h, z: q.z * w }));
   return extractFeatures(pts);
 }
 
