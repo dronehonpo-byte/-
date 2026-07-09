@@ -71,7 +71,7 @@ class Config:
     AREA = os.environ.get("DAIKO_AREA", "栃木県宇都宮市")
     OPERATOR_NAME = os.environ.get("DAIKO_OPERATOR_NAME", "Team Rafflesia")
     OPERATOR_PHONE = os.environ.get("DAIKO_OPERATOR_PHONE", "090-7343-8739")
-    CONTACT_EMAIL = os.environ.get("DAIKO_CONTACT_EMAIL", "monjal@hotmail.com")
+    CONTACT_EMAIL = os.environ.get("DAIKO_CONTACT_EMAIL", "info@daikou-madoguchi.jp")
     ACCOUNT_EMAIL = os.environ.get("DAIKO_ACCOUNT_EMAIL", "monjal1@icloud.com")
 
     # --- 近隣リクエスト判定 (ドライバーに見せる範囲・km) ---
