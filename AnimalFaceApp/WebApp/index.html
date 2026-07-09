@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>動物顔診断（仮）— Web版</title>
-<!-- build: pages-v2 (15特徴量・3D立体感・眉/鼻/配置対応の高精度スコアリング) -->
+<!-- build: pages-v3 (正規化を頑健な線形比率へ再校正・全員同一結果を修正・?debugで特徴量表示) -->
 <meta name="description" content="顔写真からあなたの動物顔タイプを診断！写真はブラウザ内でのみ解析され、アップロードされません。">
 <style>
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -134,9 +134,10 @@
 const FEATURE_KEYS = ["faceAspectRatio","eyeSize","eyeSlant","eyeSpacing","browEyeGap","browSlant","noseHeight","noseWidth","faceDepth","faceWidth","jawSharpness","cheekFullness","mouthSize","verticalBalance","featureProminence"];
 // simLow/simHigh: 実顔の類似度が収まる帯。この帯をマッチ率レンジに引き伸ばし、
 // あいまいな顔は控えめ、特徴のはっきりした顔は高%になるようメリハリを付ける。
-const MATCH = { percentMin: 55, percentMax: 98, simLow: 0.78, simHigh: 0.96 };
+const MATCH = { percentMin: 55, percentMax: 98, simLow: 0.72, simHigh: 0.95 };
 // 類似度の重み: 信頼性の高い/識別力のある特徴を厚く、z依存や眉などノイズの多い特徴は薄く
-const FEATURE_WEIGHTS = { faceAspectRatio:1.4, eyeSize:1.2, eyeSlant:1.2, eyeSpacing:1.0, browEyeGap:0.7, browSlant:0.5, noseHeight:0.9, noseWidth:0.8, faceDepth:0.9, faceWidth:0.9, jawSharpness:1.2, cheekFullness:1.1, mouthSize:0.7, verticalBalance:0.9, featureProminence:1.1 };
+// z依存(noseHeight/faceDepth)と眉はノイズが大きいので低め、2D比率を厚く
+const FEATURE_WEIGHTS = { faceAspectRatio:1.4, eyeSize:1.3, eyeSlant:1.2, eyeSpacing:1.0, browEyeGap:0.6, browSlant:0.4, noseHeight:0.4, noseWidth:0.8, faceDepth:0.4, faceWidth:0.9, jawSharpness:1.2, cheekFullness:1.1, mouthSize:0.8, verticalBalance:0.8, featureProminence:1.0 };
 /* 動物10タイプのターゲットプロファイル（15次元・0..1）。各タイプのキーワードに直結する特徴だけを
    0.5から離し、無関係な特徴は0.5（中立）に。中立値は全タイプ共通なので相対比較で相殺される。 */
 const ANIMALS = [
@@ -190,21 +191,21 @@ const HASHTAGS = "#顔診断 #動物顔診断";
    平均的な顔が ~0.5、違いがなだらかに両端へ広がる（旧: [min,max]線形+クランプ は
    端に張り付いて結果が均質化＝「適当」に見える原因だった）。center/scale はチューニング可能。 */
 const SOFT_NORM = {
-  faceAspectRatio: [1.42, 0.10],
-  eyeSize:         [0.012, 0.0045],
+  faceAspectRatio: [1.30, 0.13],
+  eyeSize:         [0.052, 0.014],
   eyeSlant:        [0.03, 0.06],
-  eyeSpacing:      [1.02, 0.16],
-  browEyeGap:      [0.085, 0.03],
+  eyeSpacing:      [1.00, 0.16],
+  browEyeGap:      [0.075, 0.028],
   browSlant:       [0.00, 0.12],
-  noseHeight:      [0.07, 0.05],
-  noseWidth:       [0.26, 0.045],
-  faceDepth:       [0.28, 0.13],
-  faceWidth:       [0.72, 0.10],
-  jawSharpness:    [0.28, 0.10],
-  cheekFullness:   [0.90, 0.10],
-  mouthSize:       [0.42, 0.06],
-  verticalBalance: [1.00, 0.20],
-  featureProminence:[0.14, 0.05],
+  noseHeight:      [0.15, 0.12],
+  noseWidth:       [0.25, 0.035],
+  faceDepth:       [0.60, 0.35],
+  faceWidth:       [0.68, 0.10],
+  jawSharpness:    [0.30, 0.09],
+  cheekFullness:   [0.86, 0.09],
+  mouthSize:       [0.42, 0.05],
+  verticalBalance: [1.00, 0.16],
+  featureProminence:[0.80, 0.10],
 };
 const softNorm = (v, key) => {
   const [c, s] = SOFT_NORM[key];
@@ -275,22 +276,23 @@ async function getLandmarker() {
 }
 
 const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+let lastDebug = null; // 直近の raw / 正規化特徴量（?debug 表示用）
 
 /** ランドマーク(468点・{x,y,z}ピクセル座標) → 15特徴量。
  *  すべて顔サイズに対する比率＝撮影距離に不変、乱数なしの決定論。
- *  z座標(奥行き)を使い「鼻の高さ」「顔の立体感」を実測する。 */
+ *  面積比やz依存は実値がばらつきやすく飽和しやすいので、頑健な線形比率を主とする。 */
 function extractFeatures(pts) {
   const p = i => pts[i];
   const faceW = dist(p(234), p(454));           // 頬骨あたりの顔幅
   const faceH = dist(p(10), p(152));            // 額上端〜顎先
   if (faceW < 4 || faceH < 4) return null;
-  const faceArea = faceW * faceH;
 
   // ---- 目（画像左目: 33外/133内/159上/145下、画像右目: 263外/362内/386上/374下）----
   const eyeW_L = dist(p(33), p(133)), eyeH_L = dist(p(159), p(145));
   const eyeW_R = dist(p(263), p(362)), eyeH_R = dist(p(386), p(374));
   const eyeWAvg = Math.max((eyeW_L + eyeW_R) / 2, 1);
-  const eyeSizeRaw = ((eyeW_L * eyeH_L) + (eyeW_R * eyeH_R)) / 2 / faceArea;
+  const eyeHAvg = (eyeH_L + eyeH_R) / 2;
+  const eyeSizeRaw = eyeHAvg / faceW;           // 目の縦開き / 顔幅（面積比より頑健。ぱっちり=高い）
   // 目尻の傾き（y下向き正 → 外側が上＝つり目で正）
   const eyeSlantRaw = ((p(133).y - p(33).y) / Math.max(eyeW_L, 1)
                      + (p(362).y - p(263).y) / Math.max(eyeW_R, 1)) / 2;
@@ -303,12 +305,13 @@ function extractFeatures(pts) {
   const bwL = Math.max(dist(p(70), p(107)), 1), bwR = Math.max(dist(p(300), p(336)), 1);
   const browSlantRaw = ((p(107).y - p(70).y) / bwL + (p(336).y - p(300).y) / bwR) / 2;
 
-  // ---- 鼻・立体感（z: 手前ほど小さい）----
-  const zPlane = (p(234).z + p(454).z + p(133).z + p(362).z) / 4; // 頬・目の奥行き基準面
-  const noseHeightRaw = (zPlane - p(4).z) / faceW;                // 鼻先の突出＝鼻の高さ
-  const noseWidthRaw = dist(p(48), p(278)) / faceW;              // 小鼻の幅
+  // ---- 鼻・立体感（z: 手前ほど小さい。奥行きは内眼角間で正規化＝頑健化。重みは低め）----
+  const interoc = Math.max(dist(p(133), p(362)), 1);             // 内眼角間（基準距離）
+  const zPlane = (p(234).z + p(454).z + p(133).z + p(362).z) / 4;
+  const noseHeightRaw = (zPlane - p(4).z) / interoc;             // 鼻先の突出＝鼻の高さ
+  const noseWidthRaw = dist(p(48), p(278)) / faceW;             // 小鼻の幅
   const zs = [p(4).z, p(234).z, p(454).z, p(152).z, p(10).z, p(168).z];
-  const faceDepthRaw = (Math.max(...zs) - Math.min(...zs)) / faceW; // 奥行きレンジ＝立体感
+  const faceDepthRaw = (Math.max(...zs) - Math.min(...zs)) / interoc; // 奥行きレンジ＝立体感
 
   // ---- 輪郭 ----
   const lowerW = dist(p(132), p(361));          // エラ付近の幅
@@ -326,7 +329,6 @@ function extractFeatures(pts) {
 
   // ---- 口 ----
   const mouthW = dist(p(61), p(291));
-  const mouthH = dist(p(0), p(17));
   const mouthSizeRaw = mouthW / faceW;
 
   // ---- 三庭（縦配置）: 眉ライン→鼻底(2)→顎先(152) の下庭/中庭比。高い=下重心（大人/面長）----
@@ -335,27 +337,20 @@ function extractFeatures(pts) {
   const lowerThird = Math.max(p(152).y - p(2).y, 1);
   const verticalBalanceRaw = lowerThird / midThird;
 
-  // ---- パーツの存在感（目+口+鼻の面積 / 顔面積）----
-  const noseArea = noseWidthRaw * faceW * Math.max(p(2).y - p(6).y, 1);
-  const prominenceRaw = (eyeW_L * eyeH_L + eyeW_R * eyeH_R + mouthW * mouthH + noseArea) / faceArea;
+  // ---- パーツの存在感（目幅+小鼻幅+口幅 の合計 / 顔幅。線形で頑健）----
+  const prominenceRaw = (eyeWAvg + dist(p(48), p(278)) + mouthW) / faceW;
 
-  return {
-    faceAspectRatio: softNorm(faceH / faceW, "faceAspectRatio"),
-    eyeSize:         softNorm(eyeSizeRaw, "eyeSize"),
-    eyeSlant:        softNorm(eyeSlantRaw, "eyeSlant"),
-    eyeSpacing:      softNorm(eyeSpacingRaw, "eyeSpacing"),
-    browEyeGap:      softNorm(browEyeGapRaw, "browEyeGap"),
-    browSlant:       softNorm(browSlantRaw, "browSlant"),
-    noseHeight:      softNorm(noseHeightRaw, "noseHeight"),
-    noseWidth:       softNorm(noseWidthRaw, "noseWidth"),
-    faceDepth:       softNorm(faceDepthRaw, "faceDepth"),
-    faceWidth:       softNorm(faceWidthRaw, "faceWidth"),
-    jawSharpness:    softNorm(jawSharpnessRaw, "jawSharpness"),
-    cheekFullness:   softNorm(cheekFullnessRaw, "cheekFullness"),
-    mouthSize:       softNorm(mouthSizeRaw, "mouthSize"),
-    verticalBalance: softNorm(verticalBalanceRaw, "verticalBalance"),
-    featureProminence: softNorm(prominenceRaw, "featureProminence"),
+  const raw = {
+    faceAspectRatio: faceH / faceW, eyeSize: eyeSizeRaw, eyeSlant: eyeSlantRaw,
+    eyeSpacing: eyeSpacingRaw, browEyeGap: browEyeGapRaw, browSlant: browSlantRaw,
+    noseHeight: noseHeightRaw, noseWidth: noseWidthRaw, faceDepth: faceDepthRaw,
+    faceWidth: faceWidthRaw, jawSharpness: jawSharpnessRaw, cheekFullness: cheekFullnessRaw,
+    mouthSize: mouthSizeRaw, verticalBalance: verticalBalanceRaw, featureProminence: prominenceRaw,
   };
+  const feat = {};
+  for (const k of FEATURE_KEYS) feat[k] = softNorm(raw[k], k);
+  lastDebug = { raw, feat }; // ?debug 表示用に保持（画像は保持しない）
+  return feat;
 }
 
 /** 画像 → 特徴量。顔なしは null。写真はメモリ上でのみ処理し、どこにも送信・保存しない */
@@ -563,7 +558,19 @@ const screens = {
   },
 };
 
-function go(name, arg) { screens[name](arg); body.scrollTop = 0; window.scrollTo(0, 0); }
+// URL に ?debug を付けると、結果画面に生の特徴量・正規化値・動物sim上位を表示（校正用）
+const DEBUG = /[?&]debug/.test(location.search);
+function appendDebug() {
+  if (!DEBUG || !lastDebug || !state.features) return;
+  const sims = ANIMALS.map(a => ({ id: a.id, s: similarity(state.features, a.profile) }))
+    .sort((x, y) => y.s - x.s);
+  const rows = FEATURE_KEYS.map(k =>
+    `${k.padEnd(17)} raw=${Number(lastDebug.raw[k]).toFixed(3).padStart(8)}  norm=${lastDebug.feat[k].toFixed(2)}`).join("\n");
+  const top = sims.slice(0, 5).map(s => `${s.id} ${(s.s * 100).toFixed(1)}`).join("  ");
+  body.insertAdjacentHTML("beforeend",
+    `<pre style="font-size:10px;line-height:1.45;background:#20160c;color:#EDE0CF;padding:12px;border-radius:12px;overflow-x:auto;margin-top:12px">[DEBUG] 特徴量 raw / 正規化(0-1)\n${esc(rows)}\n\nsim上位(%): ${esc(top)}</pre>`);
+}
+function go(name, arg) { screens[name](arg); body.scrollTop = 0; window.scrollTo(0, 0); if (name === "result") appendDebug(); }
 
 /* 写真選択 → 実解析 */
 async function onPhotoPicked(e) {
