@@ -1,0 +1,16 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+body {
+  @apply bg-neutral-50 text-neutral-900 antialiased;
+}
+
+/* 蛍光マーカー風オーバーレイ：符頭が透ける乗算合成（§4.3） */
+.marker-highlight {
+  mix-blend-mode: multiply;
+}
