@@ -32,3 +32,7 @@ yarn-error.log*
 
 # testing
 /coverage
+
+# サンプル楽譜画像はコミットしない（著作権・守秘）
+/samples/*
+!/samples/README.md
