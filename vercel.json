@@ -3,5 +3,13 @@
   "framework": null,
   "buildCommand": null,
   "installCommand": null,
-  "outputDirectory": "stat_easy/web"
+  "outputDirectory": "stat_easy/web",
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-store, no-cache, must-revalidate, max-age=0" }
+      ]
+    }
+  ]
 }

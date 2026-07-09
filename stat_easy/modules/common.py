@@ -16,6 +16,9 @@ import numpy as np
 # クレジット表記（必ずフッターに表示する）
 CREDIT_TEXT = "開発：土居拓務・株式会社Miyabee"
 
+# 版数（更新が反映されているか一目で確認できるよう画面に表示する）
+APP_VERSION = "2026-07-09 更新版"
+
 ROOT_DIR = Path(__file__).resolve().parent.parent
 ASSETS_DIR = ROOT_DIR / "assets"
 SAMPLE_DIR = ROOT_DIR / "sample_data"
@@ -156,7 +159,8 @@ def render_sidebar_credit() -> None:
 
     st.sidebar.markdown("---")
     st.sidebar.markdown(
-        "<div style='font-size:0.8rem;color:#5A6B7B;'>開発：土居拓務<br>株式会社Miyabee</div>",
+        "<div style='font-size:0.8rem;color:#5A6B7B;'>開発：土居拓務<br>株式会社Miyabee"
+        f"<br><span style='color:#9AA7B4;'>版: {APP_VERSION}</span></div>",
         unsafe_allow_html=True,
     )
 

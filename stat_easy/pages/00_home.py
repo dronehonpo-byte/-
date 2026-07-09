@@ -11,11 +11,12 @@ common.load_css()
 
 # ---- ヒーローバナー ----
 st.markdown(
-    """
+    f"""
     <div class="stateasy-hero">
         <h1>StatEasy</h1>
         <p>統計の面白さを、もっと身近に。<br>
         データを読み込むだけで、診断から検定・可視化・出力までを一気通貫で。</p>
+        <p style="font-size:0.8rem;opacity:0.8;margin-top:0.6rem;">版: {common.APP_VERSION}</p>
     </div>
     """,
     unsafe_allow_html=True,
