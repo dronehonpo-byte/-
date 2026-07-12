@@ -100,12 +100,13 @@ struct ResultView: View {
     @ViewBuilder
     private func resultCard(_ result: DiagnosisResult) -> some View {
         VStack(spacing: 16) {
-            Text(result.item.title)
+            Text(result.item.displayTitle)
                 .font(.headline)
                 .foregroundColor(.secondary)
 
-            // TODO(Miyabee): 動物PNG素材提供後、emoji → Image(imageName) に差し替え
-            Text(result.animal?.emoji ?? result.item.icon)
+            // TODO(Miyabee): 素材提供後、emoji → Image(...) に差し替え
+            //   animal=顔20番+各動物イラスト / type2=醤油・ソース瓶 / percentage=各テーマ画像
+            Text(result.animal?.emoji ?? result.typeEmoji ?? result.item.icon)
                 .font(.system(size: 88))
 
             if let animal = result.animal {
@@ -123,11 +124,14 @@ struct ResultView: View {
                             .cornerRadius(10)
                     }
                 }
+            } else if let typeLabel = result.typeLabel {
+                // type2: 選ばれたタイプ名を大きく表示（%・段階は出さない）
+                Text(typeLabel)
+                    .font(.largeTitle.bold())
+                    .foregroundColor(AppConfig.Theme.primary)
             }
 
-            if result.item.kind == .spectrum, let spectrum = result.item.spectrum {
-                spectrumBar(percent: result.percent, labels: spectrum)
-            } else {
+            if result.item.kind != .type2 {
                 percentRing(result.percent,
                             caption: result.animal != nil ? "マッチ率" : "")
             }
@@ -167,38 +171,5 @@ struct ResultView: View {
             }
         }
         .frame(width: 130, height: 130)
-    }
-
-    private func spectrumBar(percent: Int, labels: SpectrumLabels) -> some View {
-        VStack(spacing: 8) {
-            Text("\(labels.highLabel)度 \(percent)%")
-                .font(.system(size: 28, weight: .heavy, design: .rounded))
-            GeometryReader { geo in
-                ZStack(alignment: .leading) {
-                    Capsule()
-                        .fill(
-                            LinearGradient(
-                                colors: [AppConfig.Theme.accent, AppConfig.Theme.primary],
-                                startPoint: .leading, endPoint: .trailing
-                            )
-                        )
-                    Circle()
-                        .fill(Color.white)
-                        .overlay(Circle().stroke(AppConfig.Theme.primary, lineWidth: 3))
-                        .frame(width: 24, height: 24)
-                        .offset(x: (geo.size.width - 24)
-                            * (animatePercent ? CGFloat(percent) / 100 : 0))
-                }
-            }
-            .frame(height: 24)
-            HStack {
-                Text(labels.lowLabel)
-                Spacer()
-                Text(labels.highLabel)
-            }
-            .font(.caption.bold())
-            .foregroundColor(.secondary)
-        }
-        .padding(.horizontal, 28)
     }
 }

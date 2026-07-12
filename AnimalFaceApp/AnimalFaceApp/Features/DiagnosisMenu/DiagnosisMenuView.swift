@@ -100,7 +100,7 @@ struct DiagnosisMenuView: View {
                     .font(.system(size: 34))
                 VStack(alignment: .leading, spacing: 4) {
                     HStack(spacing: 6) {
-                        Text(item.title)
+                        Text(item.displayTitle)
                             .font(.headline)
                             .foregroundColor(.primary)
                         if item.isPremium {

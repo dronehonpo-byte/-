@@ -20,14 +20,39 @@ final class DiagnosisContentTests: XCTestCase {
         XCTAssertFalse(store.content.disclaimer.isEmpty, "エンタメ注意書きが定義されていること")
     }
 
-    func testAllPercentageItemsHaveScoringAndBands() throws {
+    func testScoredItemsHaveValidResultConfig() throws {
         let store = try XCTUnwrap(loadStore())
         for item in store.content.items where item.kind != .animalMatch {
             XCTAssertNotNil(item.scoring, "\(item.id) に scoring が必要")
-            XCTAssertNotNil(item.bands, "\(item.id) に結果文帯域が必要")
-            XCTAssertNotNil(item.bands?.first { $0.minPercent == 0 },
-                            "\(item.id) は 0% からの帯域を必ず持つこと")
+            switch item.kind {
+            case .percentage:
+                // 5段階（0-20/20-40/40-60/60-80/80-100）の帯域を持つこと
+                let bands = try XCTUnwrap(item.bands, "\(item.id) に結果文帯域が必要")
+                XCTAssertEqual(bands.count, 5, "\(item.id) は5段階の帯域を持つこと")
+                for min in [0, 20, 40, 60, 80] {
+                    XCTAssertNotNil(bands.first { $0.minPercent == min },
+                                    "\(item.id) は minPercent=\(min) の帯域を持つこと")
+                }
+            case .type2:
+                // 2択タイプは outcomes（high/low）を持ち、bands は使わない
+                let outcomes = try XCTUnwrap(item.outcomes, "\(item.id) に outcomes が必要")
+                XCTAssertFalse(outcomes.high.label.isEmpty)
+                XCTAssertFalse(outcomes.low.label.isEmpty)
+                XCTAssertFalse(outcomes.high.text.isEmpty)
+                XCTAssertFalse(outcomes.low.text.isEmpty)
+            case .animalMatch:
+                break
+            }
         }
+    }
+
+    func testPremiumSplitMatchesSpec() throws {
+        let store = try XCTUnwrap(loadStore())
+        let freeIDs = Set(store.freeItems.map(\.id))
+        let premiumIDs = Set(store.premiumItems.map(\.id))
+        XCTAssertEqual(freeIDs, ["animal", "babyface"], "無料は動物顔・童顔の2項目")
+        XCTAssertEqual(premiumIDs, ["sm", "menhera", "shoyu_sauce", "psychopath"],
+                       "有料はSM・メンヘラ・醤油ソース・サイコパスの4項目")
     }
 
     func testAnimalItemHasTextForEveryAnimal() throws {

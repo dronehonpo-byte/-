@@ -17,15 +17,15 @@ struct ShareService {
     /// シェアテキスト（診断結果＋ハッシュタグ。拡散系 #顔診断 をメインに）
     func shareText(for result: DiagnosisResult) -> String {
         let percentText: String
-        if result.item.kind == .spectrum, let spectrum = result.item.spectrum {
-            percentText = "\(spectrum.highLabel)度\(result.percent)%"
-        } else if let animal = result.animal {
+        if let animal = result.animal {
             percentText = "\(animal.nameJa)（マッチ率\(result.percent)%）"
+        } else if let typeLabel = result.typeLabel {
+            percentText = typeLabel
         } else {
             percentText = "\(result.percent)%"
         }
         let body = AppConfig.Share.textTemplate
-            .replacingOccurrences(of: "{title}", with: result.item.title)
+            .replacingOccurrences(of: "{title}", with: result.item.displayTitle)
             .replacingOccurrences(of: "{percent}", with: percentText)
         let tags = hashtags.shareTags(animalName: result.animal?.nameJa).joined(separator: " ")
         return "\(body)\n\(tags)\n\(AppConfig.appStoreURL.absoluteString)"

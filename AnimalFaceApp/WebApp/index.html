@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>動物顔診断（仮）— Web版</title>
-<!-- build: pages-v3 (正規化を頑健な線形比率へ再校正・全員同一結果を修正・?debugで特徴量表示) -->
+<!-- build: pages-v4 (診断項目刷新: SM/メンヘラ/サイコパス追加・童顔を無料へ・醤油/ソースは2択タイプ・%は5段階・表示名ソフト化トグル。画像は未埋め込み) -->
 <meta name="description" content="顔写真からあなたの動物顔タイプを診断！写真はブラウザ内でのみ解析され、アップロードされません。">
 <style>
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -164,25 +164,58 @@ const ANIMAL_TEXTS = {
   hamster:"あなたは愛されキャラのハムスター顔タイプ！ふんわり若々しい印象で癒しをふりまきます。",
   lion:"あなたは堂々たる存在感のライオン顔タイプ！パーツの華やかさでその場の主役になれます。",
 };
+/* 診断6項目。無料=動物顔・童顔／有料=SM・メンヘラ・醤油ソース・サイコパス。
+   結果表示: animalMatch=タイプ+マッチ率 / type2=2択タイプ(段階分けなし) / percentage=%を5段階表示。
+   診断文はプレースホルダ。TODO(Miyabee): 本番文へ差し替え（トーン=エッジ寄りで、ただし断定せず・エンタメ注記は必須）。 */
+const BAND5 = "5段階(0-20/20-40/40-60/60-80/80-100)";
 const ITEMS = [
   { id:"animal", title:"動物顔診断", subtitle:"あなたはどの動物タイプ？全10種類から判定！", icon:"🐾", isPremium:false, kind:"animalMatch" },
-  { id:"seiso", title:"清楚系度診断", subtitle:"あなたの清楚系オーラを数値化！", icon:"🌸", isPremium:false, kind:"percentage",
-    scoring:{bias:0.69, weights:{featureProminence:-0.25,mouthSize:-0.12,cheekFullness:-0.08,jawSharpness:0.12,faceAspectRatio:0.15,eyeSlant:-0.08,noseWidth:-0.08}, percentMin:8, percentMax:98},
-    bands:[{min:80,text:"透明感あふれる清楚オーラの印象が強いです！すれ違った人が振り返るレベルかも。"},{min:60,text:"上品で清潔感のある印象が強いです。初対面での好感度もばっちり！"},{min:40,text:"清楚さと親しみやすさのいいとこ取りな印象です。バランス感覚が光ります！"},{min:0,text:"清楚系よりも、華やかで印象に残るタイプの魅力が強いようです！"}] },
-  { id:"marriage", title:"結婚適正度診断", subtitle:"あなたの\"あたたかみ\"を数値化！", icon:"💍", isPremium:true, kind:"percentage",
-    scoring:{bias:0.49, weights:{cheekFullness:0.18,eyeSlant:-0.15,mouthSize:0.10,jawSharpness:-0.10,eyeSize:0.08,browEyeGap:0.08}, percentMin:20, percentMax:98},
-    bands:[{min:80,text:"あたたかく安心感のある印象が強いです。一緒にいるとホッとすると言われるタイプかも！"},{min:60,text:"穏やかで信頼感のある印象です。長く一緒にいたくなる雰囲気の持ち主！"},{min:40,text:"自分の世界も大切にしながら寄り添える、バランス型の印象です！"},{min:0,text:"刺激的でドキドキさせる魅力の印象が強いようです。恋のスパイス担当かも！"}] },
-  { id:"shoyu_sauce", title:"醤油顔/ソース顔度診断", subtitle:"あなたはあっさり派？こってり派？", icon:"🥢", isPremium:true, kind:"spectrum",
-    spectrum:{low:"醤油顔", high:"ソース顔"},
+  { id:"babyface", title:"童顔度診断", subtitle:"あなたの若見え度を5段階でチェック！", icon:"🍼", isPremium:false, kind:"percentage",
+    scoring:{bias:0.60, weights:{faceAspectRatio:-0.20,eyeSize:0.15,cheekFullness:0.15,jawSharpness:-0.10,faceDepth:-0.10,verticalBalance:-0.10}, percentMin:4, percentMax:99},
+    bands:[
+      {min:80,text:"フレッシュな童顔MAX！いつまでも若く見られる、反則級のベビーフェイスです🍼"},
+      {min:60,text:"しっかり童顔。実年齢より下に見られること、多いのでは？🌱"},
+      {min:40,text:"童顔と大人顔のいいとこ取り。かわいさと落ち着きの二刀流です✨"},
+      {min:20,text:"やや大人顔。頼れる落ち着いた雰囲気で一目置かれるタイプです🕶️"},
+      {min:0,text:"凛とした大人顔。余裕と色気のある、憧れられる顔立ちです🌹"}] },
+  { id:"sm", title:"SM度診断", subtitle:"あなたはドS？それともドM？5段階で判定！", icon:"⛓️", isPremium:true, kind:"percentage",
+    scoring:{bias:0.23, weights:{jawSharpness:0.30,eyeSlant:0.22,browSlant:0.12,featureProminence:0.12,cheekFullness:-0.14,eyeSize:-0.08}, percentMin:3, percentMax:99},
+    bands:[
+      {min:80,text:"まぎれもないドS。相手を手のひらで転がすタイプの雰囲気が全開です👑"},
+      {min:60,text:"S寄り。ぐいぐいリードして相手をドキッとさせる空気感があります😏"},
+      {min:40,text:"スイッチ切替型。場面によってSにもMにも化ける、読めない魅力です🔥"},
+      {min:20,text:"M寄り。甘え上手で、構われるほど可愛くなるタイプの雰囲気です🥺"},
+      {min:0,text:"まぎれもないドM。尽くして愛されて、ぜんぶ許しちゃうやさしさが漂います🎀"}] },
+  { id:"menhera", title:"メンヘラ度診断", subtitle:"あなたの隠れメンヘラ度を5段階で数値化！", icon:"💔", isPremium:true, kind:"percentage",
+    scoring:{bias:0.53, weights:{eyeSize:0.26,eyeSlant:-0.16,mouthSize:-0.12,browEyeGap:-0.12,cheekFullness:0.08}, percentMin:3, percentMax:99},
+    bands:[
+      {min:80,text:"重ためメンヘラの気配MAX。愛が深すぎて、たまに束縛モンスター化するかも💣"},
+      {min:60,text:"隠れメンヘラ度high。普段はクールでも、好きになると一気に沼るタイプ🕳️"},
+      {min:40,text:"ほどよくメンヘラ。かまってほしい夜と、放っておいてほしい夜の落差が魅力🌙"},
+      {min:20,text:"メンヘラ控えめ。感情に振り回されず、恋も自分もちゃんと保てる安定型です🌿"},
+      {min:0,text:"メンヘラ耐性つよつよ。むしろ相手のメンヘラを受け止める側のどっしり感です🛡️"}] },
+  { id:"shoyu_sauce", title:"醤油顔/ソース顔診断", subtitle:"あなたはあっさり派？こってり派？", icon:"🥢", isPremium:true, kind:"type2",
     scoring:{bias:0.19, weights:{featureProminence:0.35,noseHeight:0.15,noseWidth:0.10,eyeSize:0.10,faceAspectRatio:-0.08}, percentMin:5, percentMax:95},
-    bands:[{min:75,text:"しっかりソース顔！パーツの存在感が際立つ、華やかで印象的なお顔立ちです。"},{min:55,text:"ややソース顔寄り。ほどよい華やかさで写真映えする印象です！"},{min:30,text:"やや醤油顔寄り。すっきり上品な和風の魅力が光る印象です！"},{min:0,text:"きれいな醤油顔！あっさり整った、飽きのこない正統派の印象です。"}] },
-  { id:"babyface", title:"童顔度診断", subtitle:"あなたの若見え度をチェック！", icon:"🍼", isPremium:true, kind:"percentage",
-    scoring:{bias:0.60, weights:{faceAspectRatio:-0.20,eyeSize:0.15,cheekFullness:0.15,jawSharpness:-0.10,faceDepth:-0.10,verticalBalance:-0.10}, percentMin:10, percentMax:98},
-    bands:[{min:80,text:"フレッシュな童顔の印象がとても強いです！いつまでも若々しいと言われそう。"},{min:60,text:"やわらかく若見えする印象です。実年齢より下に見られること、ありませんか？"},{min:40,text:"若々しさと大人っぽさをあわせ持つ、いいとこ取りの印象です！"},{min:0,text:"落ち着いた大人の魅力の印象が強いようです。頼れる雰囲気が素敵！"}] },
-  { id:"first_impression", title:"第一印象好感度診断", subtitle:"初対面でどう見られてる？", icon:"✨", isPremium:true, kind:"percentage",
-    scoring:{bias:0.45, weights:{eyeSize:0.15,mouthSize:0.10,cheekFullness:0.10,eyeSlant:-0.10,featureProminence:0.05,browEyeGap:0.05}, percentMin:35, percentMax:98},
-    bands:[{min:85,text:"初対面から好感度ばつぐんの印象です！自然と人が集まってくるタイプかも。"},{min:65,text:"親しみやすく話しかけやすい印象です。第一印象で損しないタイプ！"},{min:45,text:"落ち着いた印象で、知るほどに好かれるスルメタイプの魅力です！"},{min:0,text:"クールでミステリアスな第一印象。ギャップで一気に距離を縮められるタイプです！"}] },
+    outcomes:{
+      high:{label:"ソース顔", emoji:"🍛", text:"しっかりソース顔！パーツの存在感が際立つ、華やかで印象的なお顔立ちです🍛"},
+      low:{label:"醤油顔", emoji:"🍶", text:"きれいな醤油顔！あっさり整った、飽きのこない正統派の和風フェイスです🍶"} } },
+  { id:"psychopath", title:"サイコパス度診断", subtitle:"あなたの隠れサイコパス度を5段階で診断！", icon:"🖤", isPremium:true, kind:"percentage",
+    scoring:{bias:0.33, weights:{featureProminence:0.24,eyeSlant:0.16,jawSharpness:0.18,cheekFullness:-0.16,eyeSize:-0.08}, percentMin:3, percentMax:99},
+    bands:[
+      {min:80,text:"サイコパス指数トップクラス。何を考えてるか読めない、ゾクッとするカリスマ性😈"},
+      {min:60,text:"隠れサイコパス。感情に流されず淡々と勝ちにいく、静かな支配者オーラ🖤"},
+      {min:40,text:"ときどきサイコパス。優しさとドライさを使い分ける、二面性の魅力です🎭"},
+      {min:20,text:"サイコパス控えめ。情に厚くて、まわりの気持ちに気づける共感タイプ💗"},
+      {min:0,text:"サイコパス度ほぼゼロ。裏表のない素直さで、みんなに安心感を与えるタイプ😊"}] },
 ];
+/* 審査対策トグル: 内部id(sm/menhera/psychopath)は固定のまま、"表示名だけ"を差し替え可能。
+   App Storeで名称が問題になったら、コードやスコアリングを触らずここを有効化して再申請できる。
+   例) psychopath:{title:"ミステリアス度診断"}, menhera:{title:"情緒ゆらぎ度診断"}, sm:{title:"ドキドキ主導権診断"} */
+const DISPLAY_OVERRIDES = {
+  // psychopath: { title:"ミステリアス度診断" },
+  // menhera:    { title:"情緒ゆらぎ度診断" },
+};
+const titleOf = it => DISPLAY_OVERRIDES[it.id]?.title ?? it.title;
 const DISCLAIMER = "本診断はエンタメ目的であり、医学的・専門的な判定ではありません。";
 const ACCURACY_NOTE = "加工・マスク・強いメイクのお写真は診断の精度が下がることがあります。";
 const HASHTAGS = "#顔診断 #動物顔診断";
@@ -248,10 +281,15 @@ function bandText(pct, bands) {
 function diagnose(item, f) {
   if (item.kind === "animalMatch") {
     const m = matchAnimal(f);
-    return { item, percent: m.percent, animal: m.animal, text: ANIMAL_TEXTS[m.animal.id] };
+    return { item, kind: "animalMatch", percent: m.percent, animal: m.animal, side: null, text: ANIMAL_TEXTS[m.animal.id] };
   }
   const pct = percentageScore(f, item.scoring);
-  return { item, percent: pct, animal: null, text: bandText(pct, item.bands) };
+  if (item.kind === "type2") {
+    // 段階分けなし: スコアで2択のどちらかに振り分け、そのタイプ文だけ表示（%は出さない）
+    const side = pct >= 50 ? item.outcomes.high : item.outcomes.low;
+    return { item, kind: "type2", percent: pct, animal: null, side, text: side.text };
+  }
+  return { item, kind: "percentage", percent: pct, animal: null, side: null, text: bandText(pct, item.bands) };
 }
 
 /* ---- 顔解析: MediaPipe FaceLandmarker（VisionFaceAnalysisProvider.swift 相当） ---- */
@@ -398,6 +436,18 @@ function syncChrome() {
 function navrow(backTo) {
   return `<div class="navrow"><button class="navbtn" data-go="${backTo}">‹ 戻る</button></div>`;
 }
+// %リング（マッチ率 or 5段階%）。cap があれば数値下に表示（例: マッチ率）
+function ringVisual(percent, cap) {
+  const R = 58, C = (2 * Math.PI * R).toFixed(1);
+  return `<div class="ring-holder">
+    <svg class="ring" width="140" height="140" viewBox="0 0 140 140" role="img" aria-label="${percent}%">
+      <circle class="track" cx="70" cy="70" r="${R}" fill="none" stroke-width="12"/>
+      <circle class="bar" id="ringBar" cx="70" cy="70" r="${R}" fill="none" stroke-width="12"
+        stroke-dasharray="${C}" stroke-dashoffset="${C}"/>
+    </svg>
+    <div class="ring-label"><span class="pct">${percent}%</span>${cap ? `<span class="cap">${esc(cap)}</span>` : ""}</div>
+  </div>`;
+}
 
 const screens = {
   home() {
@@ -408,7 +458,7 @@ const screens = {
       return `<button class="menu-item" data-item="${i}">
         <span class="mi-icon">${it.icon}</span>
         <span style="flex:1;min-width:0">
-          <span class="mi-title">${esc(it.title)}<span class="tag ${it.isPremium ? "" : "free"}">${it.isPremium ? (state.premium ? "解放中" : "有料") : "無料"}</span></span><br>
+          <span class="mi-title">${esc(titleOf(it))}<span class="tag ${it.isPremium ? "" : "free"}">${it.isPremium ? (state.premium ? "解放中" : "有料") : "無料"}</span></span><br>
           <span class="mi-sub">${esc(it.subtitle)}</span>
         </span>
         <span class="lock">${locked ? "🔒" : "›"}</span>
@@ -423,7 +473,7 @@ const screens = {
     const it = state.item;
     body.innerHTML = navrow("home") + `
       <div class="card">
-        <b>${it.icon} ${esc(it.title)}</b>
+        <b>${it.icon} ${esc(titleOf(it))}</b>
         <p style="font-size:12px;color:#9A8468;margin:4px 0 0">${esc(it.subtitle)}</p>
       </div>
       <div class="card">
@@ -492,40 +542,35 @@ const screens = {
 
   result() {
     const r = state.result, it = r.item;
-    let visual;
-    if (it.kind === "spectrum") {
-      visual = `
-        <div style="font-size:24px;font-weight:900;font-variant-numeric:tabular-nums">${esc(it.spectrum.high)}度 ${r.percent}%</div>
-        <div class="spec-bar"><div class="spec-dot" id="specDot" style="left:0%"></div></div>
-        <div class="spec-ends"><span>${esc(it.spectrum.low)}</span><span>${esc(it.spectrum.high)}</span></div>`;
-    } else {
-      const R = 58, C = (2 * Math.PI * R).toFixed(1);
-      visual = `<div class="ring-holder">
-        <svg class="ring" width="140" height="140" viewBox="0 0 140 140" role="img" aria-label="${r.percent}%">
-          <circle class="track" cx="70" cy="70" r="${R}" fill="none" stroke-width="12"/>
-          <circle class="bar" id="ringBar" cx="70" cy="70" r="${R}" fill="none" stroke-width="12"
-            stroke-dasharray="${C}" stroke-dashoffset="${C}"/>
-        </svg>
-        <div class="ring-label"><span class="pct">${r.percent}%</span>${r.animal ? '<span class="cap">マッチ率</span>' : ""}</div>
-      </div>`;
+    // メインビジュアル: animalMatch/type2 は絵文字（※画像は後日: 動物は20番の顔をメイン＋周囲に各動物を配置予定）
+    // <!-- IMAGE-TODO(Miyabee): 結果メイン画像を差し込む。animal=顔20番+各動物イラスト / type2=醤油・ソース瓶 / % = 各テーマ画像 -->
+    let hero, visual = "";
+    if (r.kind === "animalMatch") {
+      hero = `
+        <div class="hero-visual" style="font-size:70px;line-height:1.1">${r.animal.emoji}</div>
+        <div style="font-size:26px;font-weight:900;color:#F2762E">${esc(r.animal.nameJa)}</div>
+        <div class="chips">${r.animal.impressionWords.map(w => `<span class="chip">${esc(w)}</span>`).join("")}</div>`;
+      visual = ringVisual(r.percent, "マッチ率");
+    } else if (r.kind === "type2") {
+      hero = `
+        <div class="hero-visual" style="font-size:64px;line-height:1.1">${r.side.emoji}</div>
+        <div style="font-size:26px;font-weight:900;color:#F2762E">${esc(r.side.label)}</div>`;
+    } else { // percentage（5段階）
+      hero = `<div class="hero-visual" style="font-size:56px">${it.icon}</div>`;
+      visual = ringVisual(r.percent, "");
     }
-    const animalBlock = r.animal ? `
-      <div style="font-size:70px;line-height:1.1">${r.animal.emoji}</div>
-      <div style="font-size:26px;font-weight:900;color:#F2762E">${esc(r.animal.nameJa)}</div>
-      <div class="chips">${r.animal.impressionWords.map(w => `<span class="chip">${esc(w)}</span>`).join("")}</div>`
-      : `<div style="font-size:56px">${it.icon}</div>`;
 
     body.innerHTML = navrow("home") + `
       <div class="card" style="text-align:center">
-        <div style="font-size:12.5px;font-weight:800;color:#9A8468">${esc(it.title)}</div>
-        ${animalBlock}${visual}
+        <div style="font-size:12.5px;font-weight:800;color:#9A8468">${esc(titleOf(it))}</div>
+        ${hero}${visual}
         <p style="font-size:13px;margin:12px 4px 2px">${esc(r.text)}</p>
       </div>
       <div class="share-card" id="shareCard">
         <div class="sc-app">🐾 動物顔診断（仮）</div>
-        <div class="sc-emoji">${r.animal ? r.animal.emoji : it.icon}</div>
-        <div class="sc-name">${esc(r.animal ? r.animal.nameJa : it.title)}</div>
-        <div class="sc-pct">${it.kind === "spectrum" ? esc(it.spectrum.high) + "度 " : ""}${r.percent}%</div>
+        <div class="sc-emoji">${r.animal ? r.animal.emoji : r.side ? r.side.emoji : it.icon}</div>
+        <div class="sc-name">${esc(r.animal ? r.animal.nameJa : r.side ? r.side.label : titleOf(it))}</div>
+        <div class="sc-pct">${r.kind === "type2" ? "" : r.percent + "%"}</div>
         <div class="sc-text">${esc(r.text)}</div>
         <div class="sc-tags">${esc(HASHTAGS)}${r.animal ? " #" + esc(r.animal.nameJa) : ""}</div>
       </div>
@@ -535,8 +580,6 @@ const screens = {
     requestAnimationFrame(() => requestAnimationFrame(() => {
       const bar = document.getElementById("ringBar");
       if (bar) bar.style.strokeDashoffset = (2 * Math.PI * 58 * (1 - r.percent / 100)).toFixed(1);
-      const dot = document.getElementById("specDot");
-      if (dot) dot.style.left = r.percent + "%";
     }));
   },
 
@@ -609,9 +652,9 @@ async function onPhotoPicked(e) {
 /* シェア（Web Share API → 失敗時はテキストコピー） */
 async function shareResult() {
   const r = state.result;
-  const label = r.animal ? `${r.animal.nameJa}（マッチ率${r.percent}%）`
-    : r.item.kind === "spectrum" ? `${r.item.spectrum.high}度${r.percent}%` : `${r.percent}%`;
-  const text = `私は「${r.item.title}」で ${label} でした！ あなたも診断してみて👀\n${HASHTAGS}${r.animal ? " #" + r.animal.nameJa : ""}\n${location.href}`;
+  const label = r.kind === "animalMatch" ? `${r.animal.nameJa}（マッチ率${r.percent}%）`
+    : r.kind === "type2" ? `${r.side.label}` : `${r.percent}%`;
+  const text = `私は「${titleOf(r.item)}」で ${label} でした！ あなたも診断してみて👀\n${HASHTAGS}${r.animal ? " #" + r.animal.nameJa : ""}\n${location.href}`;
   try {
     if (navigator.share) { await navigator.share({ text }); return; }
     await navigator.clipboard.writeText(text);

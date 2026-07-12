@@ -98,4 +98,13 @@ enum AppConfig {
         /// シェアテキストの雛形。{title} {percent} が置換される
         static let textTemplate = "私は「{title}」で {percent} でした！ あなたも診断してみて👀"
     }
+
+    // MARK: - 審査対策: 表示名ソフト化トグル
+
+    /// 診断項目の「表示名だけ」を差し替えるマップ。内部id・スコアリング・診断文は不変のまま、
+    /// App Store 審査で名称（メンヘラ/サイコパス等）が問題になったら、ここに `id: 表示名` を
+    /// 足すだけで名称変更のみの再申請ができる（コードやロジックの改修は不要）。
+    /// TODO(Miyabee): 審査結果を見て、必要なら下記コメントを有効化。
+    /// 例) ["psychopath": "ミステリアス度診断", "menhera": "情緒ゆらぎ度診断", "sm": "主導権診断"]
+    static let displayTitleOverrides: [String: String] = [:]
 }

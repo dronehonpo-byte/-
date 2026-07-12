@@ -37,7 +37,7 @@ struct DiagnosisService {
                 disclaimer: content.disclaimer
             )
 
-        case .percentage, .spectrum:
+        case .percentage:
             guard let spec = item.scoring else {
                 throw DiagnosisError.contentUnavailable
             }
@@ -49,6 +49,23 @@ struct DiagnosisService {
                 percent: percent,
                 animal: nil,
                 text: text,
+                disclaimer: content.disclaimer
+            )
+
+        case .type2:
+            guard let spec = item.scoring, let outcomes = item.outcomes else {
+                throw DiagnosisError.contentUnavailable
+            }
+            // スコアで2択に振り分け（段階分けなし）。%は内部保持のみで画面には出さない。
+            let percent = engine.percentage(features: features, spec: spec)
+            let side = percent >= 50 ? outcomes.high : outcomes.low
+            return DiagnosisResult(
+                item: item,
+                percent: percent,
+                animal: nil,
+                typeLabel: side.label,
+                typeEmoji: side.emoji,
+                text: side.text,
                 disclaimer: content.disclaimer
             )
         }

@@ -16,25 +16,26 @@ struct ShareCardView: View {
             }
             .foregroundColor(.white.opacity(0.95))
 
-            Text(result.item.title)
+            Text(result.item.displayTitle)
                 .font(.title3.bold())
                 .foregroundColor(.white)
 
-            // TODO(Miyabee): 動物PNG素材提供後、emoji → Image(animal.imageName) に差し替え
-            Text(result.animal?.emoji ?? result.item.icon)
+            // TODO(Miyabee): 素材提供後、emoji → Image(...) に差し替え
+            Text(result.animal?.emoji ?? result.typeEmoji ?? result.item.icon)
                 .font(.system(size: 90))
 
             if let animal = result.animal {
                 Text(animal.nameJa)
                     .font(.largeTitle.bold())
                     .foregroundColor(.white)
+            } else if let typeLabel = result.typeLabel {
+                Text(typeLabel)
+                    .font(.largeTitle.bold())
+                    .foregroundColor(.white)
             }
 
-            if result.item.kind == .spectrum, let spectrum = result.item.spectrum {
-                Text("\(spectrum.highLabel)度 \(result.percent)%")
-                    .font(.system(size: 40, weight: .heavy, design: .rounded))
-                    .foregroundColor(.white)
-            } else {
+            // type2 は%を出さず、タイプ名（上）で表現。それ以外は%を大きく表示。
+            if result.item.kind != .type2 {
                 Text("\(result.percent)%")
                     .font(.system(size: 56, weight: .heavy, design: .rounded))
                     .foregroundColor(.white)

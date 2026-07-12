@@ -21,7 +21,7 @@ struct CaptureView: View {
                 VStack(spacing: 20) {
                     HStack(spacing: 8) {
                         Text(item.icon)
-                        Text(item.title)
+                        Text(item.displayTitle)
                             .font(.headline)
                     }
                     .padding(.top, 8)

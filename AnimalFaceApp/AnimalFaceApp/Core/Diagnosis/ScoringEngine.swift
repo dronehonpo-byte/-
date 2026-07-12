@@ -43,13 +43,15 @@ struct ScoringEngine {
 
     // MARK: - パーセンテージ / スペクトラム
 
-    /// 重み付き線形和 → % に変換（percentage / spectrum 共通）
+    /// 重み付き線形和 → % に変換（percentage の帯域判定・type2 の振り分け共通）
     func percentage(features: FaceFeatures, spec: ScoringSpec) -> Int {
         var score = spec.bias
         for (key, weight) in spec.weights {
-            if let value = features.value(for: key) {
-                score += weight * value
-            }
+            // 現状 Vision では一部特徴（眉/鼻の立体/三庭など）が未計測。
+            // その場合は中立の 0.5 として扱い、%の中央値がぶれないようにする
+            // （JSON の重みは全特徴が揃う前提で調整＝Web/将来のARKit経路と共通）。
+            let value = features.value(for: key) ?? 0.5
+            score += weight * value
         }
         let percent = Int((score * 100).rounded())
         return clamp(percent, min: spec.percentMin, max: spec.percentMax)
