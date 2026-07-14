@@ -18,6 +18,18 @@ def register_cli(app: Flask) -> None:
         db.create_all()
         click.echo("DB を初期化しました。")
 
+    @app.cli.command("seed-demo")
+    def seed_demo():
+        """デモ/テスト用データ（管理者・デモ客・デモ業者2社・サンプル依頼）を冪等に投入する.
+
+        テスト段階向け。ドライバーのテストログイン（09024963656 / 09033334444, パス demo123）や
+        デモ客（09011112222）が作成される。
+        """
+        from .seed import ensure_seed
+
+        ensure_seed(app, demo=True)
+        click.echo("デモ/テストデータを投入しました。")
+
     @app.cli.command("seed")
     def seed():
         """初期管理者と参加業者（エンペラー代行）を投入する."""
