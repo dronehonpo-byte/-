@@ -334,7 +334,7 @@ const IMG = {
     hamster:"assets/animals/hamster.png", lion:"assets/animals/lion.png",
   },
   heroFace: null, // 各動物が個別の顔を持つため未使用（合成レイアウトは使わない）
-  shoyu: null, sauce: null, // 醤油顔 / ソース顔（瓶画像が来たら設定）
+  shoyu: "assets/type_shoyu.png", sauce: "assets/type_sauce.png", // 醤油顔 / ソース顔
 };
 const imgEl = (src, size) => `<img src="${src}" alt="" loading="lazy" style="width:${size}px;height:${size}px;object-fit:contain;display:inline-block;vertical-align:middle;border-radius:${Math.max(6, Math.round(size*0.16))}px">`;
 const menuIconHTML = it => IMG.items[it.id] ? imgEl(IMG.items[it.id], 30) : it.icon;
