@@ -18,11 +18,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends git ca-certific
 WORKDIR /src
 # 必要に応じて特定タグに固定してください（例: --branch 5.6.0）
 RUN git clone --depth 1 https://github.com/Audiveris/audiveris.git .
-# アプリ配布物を生成（build/install/<name>/bin/Audiveris）
-RUN ./gradlew --no-daemon installDist -x test
-# 生成物を固定パスへ集約（ディレクトリ名が異なる場合はここを調整）
-RUN mkdir -p /opt && cp -r build/install/* /opt/ && \
-    ( [ -d /opt/audiveris ] || mv /opt/* /opt/audiveris )
+# Audiveris は multi-module 構成。実行アプリは :app サブプロジェクト。
+# 配布物は app/build/install/<applicationName>/bin/<launcher> に生成される。
+RUN ./gradlew --no-daemon :app:installDist -x test
+# 生成物を固定パス /opt/audiveris へ集約（名前の大文字小文字差を吸収）
+RUN mkdir -p /opt/audiveris && cp -r app/build/install/*/. /opt/audiveris/
 
 # ---- Stage 2: Node ラッパー依存 ----
 FROM node:20-bookworm-slim AS node-deps
@@ -44,12 +44,15 @@ COPY --from=node:20-bookworm-slim /usr/local/bin/node /usr/local/bin/node
 
 # Audiveris 本体
 COPY --from=audiveris-build /opt/audiveris /opt/audiveris
+# 起動スクリプト名（Audiveris / audiveris 等の差）を吸収して固定パスへ
+RUN ln -sf "$(find /opt/audiveris/bin -maxdepth 1 -type f ! -name '*.bat' | head -1)" \
+      /usr/local/bin/audiveris
 
 WORKDIR /app
 COPY --from=node-deps /app/node_modules ./node_modules
 COPY server.mjs ./
 
-ENV AUDIVERIS_BIN=/opt/audiveris/bin/Audiveris \
+ENV AUDIVERIS_BIN=/usr/local/bin/audiveris \
     RASTER_DPI=300 \
     PORT=8080 \
     TESSDATA_PREFIX=/usr/share/tesseract-ocr/4.00/tessdata
