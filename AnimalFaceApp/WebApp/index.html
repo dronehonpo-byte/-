@@ -305,11 +305,18 @@ const titleOf = it => DISPLAY_OVERRIDES[it.id]?.title ?? it.title;
 const IMG = {
   items: {},      // メニュー左アイコン（item id 別）
   heroItems: {},  // ％項目の結果メイン画像（item id 別）
-  animals: {},    // 動物イラスト（animal id 別）
-  heroFace: null, // 動物結果のメイン顔（20番）
-  shoyu: null, sauce: null, // 醤油顔 / ソース顔
+  // 動物イラスト（各シートの20番=○○顔タイプの顔を切り出したもの）
+  animals: {
+    tanuki:"assets/animals/tanuki.png", kitsune:"assets/animals/kitsune.png",
+    inu:"assets/animals/inu.png", neko:"assets/animals/neko.png",
+    usagi:"assets/animals/usagi.png", risu:"assets/animals/risu.png",
+    shika:"assets/animals/shika.png", ookami:"assets/animals/ookami.png",
+    hamster:"assets/animals/hamster.png", lion:"assets/animals/lion.png",
+  },
+  heroFace: null, // 各動物が個別の顔を持つため未使用（合成レイアウトは使わない）
+  shoyu: null, sauce: null, // 醤油顔 / ソース顔（瓶画像が来たら設定）
 };
-const imgEl = (src, size) => `<img src="${src}" alt="" loading="lazy" style="width:${size}px;height:${size}px;object-fit:contain;display:inline-block;vertical-align:middle">`;
+const imgEl = (src, size) => `<img src="${src}" alt="" loading="lazy" style="width:${size}px;height:${size}px;object-fit:contain;display:inline-block;vertical-align:middle;border-radius:${Math.max(6, Math.round(size*0.16))}px">`;
 const menuIconHTML = it => IMG.items[it.id] ? imgEl(IMG.items[it.id], 30) : it.icon;
 // 醤油/ソースのどちら側かを判定して対応画像を返す
 const shoyuSauceImg = (item, side) => (item.outcomes && item.outcomes.high === side) ? IMG.sauce : IMG.shoyu;
