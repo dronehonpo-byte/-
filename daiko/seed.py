@@ -81,19 +81,29 @@ def ensure_seed(app, *, demo: bool = True) -> None:
 def _ensure_vendor(name: str, vendor_phone: str, driver_phone: str, policy: str,
                    payment_methods: str = "") -> Vendor:
     vendor = Vendor.query.filter_by(name=name).first()
-    if vendor is not None:
-        return vendor
-    vendor = Vendor(
-        name=name,
-        phone=normalize_phone(vendor_phone),
-        status=VendorStatus.APPROVED,
-        cancellation_policy=policy,
-        payment_methods=payment_methods or None,
-    )
-    db.session.add(vendor)
-    db.session.flush()
-    driver = Driver(vendor_id=vendor.id, name=f"{name} ドライバー", phone=normalize_phone(driver_phone))
+    if vendor is None:
+        vendor = Vendor(
+            name=name,
+            phone=normalize_phone(vendor_phone),
+            status=VendorStatus.APPROVED,
+            cancellation_policy=policy,
+            payment_methods=payment_methods or None,
+        )
+        db.session.add(vendor)
+        db.session.flush()
+    else:
+        # デモ業者は承認済みを維持し、支払い方法が未設定なら補完
+        vendor.status = VendorStatus.APPROVED
+        if payment_methods and not vendor.payment_methods:
+            vendor.payment_methods = payment_methods
+    # ドライバーは存在確認のうえ、デモ用パスワード(demo123)を毎回セット（冪等）
+    dphone = normalize_phone(driver_phone)
+    driver = Driver.query.filter_by(phone=dphone).first()
+    if driver is None:
+        driver = Driver(vendor_id=vendor.id, name=f"{name} ドライバー", phone=dphone)
+        db.session.add(driver)
+    driver.vendor_id = vendor.id
+    driver.active = True
     driver.set_password(DEMO_DRIVER_PASSWORD)
-    db.session.add(driver)
     db.session.commit()
     return vendor

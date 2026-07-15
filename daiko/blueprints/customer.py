@@ -162,6 +162,23 @@ def history():
     return render_template("customer/history.html", reqs=reqs)
 
 
+@bp.route("/request/<int:request_id>/delete", methods=["POST"])
+@customer_required
+def delete_request(request_id: int):
+    """依頼履歴から1件削除（進行中は不可）."""
+    req = _own_request(request_id)
+    if req.status.is_active:
+        flash("進行中の依頼は削除できません。先にキャンセルしてください。", "danger")
+        return redirect(url_for("customer.history"))
+    req.confirmed_entry_id = None
+    db.session.flush()
+    Entry.query.filter_by(request_id=req.id).delete(synchronize_session=False)
+    db.session.delete(req)
+    db.session.commit()
+    flash("履歴を削除しました。", "info")
+    return redirect(url_for("customer.history"))
+
+
 def _own_request(request_id: int) -> Request:
     req = db.session.get(Request, request_id)
     if req is None or req.customer_id != g.customer.id:

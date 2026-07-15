@@ -64,8 +64,12 @@ window.DaikoMap = (function () {
         );
       },
       search: (q, which) => {
+        if (!q || !q.trim()) return;
         setMode(which);
-        geocode(cfg, q, (ll) => { if (ll) { map.setView([ll.lat, ll.lng], 16); place(ll); } });
+        geocode(cfg, q, (ll) => {
+          if (ll) { map.setView([ll.lat, ll.lng], 16); place(ll); }
+          else { alert('住所が見つかりませんでした。地名や番地を変えて、もう一度お試しください（例：宇都宮市馬場通り）。'); }
+        });
       },
       map,
     };
@@ -114,16 +118,26 @@ window.DaikoMap = (function () {
   }
 
   function geocode(cfg, q, cb) {
-    fetch(`${cfg.nominatimUrl}/search?format=json&limit=1&countrycodes=jp&q=${encodeURIComponent(q)}`)
+    fetch(`${cfg.nominatimUrl}/search?format=json&limit=1&countrycodes=jp&accept-language=ja&q=${encodeURIComponent(q)}`)
       .then((r) => r.json())
       .then((d) => cb(d && d[0] ? { lat: +d[0].lat, lng: +d[0].lon } : null))
       .catch(() => cb(null));
   }
   function reverse(cfg, ll, cb) {
-    fetch(`${cfg.nominatimUrl}/reverse?format=json&lat=${ll.lat}&lon=${ll.lng}`)
+    const fallback = `${ll.lat.toFixed(5)}, ${ll.lng.toFixed(5)}`;
+    fetch(`${cfg.nominatimUrl}/reverse?format=json&addressdetails=1&accept-language=ja&zoom=18&lat=${ll.lat}&lon=${ll.lng}`)
       .then((r) => r.json())
-      .then((d) => cb(d && d.display_name ? d.display_name : `${ll.lat.toFixed(5)}, ${ll.lng.toFixed(5)}`))
-      .catch(() => cb(`${ll.lat.toFixed(5)}, ${ll.lng.toFixed(5)}`));
+      .then((d) => cb(shortLabel(d, fallback)))
+      .catch(() => cb(fallback));
+  }
+  // 住所を「市区町村＋町名（＋番地）」の短い表記に整える
+  function shortLabel(d, fallback) {
+    const a = (d && d.address) || {};
+    const city = a.city || a.town || a.village || a.city_district || a.county || '';
+    const area = a.suburb || a.neighbourhood || a.quarter || a.hamlet || a.road || '';
+    const num = a.house_number || '';
+    const label = [city, area, num].filter(Boolean).join(' ').trim();
+    return label || (d && d.display_name) || fallback;
   }
 
   return { picker, route, requests, geocode };

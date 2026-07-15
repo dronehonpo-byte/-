@@ -14,10 +14,21 @@
 </head>
 <body>
   {% block appbar %}
+  {% set _p = request.path %}
+  {% if cur_driver or _p == '/driver' or _p.startswith('/d/') or _p.startswith('/auth/driver') or _p.startswith('/auth/vendor') %}
+    {% set _brand = 'ドライバーの窓口' %}
+    {% set _home = url_for('driver.dashboard') if cur_driver else url_for('main.driver_entry') %}
+  {% elif cur_admin or _p == '/staff' or _p.startswith('/admin') or _p.startswith('/auth/admin') %}
+    {% set _brand = '管理者の窓口' %}
+    {% set _home = url_for('admin.dashboard') if cur_admin else url_for('main.staff_entry') %}
+  {% else %}
+    {% set _brand = 'お客様の窓口' %}
+    {% set _home = url_for('customer.home') if cur_customer else url_for('main.index') %}
+  {% endif %}
   <div class="appbar">
-    <a class="brand" href="{{ url_for('main.index') }}">
+    <a class="brand" href="{{ _home }}">
       <img src="{{ url_for('static', filename='img/icon-192.png') }}" alt="">
-      <span>{{ service_name }}</span>
+      <span>{{ _brand }}</span>
     </a>
     <span class="spacer"></span>
     {% if cur_customer or cur_driver or cur_admin %}

@@ -6,15 +6,24 @@
   <div class="card center muted">まだ依頼はありません。</div>
 {% endif %}
 {% for r in reqs %}
-  <a class="list-item" href="{{ url_for('customer.detail', request_id=r.id) }}">
-    <div class="flex">
-      <div>
-        <span class="chip {% if r.status == RequestStatus.COMPLETED %}chip-green{% elif r.status == RequestStatus.CANCELLED %}chip-gray{% else %}chip-orange{% endif %}">{{ r.status.label }}</span>
-        <div class="small" style="margin-top:4px">{{ r.origin_label or '出発地' }} → {{ r.dest_label or '目的地' }}</div>
+  <div class="list-item" style="padding:0">
+    <a href="{{ url_for('customer.detail', request_id=r.id) }}" style="display:block; padding:15px; text-decoration:none; color:inherit">
+      <div class="flex">
+        <div>
+          <span class="chip {% if r.status == RequestStatus.COMPLETED %}chip-green{% elif r.status == RequestStatus.CANCELLED or r.status == RequestStatus.EXPIRED %}chip-gray{% else %}chip-orange{% endif %}">{{ r.status.label }}</span>
+          <div class="small" style="margin-top:4px">{{ r.origin_label or '出発地' }} → {{ r.dest_label or '目的地' }}</div>
+        </div>
+        <div class="small muted">{{ r.created_at | dt('%m/%d %H:%M') }}</div>
       </div>
-      <div class="small muted">{{ r.created_at | dt('%m/%d %H:%M') }}</div>
-    </div>
-  </a>
+    </a>
+    {% if not r.status.is_active %}
+    <form method="post" action="{{ url_for('customer.delete_request', request_id=r.id) }}"
+          onsubmit="return confirm('この依頼履歴を削除しますか？')"
+          style="border-top:1px solid var(--line); text-align:right; padding:8px 12px">
+      <button type="submit" class="btn btn-danger small" style="padding:6px 14px; font-size:13px">🗑 履歴を削除</button>
+    </form>
+    {% endif %}
+  </div>
 {% endfor %}
 <a class="btn btn-outline btn-block" href="{{ url_for('customer.home') }}">ホームへ</a>
 {% endblock %}

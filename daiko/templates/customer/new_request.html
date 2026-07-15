@@ -11,10 +11,10 @@
   <div class="card">
     <h3>① 出発地・目的地</h3>
     <div class="row" style="margin-bottom:8px">
-      <input type="text" id="search-origin" placeholder="出発地を住所で検索">
+      <input type="text" id="search-origin" placeholder="出発地の住所を入力→Enter">
       <button type="button" class="btn btn-outline" id="btn-locate" style="flex:0 0 auto">現在地</button>
     </div>
-    <input type="text" id="search-dest" placeholder="目的地を住所で検索" style="margin-bottom:8px">
+    <input type="text" id="search-dest" placeholder="目的地の住所を入力→Enter" style="margin-bottom:8px">
     <div class="seg" id="pin-mode" style="margin-bottom:8px">
       <label id="mode-origin"><span>🟠 出発地を置く</span></label>
       <label id="mode-dest"><span>🟢 目的地を置く</span></label>
@@ -100,8 +100,15 @@ const picker = DaikoMap.picker('map', cfg, setVal, updateModeUI);
 document.getElementById('mode-origin').onclick = () => picker.setMode('origin');
 document.getElementById('mode-dest').onclick = () => picker.setMode('dest');
 document.getElementById('btn-locate').onclick = () => { picker.setMode('origin'); picker.locate(); };
-document.getElementById('search-origin').addEventListener('change', (e) => picker.search(e.target.value, 'origin'));
-document.getElementById('search-dest').addEventListener('change', (e) => picker.search(e.target.value, 'dest'));
+function bindSearch(id, which) {
+  const el = document.getElementById(id);
+  el.addEventListener('change', () => picker.search(el.value, which));
+  el.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); picker.search(el.value, which); }
+  });
+}
+bindSearch('search-origin', 'origin');
+bindSearch('search-dest', 'dest');
 </script>
 <script>
 // 時刻指定の表示切替（地図スクリプトとは独立して動作させる）
