@@ -4,116 +4,193 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>動物顔診断（仮）— Web版</title>
-<!-- build: pages-v4 (診断項目刷新: SM/メンヘラ/サイコパス追加・童顔を無料へ・醤油/ソースは2択タイプ・%は5段階・表示名ソフト化トグル。画像は未埋め込み) -->
+<!-- build: pages-v5 (UI刷新: ダーク病みかわ・テーマ／画面遷移・ボタン反応・%カウントアップ・ローディング演出・発光背景。機能は不変・画像は未埋め込み) -->
 <meta name="description" content="顔写真からあなたの動物顔タイプを診断！写真はブラウザ内でのみ解析され、アップロードされません。">
 <style>
+  /* ===== デザイントークン（ダーク病みかわ／ゴシックかわいい） ===== */
+  :root {
+    --bg1:#140812; --bg2:#1e0d24; --bg3:#26102f;
+    --surface: rgba(48,24,60,0.60);
+    --surface-2: rgba(62,32,80,0.72);
+    --stroke: rgba(255,130,205,0.20);
+    --stroke-hot: rgba(255,130,205,0.48);
+    --text:#F5EAF7; --text-dim:#C0A3D2; --text-mute:#93789F;
+    --pink:#FF5DA2; --magenta:#C64BFF; --violet:#7C4DFF; --gold:#F7C766;
+    --grad-hot: linear-gradient(120deg,#FF5DA2,#C64BFF);
+    --grad-gold: linear-gradient(120deg,#F7C766,#F79E52);
+    --glow: 0 0 22px rgba(255,93,162,0.45);
+    --r: 22px;
+    --font: "Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic UI","Yu Gothic","Noto Sans JP",system-ui,sans-serif;
+  }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html, body { height: 100%; }
+  html { overflow-x: hidden; }
   body {
-    margin: 0; background: #F3E7D3; color: #3D2E20;
-    font-family: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic UI", "Yu Gothic", "Noto Sans JP", system-ui, sans-serif;
-    line-height: 1.7; font-size: 15px;
+    margin: 0; color: var(--text); font-family: var(--font);
+    line-height: 1.7; font-size: 15px; overflow-x: hidden;
+    background:
+      radial-gradient(120% 80% at 50% -10%, #3a1547 0%, transparent 55%),
+      linear-gradient(180deg, var(--bg2) 0%, var(--bg1) 100%);
     display: flex; justify-content: center;
   }
   .app {
+    position: relative; overflow: hidden;
     width: 100%; max-width: 430px; min-height: 100dvh;
-    background: #FFF8ED; display: flex; flex-direction: column;
-    box-shadow: 0 0 40px rgba(97,62,26,0.15);
+    background: linear-gradient(180deg, rgba(30,13,36,0.6), rgba(20,8,18,0.6));
+    display: flex; flex-direction: column;
+    box-shadow: 0 0 60px rgba(198,75,255,0.18), inset 0 0 60px rgba(0,0,0,0.35);
   }
+  /* 背景の発光ブロブ＋ハートのゆらぎ（装飾・操作不可） */
+  .bgfx { position: absolute; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+  .bgfx::before, .bgfx::after {
+    content: ""; position: absolute; border-radius: 50%; filter: blur(60px); opacity: 0.55;
+  }
+  .bgfx::before { width: 300px; height: 300px; top: -70px; left: -90px;
+    background: radial-gradient(circle, var(--magenta), transparent 70%); animation: blob1 16s ease-in-out infinite; }
+  .bgfx::after { width: 340px; height: 340px; bottom: -90px; right: -110px;
+    background: radial-gradient(circle, var(--pink), transparent 70%); animation: blob2 20s ease-in-out infinite; }
+  @keyframes blob1 { 0%,100%{ transform: translate(0,0) scale(1);} 50%{ transform: translate(30px,40px) scale(1.15);} }
+  @keyframes blob2 { 0%,100%{ transform: translate(0,0) scale(1);} 50%{ transform: translate(-30px,-30px) scale(1.1);} }
+
   .appbar {
-    flex-shrink: 0; padding: max(10px, env(safe-area-inset-top)) 18px 10px;
+    position: relative; z-index: 2; flex-shrink: 0;
+    padding: max(12px, env(safe-area-inset-top)) 18px 12px;
     display: flex; align-items: center; justify-content: space-between; gap: 8px;
-    background: #FFF8ED; border-bottom: 1px solid #F0E2C8;
+    background: rgba(20,8,18,0.55); backdrop-filter: blur(14px);
+    border-bottom: 1px solid var(--stroke);
   }
-  .appbar .brand { font-weight: 900; font-size: 15px; }
-  .appbar .brand small { display: block; font-size: 9.5px; font-weight: 700; color: #B08A5A; letter-spacing: 0.06em; }
+  .appbar .brand { flex: 1; min-width: 0; font-weight: 900; font-size: 15px; letter-spacing: 0.02em;
+    background: var(--grad-hot); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .appbar .brand small { display: block; font-size: 9.5px; font-weight: 700; color: var(--text-mute);
+    letter-spacing: 0.06em; -webkit-text-fill-color: var(--text-mute);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .appbar .plan {
-    font-size: 10.5px; font-weight: 800; padding: 4px 10px; border-radius: 999px;
-    background: rgba(79,163,216,0.16); color: #2E7DB3; white-space: nowrap;
+    flex-shrink: 0; font-size: 10.5px; font-weight: 800; padding: 5px 12px; border-radius: 999px; white-space: nowrap;
+    background: rgba(124,77,255,0.18); color: #CBB6FF; border: 1px solid rgba(124,77,255,0.35);
   }
-  .appbar .plan.premium { background: linear-gradient(90deg,#F2762E,#F6B93F); color: #fff; }
-  .body { flex: 1; overflow-y: auto; padding: 14px 18px 20px; display: flex; flex-direction: column; }
+  .appbar .plan.premium { background: var(--grad-gold); color: #2a1600; border: none; box-shadow: 0 0 16px rgba(247,199,102,0.5); }
+
+  .body { position: relative; z-index: 1; flex: 1; overflow-y: auto; padding: 14px 18px 22px; display: flex; flex-direction: column; }
+  /* 画面切替アニメ */
+  .screen-enter { animation: screenIn 0.34s cubic-bezier(.2,.75,.3,1) both; }
+  @keyframes screenIn { from { opacity: 0; transform: translateY(10px) scale(0.99);} to { opacity: 1; transform: none;} }
+
   .navrow { display: flex; align-items: center; min-height: 30px; margin-bottom: 6px; }
-  .navbtn { background: none; border: none; color: #F2762E; font-weight: 800; font-size: 14px; cursor: pointer; padding: 4px 8px 4px 0; font-family: inherit; }
+  .navbtn { background: none; border: none; color: var(--pink); font-weight: 800; font-size: 14px; cursor: pointer; padding: 4px 8px 4px 0; font-family: inherit; }
 
   .card {
-    background: #fff; border-radius: 18px; padding: 16px;
-    box-shadow: 0 3px 12px rgba(97,62,26,0.08); margin-bottom: 12px;
+    background: var(--surface); border: 1px solid var(--stroke); border-radius: var(--r); padding: 16px;
+    box-shadow: 0 8px 26px rgba(0,0,0,0.35); backdrop-filter: blur(12px); margin-bottom: 12px;
   }
+  b, .card b { color: var(--text); }
+
   .btn {
     display: block; width: 100%; border: none; cursor: pointer; font-family: inherit;
     font-weight: 800; font-size: 15.5px; padding: 16px 12px; border-radius: 16px; margin-top: 10px;
+    transition: transform 0.12s ease, filter 0.2s ease; color: #fff;
   }
-  .btn.primary { background: #F2762E; color: #fff; }
-  .btn.primary:active { background: #DD5F17; }
-  .btn.soft { background: rgba(79,163,216,0.14); color: #2E7DB3; }
-  .btn.gold { background: rgba(246,185,63,0.30); color: #7A5A10; }
-  .btn:disabled { opacity: 0.5; cursor: default; }
-  .btn:focus-visible { outline: 3px solid #4FA3D8; outline-offset: 2px; }
-  .note { font-size: 10.5px; color: #9A8468; text-align: center; margin: 12px 4px 0; line-height: 1.7; }
+  .btn:active { transform: scale(0.97); }
+  .btn.primary { background: var(--grad-hot); box-shadow: var(--glow); }
+  .btn.soft { background: rgba(124,77,255,0.16); color: #D3C2FF; border: 1px solid rgba(124,77,255,0.30); }
+  .btn.gold { background: var(--grad-gold); color: #2a1600; box-shadow: 0 0 18px rgba(247,199,102,0.45); }
+  .btn:disabled { opacity: 0.45; cursor: default; transform: none; }
+  .btn:focus-visible { outline: 3px solid var(--magenta); outline-offset: 2px; }
+  .note { font-size: 10.5px; color: var(--text-mute); text-align: center; margin: 12px 4px 0; line-height: 1.7; }
 
   .menu-item {
-    display: flex; align-items: center; gap: 12px; width: 100%; background: #fff;
-    border: none; border-radius: 18px; padding: 15px 14px; margin-bottom: 10px;
-    box-shadow: 0 3px 12px rgba(97,62,26,0.08); cursor: pointer; text-align: left;
-    font-family: inherit; color: #3D2E20;
+    position: relative; display: flex; align-items: center; gap: 12px; width: 100%;
+    background: var(--surface); border: 1px solid var(--stroke); border-radius: var(--r);
+    padding: 15px 14px; margin-bottom: 11px; backdrop-filter: blur(12px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.30); cursor: pointer; text-align: left;
+    font-family: inherit; color: var(--text); overflow: hidden;
+    transition: transform 0.14s ease, border-color 0.2s ease, box-shadow 0.2s ease;
   }
-  .menu-item .mi-icon { font-size: 28px; }
-  .menu-item .mi-title { font-weight: 800; font-size: 15px; }
-  .menu-item .mi-sub { font-size: 11.5px; color: #9A8468; }
-  .tag { font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 7px; background: rgba(246,185,63,0.35); color: #7A5A10; margin-left: 6px; vertical-align: 2px; }
-  .tag.free { background: rgba(79,163,216,0.18); color: #2E7DB3; }
-  .lock { margin-left: auto; font-size: 17px; color: #B9A98F; }
+  .menu-item::after { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--grad-hot); opacity: 0.85; }
+  .menu-item:active { transform: scale(0.985); border-color: var(--stroke-hot); box-shadow: 0 0 22px rgba(255,93,162,0.25); }
+  .menu-item .mi-icon {
+    font-size: 26px; width: 50px; height: 50px; flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+    background: radial-gradient(circle at 30% 25%, rgba(255,93,162,0.30), rgba(124,77,255,0.16));
+    border: 1px solid var(--stroke); border-radius: 15px;
+  }
+  .menu-item .mi-title { font-weight: 800; font-size: 15px; color: var(--text); }
+  .menu-item .mi-sub { font-size: 11.5px; color: var(--text-dim); }
+  .tag { font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 7px; margin-left: 6px; vertical-align: 2px;
+    background: rgba(247,199,102,0.22); color: var(--gold); border: 1px solid rgba(247,199,102,0.35); }
+  .tag.free { background: rgba(124,77,255,0.20); color: #CBB6FF; border-color: rgba(124,77,255,0.4); }
+  .lock { margin-left: auto; font-size: 17px; color: var(--text-mute); }
   .premium-strip {
-    display: block; width: 100%; border: none; border-radius: 16px; padding: 13px 16px;
-    background: linear-gradient(90deg,#F2762E,#F6B93F); color: #fff; cursor: pointer;
-    font-family: inherit; font-weight: 800; font-size: 13px; margin-bottom: 12px; text-align: left;
+    position: relative; display: block; width: 100%; border: none; border-radius: 16px; padding: 14px 16px;
+    background: var(--grad-gold); color: #2a1600; cursor: pointer; overflow: hidden;
+    font-family: inherit; font-weight: 800; font-size: 13px; margin-bottom: 14px; text-align: left;
+    box-shadow: 0 0 22px rgba(247,199,102,0.4);
   }
 
-  .guide li { font-size: 13px; padding: 2px 0; }
+  .guide li { font-size: 13px; padding: 2px 0; color: var(--text); }
   .photo-input { display: none; }
   .preview-box { text-align: center; }
   .preview-box img { max-width: 100%; max-height: 260px; border-radius: 14px; }
 
-  .center-fill { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; text-align: center; padding: 24px; }
-  @keyframes wiggle { 0%,100% { transform: rotate(-10deg); } 50% { transform: rotate(10deg); } }
-  .loading-emoji { font-size: 58px; animation: wiggle 0.9s ease-in-out infinite; }
-  @media (prefers-reduced-motion: reduce) { .loading-emoji { animation: none; } .ring .bar, .spec-dot { transition: none !important; } }
+  .center-fill { position: relative; z-index: 1; flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; text-align: center; padding: 24px; }
+  /* ローディング: 発光オーブ＋回転リング＋スキャン */
+  .loading-emoji { position: relative; font-size: 52px; width: 118px; height: 118px; display: flex; align-items: center; justify-content: center;
+    border-radius: 50%; background: radial-gradient(circle, rgba(255,93,162,0.28), transparent 70%); }
+  .loading-emoji::before { content: ""; position: absolute; inset: -6px; border-radius: 50%;
+    border: 3px solid transparent; border-top-color: var(--pink); border-right-color: var(--magenta);
+    animation: spin 1s linear infinite; }
+  .loading-emoji::after { content: ""; position: absolute; inset: 8px; border-radius: 50%;
+    border: 2px dashed rgba(198,75,255,0.5); animation: spin 3.2s linear infinite reverse; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes pulse { 0%,100%{ transform: scale(1); opacity: 1;} 50%{ transform: scale(1.06); opacity: 0.85;} }
 
-  .ring-holder { position: relative; width: 140px; height: 140px; margin: 6px auto; }
-  .ring { transform: rotate(-90deg); }
-  .ring .track { stroke: rgba(246,185,63,0.3); }
-  .ring .bar { stroke: #F2762E; stroke-linecap: round; transition: stroke-dashoffset 0.9s cubic-bezier(.2,.7,.3,1); }
+  .ring-holder { position: relative; width: 150px; height: 150px; margin: 8px auto; }
+  .ring { transform: rotate(-90deg); filter: drop-shadow(0 0 8px rgba(255,93,162,0.5)); }
+  .ring .track { stroke: rgba(255,130,205,0.16); }
+  .ring .bar { stroke: url(#ringGrad); stroke-linecap: round; transition: stroke-dashoffset 1.0s cubic-bezier(.2,.7,.3,1); }
   .ring-label { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-  .ring-label .pct { font-size: 33px; font-weight: 900; font-variant-numeric: tabular-nums; }
-  .ring-label .cap { font-size: 10.5px; color: #9A8468; font-weight: 700; }
+  .ring-label .pct { font-size: 34px; font-weight: 900; font-variant-numeric: tabular-nums;
+    background: var(--grad-hot); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .ring-label .cap { font-size: 10.5px; color: var(--text-dim); font-weight: 700; }
   .chips { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; margin: 6px 0; }
-  .chip { font-size: 11px; font-weight: 800; background: rgba(246,185,63,0.3); color: #7A5A10; padding: 3px 11px; border-radius: 10px; }
-  .spec-bar { position: relative; height: 20px; border-radius: 999px; margin: 14px 8px 6px; background: linear-gradient(90deg,#4FA3D8,#F2762E); }
-  .spec-dot { position: absolute; top: 50%; width: 24px; height: 24px; border-radius: 50%; background: #fff; border: 3px solid #F2762E; transform: translate(-50%,-50%); transition: left 0.9s cubic-bezier(.2,.7,.3,1); }
-  .spec-ends { display: flex; justify-content: space-between; font-size: 11px; font-weight: 800; color: #9A8468; padding: 0 8px; }
+  .chip { font-size: 11px; font-weight: 800; padding: 4px 12px; border-radius: 10px;
+    background: rgba(124,77,255,0.18); color: #CBB6FF; border: 1px solid rgba(124,77,255,0.35); }
+  .hero-visual { filter: drop-shadow(0 6px 18px rgba(255,93,162,0.4)); animation: pulse 3s ease-in-out infinite; }
 
-  .share-card { border-radius: 18px; padding: 18px 14px; text-align: center; color: #fff; background: linear-gradient(135deg,#F2762E,#F6B93F); margin-top: 12px; }
-  .share-card .sc-app { font-size: 10.5px; font-weight: 800; opacity: 0.92; letter-spacing: 0.05em; }
-  .share-card .sc-emoji { font-size: 52px; margin: 4px 0; }
-  .share-card .sc-name { font-size: 21px; font-weight: 900; }
-  .share-card .sc-pct { font-size: 30px; font-weight: 900; font-variant-numeric: tabular-nums; }
+  .share-card { position: relative; border-radius: var(--r); padding: 20px 14px; text-align: center; color: #fff; overflow: hidden;
+    background: linear-gradient(150deg,#3a1244,#20101f); border: 1px solid var(--stroke-hot);
+    box-shadow: 0 0 30px rgba(198,75,255,0.35); margin-top: 12px; }
+  .share-card::before { content: ""; position: absolute; inset: 0; opacity: 0.5;
+    background: radial-gradient(120% 60% at 50% 0%, rgba(255,93,162,0.4), transparent 60%); pointer-events: none; }
+  .share-card > * { position: relative; z-index: 1; }
+  .share-card .sc-app { font-size: 10.5px; font-weight: 800; opacity: 0.95; letter-spacing: 0.06em; color: #FFC7E4; }
+  .share-card .sc-emoji { font-size: 54px; margin: 6px 0; filter: drop-shadow(0 4px 12px rgba(255,93,162,0.5)); }
+  .share-card .sc-name { font-size: 22px; font-weight: 900; }
+  .share-card .sc-pct { font-size: 32px; font-weight: 900; font-variant-numeric: tabular-nums; color: #FFB3D9; }
   .share-card .sc-text { font-size: 11.5px; opacity: 0.95; margin-top: 4px; }
-  .share-card .sc-tags { font-size: 10px; opacity: 0.85; margin-top: 8px; }
+  .share-card .sc-tags { font-size: 10px; opacity: 0.85; margin-top: 8px; color: #E7D3FF; }
 
-  .fake-ad { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; background: #26303A; color: #EAF2F8; text-align: center; padding: 24px; border-radius: 20px; margin: 8px 0; }
-  .fake-ad .ad-mark { font-size: 10px; font-weight: 800; letter-spacing: 0.2em; color: #8FB4CC; }
+  .fake-ad { position: relative; z-index: 1; flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
+    background: #180a1f; border: 1px solid var(--stroke); color: #E7D8F2; text-align: center; padding: 24px; border-radius: var(--r); margin: 8px 0; }
+  .fake-ad .ad-mark { font-size: 10px; font-weight: 800; letter-spacing: 0.2em; color: var(--text-mute); }
 
-  .banner-ad { flex-shrink: 0; height: 48px; background: #EFE3CC; color: #9A8468; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; letter-spacing: 0.06em; padding-bottom: env(safe-area-inset-bottom); }
+  .banner-ad { position: relative; z-index: 2; flex-shrink: 0; height: 48px; display: flex; align-items: center; justify-content: center;
+    background: rgba(20,8,18,0.75); backdrop-filter: blur(10px); border-top: 1px solid var(--stroke);
+    color: var(--text-mute); font-size: 11px; font-weight: 700; letter-spacing: 0.06em; padding-bottom: env(safe-area-inset-bottom); }
 
   .error-emoji { font-size: 54px; }
-  .status { font-size: 11.5px; color: #9A8468; }
+  .status { font-size: 11.5px; color: var(--text-dim); }
+
+  @media (prefers-reduced-motion: reduce) {
+    .bgfx::before, .bgfx::after, .loading-emoji::before, .loading-emoji::after, .hero-visual { animation: none !important; }
+    .screen-enter { animation: none !important; }
+    .ring .bar { transition: none !important; }
+  }
 </style>
 </head>
 <body>
 <div class="app">
+  <div class="bgfx" aria-hidden="true"></div>
   <div class="appbar">
-    <div class="brand">🐾 動物顔診断（仮）<small>Web版 — ブラウザ内AIで15特徴量を解析</small></div>
+    <div class="brand">🖤 動物顔診断（仮）<small>ブラウザ内AIで診断 — 写真は端末外に出ません</small></div>
     <span class="plan" id="planBadge">無料プラン</span>
   </div>
   <div class="body" id="body"></div>
@@ -438,14 +515,20 @@ function navrow(backTo) {
 }
 // %リング（マッチ率 or 5段階%）。cap があれば数値下に表示（例: マッチ率）
 function ringVisual(percent, cap) {
-  const R = 58, C = (2 * Math.PI * R).toFixed(1);
+  const R = 62, C = (2 * Math.PI * R).toFixed(1);
   return `<div class="ring-holder">
-    <svg class="ring" width="140" height="140" viewBox="0 0 140 140" role="img" aria-label="${percent}%">
-      <circle class="track" cx="70" cy="70" r="${R}" fill="none" stroke-width="12"/>
-      <circle class="bar" id="ringBar" cx="70" cy="70" r="${R}" fill="none" stroke-width="12"
+    <svg class="ring" width="150" height="150" viewBox="0 0 150 150" role="img" aria-label="${percent}%">
+      <defs>
+        <linearGradient id="ringGrad" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#FF5DA2"/>
+          <stop offset="1" stop-color="#C64BFF"/>
+        </linearGradient>
+      </defs>
+      <circle class="track" cx="75" cy="75" r="${R}" fill="none" stroke-width="13"/>
+      <circle class="bar" id="ringBar" cx="75" cy="75" r="${R}" fill="none" stroke-width="13"
         stroke-dasharray="${C}" stroke-dashoffset="${C}"/>
     </svg>
-    <div class="ring-label"><span class="pct">${percent}%</span>${cap ? `<span class="cap">${esc(cap)}</span>` : ""}</div>
+    <div class="ring-label"><span class="pct" id="pctNum" data-to="${percent}">0%</span>${cap ? `<span class="cap">${esc(cap)}</span>` : ""}</div>
   </div>`;
 }
 
@@ -497,9 +580,9 @@ const screens = {
 
   loading() {
     body.innerHTML = `<div class="center-fill">
-      <div class="loading-emoji">🔍</div>
-      <b>あなたのお顔を分析中…</b>
-      <span class="status" id="loadStatus">顔解析エンジンを準備しています</span>
+      <div class="loading-emoji">🔮</div>
+      <b style="font-size:17px">お顔のオーラを解析中…</b>
+      <span class="status" id="loadStatus">解析エンジンを準備しています</span>
     </div>`;
   },
 
@@ -579,7 +662,9 @@ const screens = {
       <p class="note">${esc(DISCLAIMER)}<br>${esc(ACCURACY_NOTE)}</p>`;
     requestAnimationFrame(() => requestAnimationFrame(() => {
       const bar = document.getElementById("ringBar");
-      if (bar) bar.style.strokeDashoffset = (2 * Math.PI * 58 * (1 - r.percent / 100)).toFixed(1);
+      if (bar) bar.style.strokeDashoffset = (2 * Math.PI * 62 * (1 - r.percent / 100)).toFixed(1);
+      const num = document.getElementById("pctNum");
+      if (num) animateCount(num, r.percent, "%");
     }));
   },
 
@@ -613,7 +698,26 @@ function appendDebug() {
   body.insertAdjacentHTML("beforeend",
     `<pre style="font-size:10px;line-height:1.45;background:#20160c;color:#EDE0CF;padding:12px;border-radius:12px;overflow-x:auto;margin-top:12px">[DEBUG] 特徴量 raw / 正規化(0-1)\n${esc(rows)}\n\nsim上位(%): ${esc(top)}</pre>`);
 }
-function go(name, arg) { screens[name](arg); body.scrollTop = 0; window.scrollTo(0, 0); if (name === "result") appendDebug(); }
+const REDUCE_MOTION = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+// 数字のカウントアップ（0 → to）。reduce-motion 時は即確定。
+function animateCount(el, to, suffix = "") {
+  if (REDUCE_MOTION) { el.textContent = to + suffix; return; }
+  const dur = 900, t0 = performance.now();
+  const tick = now => {
+    const p = Math.min((now - t0) / dur, 1);
+    const eased = 1 - Math.pow(1 - p, 3); // easeOutCubic
+    el.textContent = Math.round(eased * to) + suffix;
+    if (p < 1) requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
+}
+function go(name, arg) {
+  screens[name](arg);
+  // 画面切替アニメを毎回リスタート
+  body.classList.remove("screen-enter"); void body.offsetWidth; body.classList.add("screen-enter");
+  body.scrollTop = 0; window.scrollTo(0, 0);
+  if (name === "result") appendDebug();
+}
 
 /* 写真選択 → 実解析 */
 async function onPhotoPicked(e) {
