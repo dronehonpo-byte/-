@@ -51,6 +51,10 @@
     background: radial-gradient(circle, var(--pink), transparent 70%); animation: blob2 20s ease-in-out infinite; }
   @keyframes blob1 { 0%,100%{ transform: translate(0,0) scale(1);} 50%{ transform: translate(30px,40px) scale(1.15);} }
   @keyframes blob2 { 0%,100%{ transform: translate(0,0) scale(1);} 50%{ transform: translate(-30px,-30px) scale(1.1);} }
+  /* 病みかわ小物をうっすら散らす（装飾・操作不可） */
+  .bgfx .d { position: absolute; opacity: 0.14; pointer-events: none;
+    filter: drop-shadow(0 0 5px rgba(255,93,162,0.35)); animation: floatY 9s ease-in-out infinite; }
+  @keyframes floatY { 0%,100%{ transform: translateY(0) rotate(var(--r,0deg)); } 50%{ transform: translateY(-16px) rotate(var(--r,0deg)); } }
 
   .appbar {
     position: relative; z-index: 2; flex-shrink: 0;
@@ -180,7 +184,7 @@
   .status { font-size: 11.5px; color: var(--text-dim); }
 
   @media (prefers-reduced-motion: reduce) {
-    .bgfx::before, .bgfx::after, .loading-emoji::before, .loading-emoji::after, .hero-visual { animation: none !important; }
+    .bgfx::before, .bgfx::after, .bgfx .d, .loading-emoji::before, .loading-emoji::after, .hero-visual { animation: none !important; }
     .screen-enter { animation: none !important; }
     .ring .bar { transition: none !important; }
   }
@@ -188,7 +192,17 @@
 </head>
 <body>
 <div class="app">
-  <div class="bgfx" aria-hidden="true"></div>
+  <div class="bgfx" aria-hidden="true">
+    <img class="d" src="assets/decor/heartbroken.png" alt="" style="left:5%;top:11%;width:46px;--r:-14deg;animation-delay:0s">
+    <img class="d" src="assets/decor/cross.png" alt="" style="left:83%;top:7%;width:32px;--r:12deg;animation-delay:1.1s">
+    <img class="d" src="assets/decor/bow.png" alt="" style="left:71%;top:29%;width:40px;--r:-8deg;animation-delay:2.2s">
+    <img class="d" src="assets/decor/padlock.png" alt="" style="left:8%;top:45%;width:38px;--r:9deg;animation-delay:0.6s">
+    <img class="d" src="assets/decor/heartdrip.png" alt="" style="left:85%;top:51%;width:36px;--r:0deg;animation-delay:1.7s">
+    <img class="d" src="assets/decor/crown.png" alt="" style="left:15%;top:73%;width:44px;--r:-6deg;animation-delay:2.6s">
+    <img class="d" src="assets/decor/cross.png" alt="" style="left:61%;top:83%;width:26px;--r:18deg;opacity:.1;animation-delay:0.3s">
+    <img class="d" src="assets/decor/heartbroken.png" alt="" style="left:88%;top:80%;width:30px;--r:10deg;opacity:.11;animation-delay:3.1s">
+    <img class="d" src="assets/decor/bow.png" alt="" style="left:3%;top:90%;width:34px;--r:6deg;opacity:.12;animation-delay:1.4s">
+  </div>
   <div class="appbar">
     <div class="brand">🖤 動物顔診断（仮）<small>ブラウザ内AIで診断 — 写真は端末外に出ません</small></div>
     <span class="plan" id="planBadge">無料プラン</span>
