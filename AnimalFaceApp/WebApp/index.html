@@ -293,6 +293,34 @@ const DISPLAY_OVERRIDES = {
   // menhera:    { title:"情緒ゆらぎ度診断" },
 };
 const titleOf = it => DISPLAY_OVERRIDES[it.id]?.title ?? it.title;
+
+/* ===== 画像アセット（任意・未設定なら絵文字のまま） =====
+   assets/ に画像を置き、下にパスを書くと「絵文字→画像」に切り替わる。差し込みは基本これだけ。
+   ファイル配置と命名（assets/README.md 参照）:
+     動物10種   → IMG.animals.tanuki = "assets/animals/tanuki.png"（kitsune/inu/neko/usagi/risu/shika/ookami/hamster/lion）
+     動物メイン顔(20番) → IMG.heroFace = "assets/hero_face.png"
+     醤油/ソース → IMG.shoyu = "assets/type_shoyu.png" / IMG.sauce = "assets/type_sauce.png"
+     メニューアイコン(任意) → IMG.items.menhera = "assets/icon_menhera.png"
+     結果メイン(％項目・任意) → IMG.heroItems.menhera = "assets/hero_menhera.png" */
+const IMG = {
+  items: {},      // メニュー左アイコン（item id 別）
+  heroItems: {},  // ％項目の結果メイン画像（item id 別）
+  animals: {},    // 動物イラスト（animal id 別）
+  heroFace: null, // 動物結果のメイン顔（20番）
+  shoyu: null, sauce: null, // 醤油顔 / ソース顔
+};
+const imgEl = (src, size) => `<img src="${src}" alt="" loading="lazy" style="width:${size}px;height:${size}px;object-fit:contain;display:inline-block;vertical-align:middle">`;
+const menuIconHTML = it => IMG.items[it.id] ? imgEl(IMG.items[it.id], 30) : it.icon;
+// 醤油/ソースのどちら側かを判定して対応画像を返す
+const shoyuSauceImg = (item, side) => (item.outcomes && item.outcomes.high === side) ? IMG.sauce : IMG.shoyu;
+// シェアカード用のビジュアル（画像 or 絵文字）
+function shareVisualHTML(r) {
+  const it = r.item;
+  if (r.animal) return IMG.animals[r.animal.id] ? imgEl(IMG.animals[r.animal.id], 56) : r.animal.emoji;
+  if (r.side)   { const s = shoyuSauceImg(it, r.side); return s ? imgEl(s, 56) : r.side.emoji; }
+  return IMG.heroItems[it.id] ? imgEl(IMG.heroItems[it.id], 56) : it.icon;
+}
+
 const DISCLAIMER = "本診断はエンタメ目的であり、医学的・専門的な判定ではありません。";
 const ACCURACY_NOTE = "加工・マスク・強いメイクのお写真は診断の精度が下がることがあります。";
 const HASHTAGS = "#顔診断 #動物顔診断";
@@ -539,7 +567,7 @@ const screens = {
     const rows = ITEMS.map((it, i) => {
       const locked = it.isPremium && !state.premium;
       return `<button class="menu-item" data-item="${i}">
-        <span class="mi-icon">${it.icon}</span>
+        <span class="mi-icon">${menuIconHTML(it)}</span>
         <span style="flex:1;min-width:0">
           <span class="mi-title">${esc(titleOf(it))}<span class="tag ${it.isPremium ? "" : "free"}">${it.isPremium ? (state.premium ? "解放中" : "有料") : "無料"}</span></span><br>
           <span class="mi-sub">${esc(it.subtitle)}</span>
@@ -629,17 +657,25 @@ const screens = {
     // <!-- IMAGE-TODO(Miyabee): 結果メイン画像を差し込む。animal=顔20番+各動物イラスト / type2=醤油・ソース瓶 / % = 各テーマ画像 -->
     let hero, visual = "";
     if (r.kind === "animalMatch") {
-      hero = `
-        <div class="hero-visual" style="font-size:70px;line-height:1.1">${r.animal.emoji}</div>
-        <div style="font-size:26px;font-weight:900;color:#F2762E">${esc(r.animal.nameJa)}</div>
+      // メイン顔(20番)＋動物イラストの合成 → 顔なしなら動物単体 → どちらも無ければ絵文字
+      const aImg = IMG.animals[r.animal.id];
+      const mainVis = IMG.heroFace
+        ? `<div class="hero-visual" style="position:relative;display:inline-block">${imgEl(IMG.heroFace, 128)}${aImg ? `<span style="position:absolute;right:-8px;bottom:-8px;filter:drop-shadow(0 2px 8px rgba(0,0,0,.5))">${imgEl(aImg, 52)}</span>` : ""}</div>`
+        : aImg
+          ? `<div class="hero-visual">${imgEl(aImg, 112)}</div>`
+          : `<div class="hero-visual" style="font-size:70px;line-height:1.1">${r.animal.emoji}</div>`;
+      hero = `${mainVis}
+        <div style="font-size:26px;font-weight:900;color:#FF7DC0">${esc(r.animal.nameJa)}</div>
         <div class="chips">${r.animal.impressionWords.map(w => `<span class="chip">${esc(w)}</span>`).join("")}</div>`;
       visual = ringVisual(r.percent, "マッチ率");
     } else if (r.kind === "type2") {
+      const t2 = shoyuSauceImg(it, r.side);
       hero = `
-        <div class="hero-visual" style="font-size:64px;line-height:1.1">${r.side.emoji}</div>
-        <div style="font-size:26px;font-weight:900;color:#F2762E">${esc(r.side.label)}</div>`;
+        <div class="hero-visual">${t2 ? imgEl(t2, 112) : `<span style="font-size:64px;line-height:1.1">${r.side.emoji}</span>`}</div>
+        <div style="font-size:26px;font-weight:900;color:#FF7DC0">${esc(r.side.label)}</div>`;
     } else { // percentage（5段階）
-      hero = `<div class="hero-visual" style="font-size:56px">${it.icon}</div>`;
+      const pImg = IMG.heroItems[it.id];
+      hero = `<div class="hero-visual">${pImg ? imgEl(pImg, 96) : `<span style="font-size:56px">${it.icon}</span>`}</div>`;
       visual = ringVisual(r.percent, "");
     }
 
@@ -651,7 +687,7 @@ const screens = {
       </div>
       <div class="share-card" id="shareCard">
         <div class="sc-app">🐾 動物顔診断（仮）</div>
-        <div class="sc-emoji">${r.animal ? r.animal.emoji : r.side ? r.side.emoji : it.icon}</div>
+        <div class="sc-emoji">${shareVisualHTML(r)}</div>
         <div class="sc-name">${esc(r.animal ? r.animal.nameJa : r.side ? r.side.label : titleOf(it))}</div>
         <div class="sc-pct">${r.kind === "type2" ? "" : r.percent + "%"}</div>
         <div class="sc-text">${esc(r.text)}</div>
