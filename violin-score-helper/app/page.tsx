@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import Uploader from "@/components/Uploader";
+import Uploader, { type UploadPayload } from "@/components/Uploader";
 import ScoreOverlay from "@/components/ScoreOverlay";
 import Controls from "@/components/Controls";
 import EditPopover from "@/components/EditPopover";
@@ -25,6 +25,7 @@ export default function Home() {
   const [editing, setEditing] = useState<Note | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [warning, setWarning] = useState<string | null>(null);
   const [showTutorial, setShowTutorial] = useState(false);
   const overlayRef = useRef<HTMLDivElement>(null);
 
@@ -38,18 +39,25 @@ export default function Home() {
     [rawAnalysis, mode],
   );
 
-  async function handleUpload(file: File, width: number, height: number, objectUrl: string) {
+  async function handleUpload(payload: UploadPayload) {
     setLoading(true);
     setError(null);
-    setImageUrl(objectUrl);
+    // スキャン品質の警告（撮影写真の疑い等）は解析を止めずに表示
+    setWarning(payload.warnings.length ? payload.warnings.join(" ") : null);
+    // 画像はローカルプレビュー、PDF は認識後にサービス画像へ差し替え
+    setImageUrl(payload.objectUrl);
     try {
       const fd = new FormData();
-      fd.append("image", file);
-      fd.append("width", String(width));
-      fd.append("height", String(height));
+      fd.append("image", payload.file);
+      fd.append("width", String(payload.width));
+      fd.append("height", String(payload.height));
       const res = await fetch("/api/omr", { method: "POST", body: fd });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "解析に失敗しました");
+      // サービスがページ画像を返した場合（主にPDF）はそれを背景に使う
+      if (typeof data.pageImage === "string" && data.pageImage) {
+        setImageUrl(data.pageImage);
+      }
       setRawAnalysis(data as ScoreAnalysis);
     } catch (e) {
       setError(e instanceof Error ? e.message : "解析に失敗しました");
@@ -93,6 +101,14 @@ export default function Home() {
       {error && (
         <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
           {error}
+        </div>
+      )}
+
+      {warning && (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+          ⚠️ {warning}
+          <br />
+          スキャンデータ（傾きなし・白背景・影なし・300dpi以上）でのご利用を推奨します。表示された結果は手動修正できます。
         </div>
       )}
 

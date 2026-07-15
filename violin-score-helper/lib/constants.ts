@@ -70,4 +70,7 @@ export const TEMPO_MIN_BPM = 30;
 export const TEMPO_MAX_BPM = 160;
 
 // ===== OMR =====
-export const OMR_MODEL_DEFAULT = "claude-sonnet-4-5";
+// 楽譜認識は OSS（Audiveris）をコンテナで実行し、MusicXML を返す方式。
+// 外部AI/Vision API は使用しない。サービスURLは環境変数 OMR_SERVICE_URL。
+// 座標換算の調整値は lib/musicXml.ts の CALIBRATION、
+// スキャン品質のしきい値は lib/scanQuality.ts の SCAN_THRESHOLDS に集約。
