@@ -304,7 +304,13 @@ const titleOf = it => DISPLAY_OVERRIDES[it.id]?.title ?? it.title;
      結果メイン(％項目・任意) → IMG.heroItems.menhera = "assets/hero_menhera.png" */
 const IMG = {
   items: {},      // メニュー左アイコン（item id 別）
-  heroItems: {},  // ％項目の結果メイン画像（item id 別）
+  // ％項目の結果メイン画像（先方支給シートから1コマ切り出し）
+  heroItems: {
+    babyface:  "assets/hero_babyface.png",   // 赤ちゃん
+    sm:        "assets/hero_sm.png",          // 病みかわ男子（鎖）
+    menhera:   "assets/hero_menhera.png",     // 病みかわ女子（テディ＋ハート）
+    psychopath:"assets/hero_psychopath.png",  // 病みかわ女子（暗い箱＝ミステリアス）
+  },
   // 動物イラスト（各シートの20番=○○顔タイプの顔を切り出したもの）
   animals: {
     tanuki:"assets/animals/tanuki.png", kitsune:"assets/animals/kitsune.png",
