@@ -32,6 +32,22 @@ class MatchingError(Exception):
     """マッチング操作の業務エラー（ユーザーに見せるメッセージ付き）."""
 
 
+def purge_request(req: Request) -> None:
+    """リクエストを関連データ（エントリー・通知）ごと完全に削除する.
+
+    Postgres では notifications.request_id が FK のため、先に関連行を消さないと
+    削除がエラーになる（履歴削除ボタンの不具合の原因）。
+    """
+    from ..models import Notification
+
+    req.confirmed_entry_id = None
+    db.session.flush()
+    Notification.query.filter_by(request_id=req.id).delete(synchronize_session=False)
+    Entry.query.filter_by(request_id=req.id).delete(synchronize_session=False)
+    db.session.delete(req)
+    db.session.commit()
+
+
 # ─────────────────────────────────────────────────────────────
 # リクエスト作成
 # ─────────────────────────────────────────────────────────────

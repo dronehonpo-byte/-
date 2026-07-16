@@ -19,6 +19,14 @@ def notify(role: str, recipient_id: int, title: str, body: str = "", request_id:
             request_id=request_id,
         )
     )
+    # スマホプッシュ通知（購読済み端末のみ・失敗しても処理は継続）
+    from . import push
+
+    if request_id:
+        url = {"customer": f"/c/request/{request_id}", "driver": f"/d/request/{request_id}"}.get(role, "/admin/")
+    else:
+        url = {"customer": "/c/", "driver": "/d/"}.get(role, "/admin/")
+    push.send(role, recipient_id, title, body, url)
 
 
 def notify_nearby_drivers(req: Request, driver_ids: list[int]) -> None:

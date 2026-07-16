@@ -305,6 +305,20 @@ class Entry(db.Model):
     )
 
 
+class PushSubscription(db.Model):
+    """Web Push の購読情報 — 端末ごとに保存し、通知時に送信する."""
+
+    __tablename__ = "push_subscriptions"
+
+    id = db.Column(db.Integer, primary_key=True)
+    role = db.Column(db.String(16), nullable=False, index=True)      # customer/driver/admin
+    recipient_id = db.Column(db.Integer, nullable=False, index=True)
+    endpoint = db.Column(db.Text, nullable=False, unique=True)
+    p256dh = db.Column(db.String(255), nullable=False)
+    auth = db.Column(db.String(64), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+
+
 class Notification(db.Model):
     """通知 — 要件定義書 第10章. アプリ内通知として記録（Webプッシュは将来拡張）."""
 

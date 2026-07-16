@@ -15,6 +15,11 @@
     車両 {{ r.transmission.value }}/{{ r.handle.label }}　・　提示 {{ r.entries.count() }}件　・
     確定 {% if r.confirmed_entry %}{{ r.confirmed_entry.vendor.name }}（{{ r.confirmed_entry.price | yen }}）{% else %}—{% endif %}
   </div>
+  <form method="post" action="{{ url_for('admin.delete_request', request_id=r.id) }}"
+        onsubmit="return confirm('リクエスト #{{ r.id }} を削除しますか？（エントリー・通知も消えます）')"
+        style="text-align:right; margin-top:8px">
+    <button type="submit" class="btn btn-danger" style="padding:5px 12px; font-size:12px">🗑 削除</button>
+  </form>
 </div>
 {% else %}
 <div class="card center muted">リクエストはまだありません。</div>

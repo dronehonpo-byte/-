@@ -63,7 +63,7 @@ def new_request():
                 "dest_lat": request.form["dest_lat"],
                 "dest_lng": request.form["dest_lng"],
                 "dest_label": request.form.get("dest_label"),
-                "car_type": request.form.get("car_type"),
+                "car_type": (request.form.get("car_type") or "").strip() or None,
                 "transmission": request.form.get("transmission", "AT"),
                 "handle": request.form.get("handle", "right"),
                 "via_count": request.form.get("via_count", 0),
@@ -170,11 +170,7 @@ def delete_request(request_id: int):
     if req.status.is_active:
         flash("進行中の依頼は削除できません。先にキャンセルしてください。", "danger")
         return redirect(url_for("customer.history"))
-    req.confirmed_entry_id = None
-    db.session.flush()
-    Entry.query.filter_by(request_id=req.id).delete(synchronize_session=False)
-    db.session.delete(req)
-    db.session.commit()
+    matching.purge_request(req)
     flash("履歴を削除しました。", "info")
     return redirect(url_for("customer.history"))
 

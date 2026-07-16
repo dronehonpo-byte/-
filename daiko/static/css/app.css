@@ -139,6 +139,8 @@ th { color: var(--muted); font-weight: 700; white-space: nowrap; font-size: 12px
 /* ── 統計グリッド ── */
 .stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
 .stat { background: #fff; border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; box-shadow: var(--shadow-sm); }
+.stat-link { display: block; text-decoration: none; color: inherit; transition: border-color .12s ease, box-shadow .12s ease; }
+.stat-link:hover, .stat-link:active { border-color: var(--green); box-shadow: 0 0 0 3px var(--ring); }
 .stat .n { font-size: 32px; font-weight: 900; letter-spacing: -.04em; line-height: 1.1; color: var(--green-dark); }
 .stat .l { font-size: 12px; color: var(--muted); font-weight: 700; }
 

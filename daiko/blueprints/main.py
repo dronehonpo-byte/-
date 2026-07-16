@@ -47,6 +47,25 @@ def service_worker():
     return resp
 
 
+# ── スマホプッシュ通知（Web Push） ──
+@bp.route("/api/push/public-key")
+def push_public_key():
+    from ..services import push
+
+    return jsonify({"key": push.public_key()})
+
+
+@bp.route("/api/push/subscribe", methods=["POST"])
+def push_subscribe():
+    from ..services import push
+
+    role, rid = _current_role_id()
+    if role is None:
+        return jsonify({"ok": False, "error": "login required"}), 401
+    ok = push.save_subscription(role, rid, request.get_json(silent=True) or {})
+    return jsonify({"ok": ok})
+
+
 # ── アプリ内通知 API（ポーリング） ──
 def _current_role_id():
     if (c := current_customer()) is not None:

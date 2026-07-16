@@ -26,6 +26,7 @@ from ..models import (
     Vendor,
     VendorStatus,
 )
+from ..services import matching
 
 bp = Blueprint("admin", __name__, url_prefix="/admin")
 
@@ -49,6 +50,27 @@ def dashboard():
     }
     recent = Request.query.order_by(Request.created_at.desc()).limit(10).all()
     return render_template("admin/dashboard.html", stats=stats, recent=recent)
+
+
+@bp.route("/request/<int:request_id>/delete", methods=["POST"])
+@admin_required
+def delete_request(request_id: int):
+    """管理者によるリクエスト削除（テストデータ整理用・関連データごと削除）."""
+    req = db.session.get(Request, request_id)
+    if req is None:
+        abort(404)
+    matching.purge_request(req)
+    flash(f"リクエスト #{request_id} を削除しました。", "info")
+    return redirect(request_referrer_or_dashboard())
+
+
+def request_referrer_or_dashboard():
+    from flask import request as _rq
+
+    ref = _rq.referrer or ""
+    if "/admin/matching" in ref:
+        return url_for("admin.matching")
+    return url_for("admin.dashboard")
 
 
 @bp.route("/customers")

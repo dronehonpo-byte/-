@@ -14,11 +14,12 @@
 </head>
 <body>
   {% block appbar %}
+  {# 窓口名は「いま開いているページの種類」で決める（ログイン中の役割より優先） #}
   {% set _p = request.path %}
-  {% if cur_driver or _p == '/driver' or _p.startswith('/d/') or _p.startswith('/auth/driver') or _p.startswith('/auth/vendor') %}
+  {% if _p == '/driver' or _p.startswith('/d/') or _p.startswith('/auth/driver') or _p.startswith('/auth/vendor') %}
     {% set _brand = 'ドライバーの窓口' %}
     {% set _home = url_for('driver.dashboard') if cur_driver else url_for('main.driver_entry') %}
-  {% elif cur_admin or _p == '/staff' or _p.startswith('/admin') or _p.startswith('/auth/admin') %}
+  {% elif _p == '/staff' or _p.startswith('/admin') or _p.startswith('/auth/admin') %}
     {% set _brand = '管理者の窓口' %}
     {% set _home = url_for('admin.dashboard') if cur_admin else url_for('main.staff_entry') %}
   {% else %}

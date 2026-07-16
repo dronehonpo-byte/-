@@ -38,7 +38,7 @@
   {% endif %}
   <div class="small" style="margin-top:8px">🟠 出発：{{ req.origin_label or '—' }}</div>
   <div class="small">🟢 目的：{{ req.dest_label or '—' }}</div>
-  <div class="small muted" style="margin-top:6px">{{ req.car_type }} ／ {{ req.transmission.value }} ／ {{ req.handle.label }} ／ 経由{{ req.via_count }}回 ／ {{ req.time_label }}</div>
+  <div class="small muted" style="margin-top:6px">{{ req.car_type or "車種未入力" }} ／ {{ req.transmission.value }} ／ {{ req.handle.label }} ／ 経由{{ req.via_count }}回 ／ {{ req.time_label }}</div>
 </div>
 
 {% if req.status.is_active %}

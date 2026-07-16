@@ -38,7 +38,7 @@ function render(items) {
       <div class="flex">
         <div>
           <div style="font-weight:700">#${it.id} ${it.origin_label || '出発地'} <span style="font-weight:400">→ ${it.dest_label || ''}</span></div>
-          <div class="small muted">${it.car_type || ''} / ${it.transmission} / ${it.handle} / 経由${it.via_count}回 / ${it.time_label}</div>
+          <div class="small muted">${it.car_type || '車種未入力'} / ${it.transmission} / ${it.handle} / 経由${it.via_count}回 / ${it.time_label}</div>
         </div>
         <div class="small">
           ${it.my_entry ? `<span class="chip chip-info">${it.my_entry === 'accepted' ? '成立' : it.my_entry === 'rejected' ? '不成立' : '提示中'}</span>` : `<span class="chip chip-orange">${it.entry_count}件提示中</span>`}
