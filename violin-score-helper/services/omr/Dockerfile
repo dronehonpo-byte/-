@@ -53,7 +53,7 @@ COPY --from=audiveris-build /opt/audiveris /opt/audiveris
 # 起動スクリプト名（Audiveris / audiveris 等の差）を吸収しつつ、
 # 仮想ディスプレイ(xvfb-run)経由で起動するラッパーを /usr/local/bin/audiveris に作る
 RUN L="$(find /opt/audiveris/bin -maxdepth 1 -type f ! -name '*.bat' | head -1)" && \
-    printf '#!/bin/sh\nexec xvfb-run -a -e /dev/stderr "%s" "$@"\n' "$L" \
+    printf '#!/bin/sh\nexec xvfb-run -a "%s" "$@"\n' "$L" \
       > /usr/local/bin/audiveris && \
     chmod +x /usr/local/bin/audiveris
 
