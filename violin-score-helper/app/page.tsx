@@ -10,6 +10,7 @@ import SaveButtons from "@/components/SaveButtons";
 import Tutorial from "@/components/Tutorial";
 import DebugJson from "@/components/DebugJson";
 import { analyze, applyManualEdit } from "@/lib/pipeline";
+import { parseMusicXml } from "@/lib/musicXml";
 import type { FingeringMode, Note, ScoreAnalysis } from "@/types/score";
 import type { ViolinString } from "@/lib/constants";
 import { STRING_COLOR, ViolinString as VS } from "@/lib/constants";
@@ -47,18 +48,43 @@ export default function Home() {
     // 画像はローカルプレビュー、PDF は認識後にサービス画像へ差し替え
     setImageUrl(payload.objectUrl);
     try {
+      // 認識サービスのURLを取得（サーバー側 env OMR_SERVICE_URL を返すだけの軽いAPI）
+      const cfg = await fetch("/api/omr-url").then((r) => r.json());
+      if (!cfg?.url) throw new Error(cfg?.error || "認識サービスURLの取得に失敗しました。");
+
+      // ★ブラウザから認識サービスへ直接送る（Vercelの60秒制限を回避。重い認識も待てる）
       const fd = new FormData();
-      fd.append("image", payload.file);
-      fd.append("width", String(payload.width));
-      fd.append("height", String(payload.height));
-      const res = await fetch("/api/omr", { method: "POST", body: fd });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "解析に失敗しました");
+      fd.append("file", payload.file, payload.file.name || "score");
+      const res = await fetch(`${cfg.url}/omr`, { method: "POST", body: fd });
+      const raw = await res.text();
+      let data: {
+        musicXml?: string;
+        width?: number;
+        height?: number;
+        pageImage?: string;
+        error?: string;
+      };
+      try {
+        data = JSON.parse(raw);
+      } catch {
+        const snippet = raw.replace(/\s+/g, " ").trim().slice(0, 160);
+        throw new Error(`認識サービスの応答が不正です（HTTP ${res.status}）: ${snippet || "(空)"}`);
+      }
+      if (!res.ok) throw new Error(data.error || `認識に失敗しました（HTTP ${res.status}）`);
+      if (!data.musicXml) throw new Error("MusicXML が返りませんでした。");
+
+      // MusicXML → 音符データへ変換（ブラウザ内・純関数）
+      const imageWidth = data.width || payload.width || 0;
+      const imageHeight = data.height || payload.height || 0;
+      const analysis = parseMusicXml(data.musicXml, { imageWidth, imageHeight });
+      if (analysis.notes.length === 0) {
+        throw new Error("音符を検出できませんでした。スキャン品質（傾き・影・解像度）をご確認ください。");
+      }
       // サービスがページ画像を返した場合（主にPDF）はそれを背景に使う
       if (typeof data.pageImage === "string" && data.pageImage) {
         setImageUrl(data.pageImage);
       }
-      setRawAnalysis(data as ScoreAnalysis);
+      setRawAnalysis(analysis);
     } catch (e) {
       setError(e instanceof Error ? e.message : "解析に失敗しました");
     } finally {

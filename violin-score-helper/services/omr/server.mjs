@@ -30,6 +30,16 @@ const RASTER_DPI = Number(process.env.RASTER_DPI || 300);
 const app = express();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 30 * 1024 * 1024 } });
 
+// CORS: ブラウザから直接呼べるようにする（このサービスは楽譜画像を受けるだけ・秘密情報なし）
+app.use((req, res, next) => {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "POST, GET, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  res.setHeader("Access-Control-Max-Age", "86400");
+  if (req.method === "OPTIONS") return res.status(204).end();
+  next();
+});
+
 /** 子プロセスを実行し、終了を待つ */
 function run(cmd, args, opts = {}) {
   return new Promise((resolve, reject) => {
