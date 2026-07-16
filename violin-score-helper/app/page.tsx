@@ -19,6 +19,7 @@ const TUTORIAL_KEY = "violin-helper-tutorial-seen";
 
 export default function Home() {
   const [rawAnalysis, setRawAnalysis] = useState<ScoreAnalysis | null>(null);
+  const [rawXml, setRawXml] = useState<string | null>(null);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [mode, setMode] = useState<FingeringMode>("auto");
   const [showCyan, setShowCyan] = useState(true);
@@ -72,6 +73,7 @@ export default function Home() {
       }
       if (!res.ok) throw new Error(data.error || `認識に失敗しました（HTTP ${res.status}）`);
       if (!data.musicXml) throw new Error("MusicXML が返りませんでした。");
+      setRawXml(data.musicXml); // デバッグDL・座標較正用に生データを保持
 
       // MusicXML → 音符データへ変換（ブラウザ内・純関数）
       const imageWidth = data.width || payload.width || 0;
@@ -166,7 +168,7 @@ export default function Home() {
             <SaveButtons targetRef={overlayRef} />
           </div>
 
-          <DebugJson analysis={analysis} />
+          <DebugJson analysis={analysis} rawXml={rawXml} />
         </>
       )}
 
