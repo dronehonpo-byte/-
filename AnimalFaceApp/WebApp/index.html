@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>動物顔診断（仮）— Web版</title>
-<!-- build: pages-v5 (UI刷新: ダーク病みかわ・テーマ／画面遷移・ボタン反応・%カウントアップ・ローディング演出・発光背景。機能は不変・画像は未埋め込み) -->
+<!-- build: pages-v6 (先方修正対応: 診断文確定版／醤油ソース・SMを割合%表示／%の振れ幅拡大／もう一度診断／写真選択1本化／全診断開放＋結果前に毎回広告＋480円) -->
 <meta name="description" content="顔写真からあなたの動物顔タイプを診断！写真はブラウザ内でのみ解析され、アップロードされません。">
 <style>
   /* ===== デザイントークン（ダーク病みかわ／ゴシックかわいい） ===== */
@@ -244,60 +244,77 @@ const ANIMALS = [
   { id:"lion", nameJa:"ライオン顔", emoji:"🦁", impressionWords:["リーダー的","堂々"], profile:{faceAspectRatio:0.60,eyeSize:0.80,eyeSlant:0.60,eyeSpacing:0.52,browEyeGap:0.42,browSlant:0.58,noseHeight:0.65,noseWidth:0.65,faceDepth:0.72,faceWidth:0.60,jawSharpness:0.75,cheekFullness:0.42,mouthSize:0.75,verticalBalance:0.55,featureProminence:0.95} },
 ];
 const ANIMAL_TEXTS = {
-  tanuki:"あなたは親しみやすさ満点のたぬき顔タイプ！まわりをほっとさせる優しい雰囲気の持ち主です。",
-  kitsune:"あなたは知的でクールなきつね顔タイプ！大人っぽい雰囲気で一目置かれる存在です。",
-  inu:"あなたは誠実さがにじみ出る犬顔タイプ！話しかけやすい雰囲気でみんなの人気者です。",
-  neko:"あなたはミステリアスな魅力の猫顔タイプ！スッと通った個性が印象に残るタイプです。",
-  usagi:"あなたは癒しの存在うさぎ顔タイプ！ぱっちりした目元でまわりをキュンとさせます。",
-  risu:"あなたは元気いっぱいリス顔タイプ！愛嬌たっぷりの笑顔で場をパッと明るくします。",
-  shika:"あなたは上品で清楚な鹿顔タイプ！すらっとした印象で思わず振り返られる存在です。",
-  ookami:"あなたは頼れるかっこよさの狼顔タイプ！キリッとした目力でまわりを引っ張ります。",
-  hamster:"あなたは愛されキャラのハムスター顔タイプ！ふんわり若々しい印象で癒しをふりまきます。",
-  lion:"あなたは堂々たる存在感のライオン顔タイプ！パーツの華やかさでその場の主役になれます。",
+  tanuki:"丸い目元と柔らかな輪郭が特徴的な顔立ちです！男女ともに人気！！ 周囲からは「優しそう」「親しみやすい」「一緒にいると安心する」と思われることがあるかもしれません。愛嬌と親近感が魅力の顔タイプです。",
+  kitsune:"切れ長の目元とシャープな輪郭が特徴的な顔立ちです。周囲からは「知的」「大人っぽい」「洗練されている」と思われることがあるかもしれません。クールで上品な魅力を持つ顔タイプです。",
+  inu:"優しい目元と柔らかな表情が特徴的な顔立ちです。周囲からは「誠実そう」「話しやすい」「信頼できそう」と思われることがあるかもしれません。安心感を与える愛され顔です。",
+  neko:"印象的な目元と整った顔立ちが特徴的な顔立ちです。周囲からは「ミステリアス」「色気がある」「個性的」と思われることがあるかもしれません。可愛さとクールさを兼ね備えた顔タイプです。",
+  usagi:"丸い目と柔らかな雰囲気が特徴的な顔立ちです。周囲からは「可愛い」「癒やされる」「守ってあげたくなる」と思われることがあるかもしれません。優しく穏やかな魅力を持つ顔タイプです。",
+  risu:"愛嬌のある表情が特徴的な顔立ちです。周囲からは「明るい」「元気」「一緒にいると楽しい」と思われることがあるかもしれません。親しみやすさが魅力の顔タイプです。",
+  shika:"すっきりした輪郭と澄んだ目元が特徴的な顔立ちです。周囲からは「上品」「清楚」「知的」と思われることがあるかもしれません。落ち着いた雰囲気が魅力の顔タイプです。",
+  ookami:"シャープな輪郭と力強い目元が特徴的な顔立ちです。周囲からは「かっこいい」「頼りになりそう」「芯が強そう」と思われることがあるかもしれません。存在感のある顔タイプです。",
+  hamster:"丸い輪郭と幼さを感じる顔立ちが特徴的な顔立ちです。周囲からは「可愛い」「若く見える」「放っておけない」と思われることがあるかもしれません。愛嬌たっぷりの顔タイプです。",
+  lion:"はっきりとした顔立ちが特徴的な顔立ちです。周囲からは「リーダーっぽい」「堂々としている」「自信がありそう」と思われることがあるかもしれません。強い存在感が魅力の顔タイプです。",
 };
-/* 診断6項目。無料=動物顔・童顔／有料=SM・メンヘラ・醤油ソース・サイコパス。
-   結果表示: animalMatch=タイプ+マッチ率 / type2=2択タイプ(段階分けなし) / percentage=%を5段階表示。
-   診断文はプレースホルダ。TODO(Miyabee): 本番文へ差し替え（トーン=エッジ寄りで、ただし断定せず・エンタメ注記は必須）。 */
-const BAND5 = "5段階(0-20/20-40/40-60/60-80/80-100)";
+/* 診断6項目（全て初期から利用可・ロックなし）。診断文＝先方確定版。
+   kind: animalMatch=タイプ+マッチ率 / percentage=単一の%を5段階表示 /
+         dual=表裏の割合%（例 ソース顔度○%／醤油顔度○%、S顔度○%／M顔度○%）。
+   %の振れ幅は percentageScore の PCT_GAIN で拡大。 */
 const ITEMS = [
-  { id:"animal", title:"動物顔診断", subtitle:"あなたはどの動物タイプ？全10種類から判定！", icon:"🐾", isPremium:false, kind:"animalMatch" },
-  { id:"babyface", title:"童顔度診断", subtitle:"あなたの若見え度を5段階でチェック！", icon:"🍼", isPremium:false, kind:"percentage",
-    scoring:{bias:0.60, weights:{faceAspectRatio:-0.20,eyeSize:0.15,cheekFullness:0.15,jawSharpness:-0.10,faceDepth:-0.10,verticalBalance:-0.10}, percentMin:4, percentMax:99},
+  { id:"animal", title:"動物顔診断", subtitle:"あなたはどの動物タイプ？全10種類から判定！", icon:"🐾", kind:"animalMatch" },
+  { id:"babyface", title:"童顔度診断", subtitle:"あなたの若見え度を5段階でチェック！", icon:"🍼", kind:"percentage",
+    scoring:{bias:0.60, weights:{faceAspectRatio:-0.20,eyeSize:0.15,cheekFullness:0.15,jawSharpness:-0.10,faceDepth:-0.10,verticalBalance:-0.10}, percentMin:2, percentMax:99},
     bands:[
-      {min:80,text:"フレッシュな童顔MAX！いつまでも若く見られる、反則級のベビーフェイスです🍼"},
-      {min:60,text:"しっかり童顔。実年齢より下に見られること、多いのでは？🌱"},
-      {min:40,text:"童顔と大人顔のいいとこ取り。かわいさと落ち着きの二刀流です✨"},
-      {min:20,text:"やや大人顔。頼れる落ち着いた雰囲気で一目置かれるタイプです🕶️"},
-      {min:0,text:"凛とした大人顔。余裕と色気のある、憧れられる顔立ちです🌹"}] },
-  { id:"sm", title:"SM度診断", subtitle:"あなたはドS？それともドM？5段階で判定！", icon:"⛓️", isPremium:true, kind:"percentage",
-    scoring:{bias:0.23, weights:{jawSharpness:0.30,eyeSlant:0.22,browSlant:0.12,featureProminence:0.12,cheekFullness:-0.14,eyeSize:-0.08}, percentMin:3, percentMax:99},
+      {min:80,text:"赤ちゃんのような愛らしさのある ガチ童顔！！ 丸みのある輪郭と大きな目元から、あどけなさが強く表れています。何歳になっても若く見られやすい、圧倒的な可愛らしさが魅力です。"},
+      {min:60,text:"あどけない可愛さが残る 激童顔！！ 丸い目元や柔らかな表情が印象的で、幼さを感じさせる顔立ちです。実年齢を伝えると、驚かれることも多そうな若々しい雰囲気があります。"},
+      {min:40,text:"親しみやすく若々しい 王道童顔！！ 丸みのある目元や柔らかな輪郭から、年齢より少し若く見えそうな印象があります。明るく話しかけやすい、自然な可愛らしさを持つ顔立ちです。"},
+      {min:20,text:"ほんのり若々しさのある プチ童顔！！ 大人っぽい顔立ちの中に、柔らかな目元や親しみやすさを感じる印象があります。表情によって、落ち着いても可愛らしくも見えやすいタイプです。"},
+      {min:0,text:"大人っぽさが際立つ 超・大人顔！！ シャープな輪郭や落ち着いた表情が印象的な顔立ちです。年齢よりもしっかりして見えやすく、知的で頼れそうな雰囲気があります。"}] },
+  { id:"menhera", title:"メンヘラ度診断", subtitle:"あなたの隠れメンヘラ度を5段階で数値化！", icon:"💔", kind:"percentage",
+    scoring:{bias:0.53, weights:{eyeSize:0.26,eyeSlant:-0.16,mouthSize:-0.12,browEyeGap:-0.12,cheekFullness:0.08}, percentMin:2, percentMax:99},
     bands:[
-      {min:80,text:"まぎれもないドS。相手を手のひらで転がすタイプの雰囲気が全開です👑"},
-      {min:60,text:"S寄り。ぐいぐいリードして相手をドキッとさせる空気感があります😏"},
-      {min:40,text:"スイッチ切替型。場面によってSにもMにも化ける、読めない魅力です🔥"},
-      {min:20,text:"M寄り。甘え上手で、構われるほど可愛くなるタイプの雰囲気です🥺"},
-      {min:0,text:"まぎれもないドM。尽くして愛されて、ぜんぶ許しちゃうやさしさが漂います🎀"}] },
-  { id:"menhera", title:"メンヘラ度診断", subtitle:"あなたの隠れメンヘラ度を5段階で数値化！", icon:"💔", isPremium:true, kind:"percentage",
-    scoring:{bias:0.53, weights:{eyeSize:0.26,eyeSlant:-0.16,mouthSize:-0.12,browEyeGap:-0.12,cheekFullness:0.08}, percentMin:3, percentMax:99},
+      {min:80,text:"深い愛情が顔からにじみ出ている ガチメンヘラ顔！！ 強く惹きつける表情に、好きな人を簡単には手放さない迫力があります。一度好きになると止まらない、圧倒的な愛情の深さが表れています。"},
+      {min:60,text:"好きな人への想いがあふれる 激メンヘラ顔！！ 印象的な目元から、恋愛では相手を深く想い続けそうな印象があります。好きになった相手には、まっすぐ全力で愛情を注ぎそうです。"},
+      {min:40,text:"放っておけない愛嬌のある メンヘラ顔！！ 感情が表情に表れやすく、好きな気持ちを隠しきれない顔立ちです。一途さと愛嬌をあわせ持つ、どこか気になる存在でしょう。"},
+      {min:20,text:"ちょっぴり甘えん坊な プチメンヘラ顔！！ 柔らかな目元から、好きな人には素直に甘えそうな印象があります。親しくなるほど、可愛らしい寂しがり屋な一面が見えてきそうです。"},
+      {min:0,text:"あっさりした雰囲気の 超サバサバ顔！！ 落ち着いた表情で、恋愛に振り回されにくそうな顔立ちです。自分のペースを大切にする、さっぱりとした魅力が表れています。"}] },
+  { id:"shoyu_sauce", title:"醤油/ソース顔診断", subtitle:"あなたはソース顔？醤油顔？割合で判定！", icon:"🥢", kind:"dual",
+    dual:{ high:{label:"ソース顔度"}, low:{label:"醤油顔度"} },
+    scoring:{bias:0.19, weights:{featureProminence:0.35,noseHeight:0.15,noseWidth:0.10,eyeSize:0.10,faceAspectRatio:-0.08}, percentMin:1, percentMax:99},
+    highBands:[
+      {min:80,text:"圧倒的な存在感を放つ 濃厚ソース顔！！ ひとつひとつのパーツがはっきりしており、遠くからでも目を引きやすい顔立ちです。華やかさと力強さをあわせ持つ、印象に残る存在感が表れています。"},
+      {min:60,text:"目鼻立ちがくっきりした 濃いめソース顔！！ 印象的な目元や立体感のあるパーツから、華やかで大人っぽい印象があります。表情がはっきり伝わりやすく、人の記憶に残りやすい顔立ちです。"},
+      {min:40,text:"バランスよく華やかな 王道ソース顔！！ 目鼻立ちにほどよい存在感があり、全体のバランスが整った顔立ちです。写真や場面によって印象が変わりやすく、自然と目を引く魅力があります。"},
+      {min:20,text:"ほんのり華やかさのある プチソース顔！！ すっきりした顔立ちの中に、目元や眉の印象がほどよく残るような雰囲気があります。角度や表情によって、爽やかにも華やかにも見えやすいタイプです。"},
+      {min:0,text:"すっきり爽やかな 超あっさり顔！！ 目元や輪郭が穏やかで、全体的に軽やかな顔立ちです。飾りすぎない自然な雰囲気と、親しみやすさが表れています。"}],
+    lowBands:[
+      {min:80,text:"洗練された爽やかさが光る 純正醤油顔！！ すっきりとした目元と整った輪郭が特徴的な、あっさりとした顔立ちです。飾りすぎない自然な美しさと、清潔感のある雰囲気が表れています。"},
+      {min:60,text:"すっきり涼しげな 濃いめ醤油顔！！ シャープな輪郭や穏やかな目元から、知的で落ち着いた印象があります。派手すぎないのに印象に残る、洗練された魅力を持つ顔立ちです。"},
+      {min:40,text:"自然体で親しみやすい 王道醤油顔！！ 濃すぎず薄すぎない、全体のバランスが整った顔立ちです。落ち着きと爽やかさがあり、初対面でも話しかけやすそうな印象があります。"},
+      {min:20,text:"華やかさの中に爽やかさのある プチ醤油顔！！ ほどよく印象的なパーツを持ちながら、全体にはすっきりとした雰囲気があります。表情や角度によって、大人っぽくも親しみやすくも見えやすいタイプです。"},
+      {min:0,text:"華やかさが際立つ 超くっきり顔！！ 目元や鼻筋に存在感があり、全体的にはっきりとした顔立ちです。表情が伝わりやすく、自然と人の目を引く魅力が表れています。"}] },
+  { id:"sm", title:"SM度診断", subtitle:"あなたはS？M？割合で判定！", icon:"⛓️", kind:"dual",
+    dual:{ high:{label:"S顔度"}, low:{label:"M顔度"} },
+    scoring:{bias:0.23, weights:{jawSharpness:0.30,eyeSlant:0.22,browSlant:0.12,featureProminence:0.12,cheekFullness:-0.14,eyeSize:-0.08}, percentMin:1, percentMax:99},
+    highBands:[
+      {min:80,text:"圧倒的な迫力を放つ ガチS顔！！ 自信に満ちた表情と、相手を見透かすような視線が特徴的です。自然と周囲を引っ張る、強い存在感が顔全体に表れています。"},
+      {min:60,text:"鋭い視線が印象的な ドS顔！！ はっきりとした目元から、相手の反応を楽しみそうな印象があります。強気で堂々とした雰囲気があり、簡単には押されなさそうです。"},
+      {min:40,text:"余裕のある表情が魅力的な 王道S顔！！ 落ち着いた目元や表情から、自分のペースを崩しにくそうな雰囲気があります。自然と主導権を握りやすい、頼もしさのある顔立ちです。"},
+      {min:20,text:"少し強気な一面を秘めた プチS顔！！ 柔らかさの中に、意志の強さを感じさせるような印象があります。普段は穏やかでも、ここぞという場面では自分の意見をはっきり言えそうです。"},
+      {min:0,text:"優しさと柔らかさのある ミニS顔！！ 穏やかな目元や控えめな表情が印象的な顔立ちです。相手を立てるのが上手そうな、親しみやすい雰囲気が表れています。"}],
+    lowBands:[
+      {min:80,text:"受け身な魅力があふれる ガチM顔！！ 柔らかな表情と無防備な雰囲気が、顔全体に強く表れています。相手に委ねることを楽しめそうな、圧倒的な愛され感のある顔立ちです。"},
+      {min:60,text:"つい構いたくなる ドM顔！！ 控えめな表情や優しい目元から、相手に尽くしそうな印象があります。少し困ったような表情も魅力になりやすく、自然と守ってあげたくなるタイプです。"},
+      {min:40,text:"放っておけない可愛さのある 王道M顔！！ 穏やかな目元や表情から、優しく受け止めてくれそうな雰囲気があります。相手を安心させる柔らかさと、親しみやすさを持つ顔立ちです。"},
+      {min:20,text:"少し控えめな一面を持つ プチM顔！！ 柔らかな表情から、相手に合わせるのが上手そうな印象があります。普段はしっかりしていても、好きな人の前では素直になりやすそうです。"},
+      {min:0,text:"堂々とした雰囲気の ミニM顔！！ 自信を感じさせる目元と、はっきりした表情が印象的です。自然と主導権を握りそうな、頼もしさのある顔立ちです。"}] },
+  { id:"psychopath", title:"サイコパス度診断", subtitle:"あなたの隠れサイコパス度を5段階で診断！", icon:"🖤", kind:"percentage",
+    scoring:{bias:0.33, weights:{featureProminence:0.24,eyeSlant:0.16,jawSharpness:0.18,cheekFullness:-0.16,eyeSize:-0.08}, percentMin:2, percentMax:99},
     bands:[
-      {min:80,text:"重ためメンヘラの気配MAX。愛が深すぎて、たまに束縛モンスター化するかも💣"},
-      {min:60,text:"隠れメンヘラ度high。普段はクールでも、好きになると一気に沼るタイプ🕳️"},
-      {min:40,text:"ほどよくメンヘラ。かまってほしい夜と、放っておいてほしい夜の落差が魅力🌙"},
-      {min:20,text:"メンヘラ控えめ。感情に振り回されず、恋も自分もちゃんと保てる安定型です🌿"},
-      {min:0,text:"メンヘラ耐性つよつよ。むしろ相手のメンヘラを受け止める側のどっしり感です🛡️"}] },
-  { id:"shoyu_sauce", title:"醤油顔/ソース顔診断", subtitle:"あなたはあっさり派？こってり派？", icon:"🥢", isPremium:true, kind:"type2",
-    scoring:{bias:0.19, weights:{featureProminence:0.35,noseHeight:0.15,noseWidth:0.10,eyeSize:0.10,faceAspectRatio:-0.08}, percentMin:5, percentMax:95},
-    outcomes:{
-      high:{label:"ソース顔", emoji:"🍛", text:"しっかりソース顔！パーツの存在感が際立つ、華やかで印象的なお顔立ちです🍛"},
-      low:{label:"醤油顔", emoji:"🍶", text:"きれいな醤油顔！あっさり整った、飽きのこない正統派の和風フェイスです🍶"} } },
-  { id:"psychopath", title:"サイコパス度診断", subtitle:"あなたの隠れサイコパス度を5段階で診断！", icon:"🖤", isPremium:true, kind:"percentage",
-    scoring:{bias:0.33, weights:{featureProminence:0.24,eyeSlant:0.16,jawSharpness:0.18,cheekFullness:-0.16,eyeSize:-0.08}, percentMin:3, percentMax:99},
-    bands:[
-      {min:80,text:"サイコパス指数トップクラス。何を考えてるか読めない、ゾクッとするカリスマ性😈"},
-      {min:60,text:"隠れサイコパス。感情に流されず淡々と勝ちにいく、静かな支配者オーラ🖤"},
-      {min:40,text:"ときどきサイコパス。優しさとドライさを使い分ける、二面性の魅力です🎭"},
-      {min:20,text:"サイコパス控えめ。情に厚くて、まわりの気持ちに気づける共感タイプ💗"},
-      {min:0,text:"サイコパス度ほぼゼロ。裏表のない素直さで、みんなに安心感を与えるタイプ😊"}] },
+      {min:80,text:"すべてを見透かすような ガチサイコパス顔！！ 強く引き込まれる視線と、感情を簡単には見せない表情が特徴的です。圧倒的な冷静さとミステリアスな存在感が、顔全体に表れています。"},
+      {min:60,text:"鋭い視線を持つ 激サイコパス顔！！ 印象的な目元から、周囲を冷静に観察していそうな雰囲気を感じます。落ち着きの中に鋭さがあり、自然と緊張感を与えることもありそうです。"},
+      {min:40,text:"本心が読めない サイコパス顔！！ 静かな目元や表情から、何を考えているのか簡単には読めないような印象があります。柔らかさとミステリアスさをあわせ持つ、どこか気になる顔立ちです。"},
+      {min:20,text:"冷静さを秘めた プチサイコパス顔！！ 落ち着いた表情から、感情に流されず冷静に考えそうな印象があります。普段は親しみやすくても、ふとした瞬間にクールな一面が見えそうです。"},
+      {min:0,text:"優しさがにじみ出る 超ピュア顔！！ 柔らかな目元や表情から、穏やかで親しみやすい顔立ちです。警戒心を与えにくく、安心感のある雰囲気が表れています。"}] },
 ];
 /* 審査対策トグル: 内部id(sm/menhera/psychopath)は固定のまま、"表示名だけ"を差し替え可能。
    App Storeで名称が問題になったら、コードやスコアリングを触らずここを有効化して再申請できる。
@@ -338,13 +355,22 @@ const IMG = {
 };
 const imgEl = (src, size) => `<img src="${src}" alt="" loading="lazy" style="width:${size}px;height:${size}px;object-fit:contain;display:inline-block;vertical-align:middle;border-radius:${Math.max(6, Math.round(size*0.16))}px">`;
 const menuIconHTML = it => IMG.items[it.id] ? imgEl(IMG.items[it.id], 30) : it.icon;
-// 醤油/ソースのどちら側かを判定して対応画像を返す
-const shoyuSauceImg = (item, side) => (item.outcomes && item.outcomes.high === side) ? IMG.sauce : IMG.shoyu;
+// dual（醤油ソース・SM）の優勢側に対応する画像。醤油ソースは瓶2種、SMは暫定共通。
+function dualImg(item, isHigh) {
+  if (item.id === "shoyu_sauce") return isHigh ? IMG.sauce : IMG.shoyu;
+  return IMG.heroItems[item.id] ?? null; // sm 等は共通画像
+}
+// 結果の主表示名（動物名 / dualの優勢ラベル / 項目名）
+function resultName(r) {
+  if (r.animal) return r.animal.nameJa;
+  if (r.kind === "dual") return r.isHigh ? r.item.dual.high.label : r.item.dual.low.label;
+  return titleOf(r.item);
+}
 // シェアカード用のビジュアル（画像 or 絵文字）
 function shareVisualHTML(r) {
   const it = r.item;
   if (r.animal) return IMG.animals[r.animal.id] ? imgEl(IMG.animals[r.animal.id], 56) : r.animal.emoji;
-  if (r.side)   { const s = shoyuSauceImg(it, r.side); return s ? imgEl(s, 56) : r.side.emoji; }
+  if (r.kind === "dual") { const s = dualImg(it, r.isHigh); return s ? imgEl(s, 56) : it.icon; }
   return IMG.heroItems[it.id] ? imgEl(IMG.heroItems[it.id], 56) : it.icon;
 }
 
@@ -402,9 +428,13 @@ function matchAnimal(f) {
   const pct = Math.round(MATCH.percentMin + t * (MATCH.percentMax - MATCH.percentMin));
   return { animal: best.animal, percent: Math.min(Math.max(pct, MATCH.percentMin), MATCH.percentMax) };
 }
+// 結果の振れ幅を広げるゲイン（実顔は特徴差が小さく50前後に集中しがちなので中央から拡大）。
+// この定数ひとつで全%項目の振れ幅を調整可能（大きいほどメリハリ・要実機再確認）。
+const PCT_GAIN = 2.6;
 function percentageScore(f, spec) {
   let s = spec.bias;
   for (const [k, w] of Object.entries(spec.weights)) s += w * (f[k] ?? 0);
+  s = 0.5 + (s - 0.5) * PCT_GAIN;   // 中央(50%)を基準に振れ幅を拡大
   return Math.min(Math.max(Math.round(s * 100), spec.percentMin), spec.percentMax);
 }
 function bandText(pct, bands) {
@@ -413,15 +443,17 @@ function bandText(pct, bands) {
 function diagnose(item, f) {
   if (item.kind === "animalMatch") {
     const m = matchAnimal(f);
-    return { item, kind: "animalMatch", percent: m.percent, animal: m.animal, side: null, text: ANIMAL_TEXTS[m.animal.id] };
+    return { item, kind: "animalMatch", percent: m.percent, animal: m.animal, text: ANIMAL_TEXTS[m.animal.id] };
   }
-  const pct = percentageScore(f, item.scoring);
-  if (item.kind === "type2") {
-    // 段階分けなし: スコアで2択のどちらかに振り分け、そのタイプ文だけ表示（%は出さない）
-    const side = pct >= 50 ? item.outcomes.high : item.outcomes.low;
-    return { item, kind: "type2", percent: pct, animal: null, side, text: side.text };
+  const pct = percentageScore(f, item.scoring);  // high側の割合（例: ソース度・S度）
+  if (item.kind === "dual") {
+    // 表裏の割合%。優勢側の5段階文を表示（ソース/S が high、醤油/M が low）
+    const highPct = pct, lowPct = 100 - pct, isHigh = highPct >= 50;
+    const domPct = isHigh ? highPct : lowPct;
+    const text = bandText(domPct, isHigh ? item.highBands : item.lowBands);
+    return { item, kind: "dual", percent: domPct, highPct, lowPct, isHigh, animal: null, text };
   }
-  return { item, kind: "percentage", percent: pct, animal: null, side: null, text: bandText(pct, item.bands) };
+  return { item, kind: "percentage", percent: pct, animal: null, text: bandText(pct, item.bands) };
 }
 
 /* ---- 顔解析: MediaPipe FaceLandmarker（VisionFaceAnalysisProvider.swift 相当） ---- */
@@ -561,7 +593,7 @@ const esc = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">"
 
 function syncChrome() {
   const badge = document.getElementById("planBadge");
-  badge.textContent = state.premium ? "プレミアム✨" : "無料プラン";
+  badge.textContent = state.premium ? "広告なし✨" : "無料プラン";
   badge.className = "plan" + (state.premium ? " premium" : "");
   document.getElementById("bannerAd").style.display = state.premium ? "none" : "flex";
 }
@@ -590,21 +622,20 @@ function ringVisual(percent, cap) {
 const screens = {
   home() {
     const strip = state.premium ? "" :
-      `<button class="premium-strip" data-act="paywall-menu">✨ プレミアムプラン — 全診断解放・広告なし（月額200円・モック）</button>`;
-    const rows = ITEMS.map((it, i) => {
-      const locked = it.isPremium && !state.premium;
-      return `<button class="menu-item" data-item="${i}">
+      `<button class="premium-strip" data-act="paywall-menu">✨ 広告なしプラン — 診断結果を広告なしで見る（月額480円・モック）</button>`;
+    const rows = ITEMS.map((it, i) =>
+      `<button class="menu-item" data-item="${i}">
         <span class="mi-icon">${menuIconHTML(it)}</span>
         <span style="flex:1;min-width:0">
-          <span class="mi-title">${esc(titleOf(it))}<span class="tag ${it.isPremium ? "" : "free"}">${it.isPremium ? (state.premium ? "解放中" : "有料") : "無料"}</span></span><br>
+          <span class="mi-title">${esc(titleOf(it))}</span><br>
           <span class="mi-sub">${esc(it.subtitle)}</span>
         </span>
-        <span class="lock">${locked ? "🔒" : "›"}</span>
-      </button>`;
-    }).join("");
+        <span class="lock">›</span>
+      </button>`
+    ).join("");
     body.innerHTML = strip + rows + `
-      <p class="note">写真はブラウザの中だけで解析され、診断後すぐに破棄されます。<br>
-      サーバーへのアップロードは一切ありません。<br>${esc(DISCLAIMER)}</p>`;
+      <p class="note">すべての診断が無料でできます（無料は結果表示の前に広告あり）。<br>
+      写真はブラウザ内でのみ解析され、診断後すぐ破棄・送信されません。<br>${esc(DISCLAIMER)}</p>`;
   },
 
   capture() {
@@ -624,13 +655,10 @@ const screens = {
         </ul>
         <p style="font-size:11px;color:#9A8468;margin:8px 0 0">${esc(ACCURACY_NOTE)}</p>
       </div>
-      <input type="file" accept="image/*" capture="user" class="photo-input" id="cameraInput">
-      <input type="file" accept="image/*" class="photo-input" id="albumInput">
-      <button class="btn primary" data-act="camera">📸 カメラで撮影する</button>
-      <button class="btn soft" data-act="album">🖼 アルバムから選ぶ</button>
-      <p class="note">写真は端末（ブラウザ）内でのみ解析。送信・保存されません。</p>`;
-    document.getElementById("cameraInput").addEventListener("change", onPhotoPicked);
-    document.getElementById("albumInput").addEventListener("change", onPhotoPicked);
+      <input type="file" accept="image/*" class="photo-input" id="photoInput">
+      <button class="btn primary" data-act="pick">📸 写真を選んで診断する</button>
+      <p class="note">タップすると「カメラで撮影」か「アルバムから選ぶ」を選べます。<br>写真は端末内でのみ解析。送信・保存されません。</p>`;
+    document.getElementById("photoInput").addEventListener("change", onPhotoPicked);
   },
 
   loading() {
@@ -680,8 +708,7 @@ const screens = {
 
   result() {
     const r = state.result, it = r.item;
-    // メインビジュアル: animalMatch/type2 は絵文字（※画像は後日: 動物は20番の顔をメイン＋周囲に各動物を配置予定）
-    // <!-- IMAGE-TODO(Miyabee): 結果メイン画像を差し込む。animal=顔20番+各動物イラスト / type2=醤油・ソース瓶 / % = 各テーマ画像 -->
+    // メインビジュアル: 画像があれば画像、無ければ絵文字。5段階ごとの画像差し替えは今後対応予定。
     let hero, visual = "";
     if (r.kind === "animalMatch") {
       // メイン顔(20番)＋動物イラストの合成 → 顔なしなら動物単体 → どちらも無ければ絵文字
@@ -695,11 +722,22 @@ const screens = {
         <div style="font-size:26px;font-weight:900;color:#FF7DC0">${esc(r.animal.nameJa)}</div>
         <div class="chips">${r.animal.impressionWords.map(w => `<span class="chip">${esc(w)}</span>`).join("")}</div>`;
       visual = ringVisual(r.percent, "マッチ率");
-    } else if (r.kind === "type2") {
-      const t2 = shoyuSauceImg(it, r.side);
+    } else if (r.kind === "dual") {
+      // 表裏の割合を両方表示（優勢側を大きく）＋左右比のバー
+      const img = dualImg(it, r.isHigh);
+      const big = r.isHigh ? { l: it.dual.high.label, p: r.highPct } : { l: it.dual.low.label, p: r.lowPct };
+      const sub = r.isHigh ? { l: it.dual.low.label, p: r.lowPct } : { l: it.dual.high.label, p: r.highPct };
       hero = `
-        <div class="hero-visual">${t2 ? imgEl(t2, 112) : `<span style="font-size:64px;line-height:1.1">${r.side.emoji}</span>`}</div>
-        <div style="font-size:26px;font-weight:900;color:#FF7DC0">${esc(r.side.label)}</div>`;
+        <div class="hero-visual">${img ? imgEl(img, 110) : `<span style="font-size:56px">${it.icon}</span>`}</div>
+        <div style="margin-top:8px;font-size:25px;font-weight:900;color:#FF7DC0;font-variant-numeric:tabular-nums">${esc(big.l)} ${big.p}%</div>
+        <div style="font-size:15px;font-weight:800;color:var(--text-dim);font-variant-numeric:tabular-nums">${esc(sub.l)} ${sub.p}%</div>
+        <div style="height:12px;border-radius:999px;overflow:hidden;background:rgba(255,130,205,.16);margin:12px 18px 4px">
+          <div style="height:100%;width:${r.highPct}%;background:linear-gradient(90deg,#FF5DA2,#C64BFF)"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:11px;font-weight:800;color:var(--text-mute);margin:0 18px">
+          <span>${esc(it.dual.high.label)}</span><span>${esc(it.dual.low.label)}</span>
+        </div>`;
+      visual = "";
     } else { // percentage（5段階）
       const pImg = IMG.heroItems[it.id];
       hero = `<div class="hero-visual">${pImg ? imgEl(pImg, 96) : `<span style="font-size:56px">${it.icon}</span>`}</div>`;
@@ -715,13 +753,14 @@ const screens = {
       <div class="share-card" id="shareCard">
         <div class="sc-app">🐾 動物顔診断（仮）</div>
         <div class="sc-emoji">${shareVisualHTML(r)}</div>
-        <div class="sc-name">${esc(r.animal ? r.animal.nameJa : r.side ? r.side.label : titleOf(it))}</div>
-        <div class="sc-pct">${r.kind === "type2" ? "" : r.percent + "%"}</div>
+        <div class="sc-name">${esc(resultName(r))}</div>
+        <div class="sc-pct">${r.percent}%</div>
         <div class="sc-text">${esc(r.text)}</div>
         <div class="sc-tags">${esc(HASHTAGS)}${r.animal ? " #" + esc(r.animal.nameJa) : ""}</div>
       </div>
       <button class="btn primary" data-act="share">📤 結果をシェアする</button>
-      <button class="btn soft" data-go="home">ほかの診断もしてみる</button>
+      <button class="btn gold" data-act="again">🔄 同じ診断をもう一度</button>
+      <button class="btn soft" data-go="home">ほかの診断を選ぶ</button>
       <p class="note">${esc(DISCLAIMER)}<br>${esc(ACCURACY_NOTE)}</p>`;
     requestAnimationFrame(() => requestAnimationFrame(() => {
       const bar = document.getElementById("ringBar");
@@ -734,14 +773,14 @@ const screens = {
   paywall() {
     body.innerHTML = navrow(state.paywallCtx === "adSkip" ? "adgate" : "home") + `
       <div style="text-align:center;font-size:46px;margin:4px 0">✨</div>
-      <div style="text-align:center;font-size:20px;font-weight:900">プレミアムプラン</div>
+      <div style="text-align:center;font-size:20px;font-weight:900">広告なしプラン</div>
       <div class="card" style="margin-top:12px">
-        <p style="margin:4px 0;font-weight:700">🔓 有料診断4種類がぜんぶ解放</p>
-        <p style="margin:4px 0;font-weight:700">🚫 広告が完全に非表示に</p>
-        <p style="margin:4px 0;font-weight:700">♾️ 診断回数は無制限</p>
+        <p style="margin:4px 0;font-weight:700">✅ 診断は最初から全部使える</p>
+        <p style="margin:4px 0;font-weight:700">🚫 結果表示前の広告が不要に</p>
+        <p style="margin:4px 0;font-weight:700">♾️ 何回でもサクサク診断</p>
       </div>
-      <div style="text-align:center;font-size:18px;font-weight:900;margin:4px 0">¥200 / 月</div>
-      <button class="btn primary" data-act="purchase">プレミアムをはじめる（モック購入）</button>
+      <div style="text-align:center;font-size:18px;font-weight:900;margin:4px 0">¥480 / 月</div>
+      <button class="btn primary" data-act="purchase">広告なしにする（モック購入）</button>
       <button class="btn soft" data-go="${state.paywallCtx === "adSkip" ? "adgate" : "home"}">今回はやめておく</button>
       <p class="note">Web版の課金はモックです。iOSアプリでは StoreKit 2 を使用し、
         Transaction.currentEntitlements を単一の真実源として管理。復元購入は設定画面から。<br>
@@ -805,9 +844,9 @@ async function onPhotoPicked(e) {
     }
     state.features = features;
     state.result = diagnose(state.item, features);
-    const secondOrLater = state.count + 1 >= 2;
     state.count++;
-    go(!state.premium && secondOrLater ? "adgate" : "result");
+    // 無料は毎回、結果表示の前に広告。課金者は広告なしで即結果。
+    go(!state.premium ? "adgate" : "result");
   } catch (err) {
     console.error(err);
     go("faceError", "解析エンジンの読み込みに失敗しました。通信環境をご確認のうえ、もう一度お試しください。");
@@ -820,7 +859,7 @@ async function onPhotoPicked(e) {
 async function shareResult() {
   const r = state.result;
   const label = r.kind === "animalMatch" ? `${r.animal.nameJa}（マッチ率${r.percent}%）`
-    : r.kind === "type2" ? `${r.side.label}` : `${r.percent}%`;
+    : r.kind === "dual" ? `${resultName(r)} ${r.percent}%` : `${r.percent}%`;
   const text = `私は「${titleOf(r.item)}」で ${label} でした！ あなたも診断してみて👀\n${HASHTAGS}${r.animal ? " #" + r.animal.nameJa : ""}\n${location.href}`;
   try {
     if (navigator.share) { await navigator.share({ text }); return; }
@@ -835,14 +874,14 @@ document.addEventListener("click", e => {
   if (!t) return;
   if (t.dataset.go) { go(t.dataset.go); return; }
   if (t.dataset.item !== undefined) {
-    const it = ITEMS[Number(t.dataset.item)];
-    if (it.isPremium && !state.premium) { state.pendingItem = it; state.paywallCtx = "lockedItem"; go("paywall"); }
-    else { state.item = it; go("capture"); }
+    // 全診断オープン（ロックなし）。タップ→撮影へ
+    state.item = ITEMS[Number(t.dataset.item)];
+    go("capture");
     return;
   }
   switch (t.dataset.act) {
-    case "camera": document.getElementById("cameraInput").click(); break;
-    case "album": document.getElementById("albumInput").click(); break;
+    case "pick": document.getElementById("photoInput").click(); break;
+    case "again": go("capture"); break;            // 同じ診断をもう一度
     case "retry": go("capture"); break;
     case "watch-ad": go("interstitial"); break;
     case "close-ad": go("result"); break;
@@ -850,9 +889,7 @@ document.addEventListener("click", e => {
     case "paywall-adskip": state.paywallCtx = "adSkip"; go("paywall"); break;
     case "purchase":
       state.premium = true; syncChrome();
-      if (state.paywallCtx === "lockedItem" && state.pendingItem) { state.item = state.pendingItem; state.pendingItem = null; go("capture"); }
-      else if (state.paywallCtx === "adSkip") go("result");
-      else go("home");
+      if (state.paywallCtx === "adSkip") go("result"); else go("home");
       break;
     case "share": shareResult(); break;
   }
