@@ -34,11 +34,15 @@ RUN npm install --omit=dev --no-audit --no-fund
 # ---- Stage 3: 実行イメージ ----
 # 実行も Java 25 が必要（JDKイメージを流用。25-jre-jammy が無い環境でも確実にpullできる）
 FROM eclipse-temurin:25-jdk-jammy AS runtime
-# 認識に必要なネイティブ依存: Tesseract(OCR), poppler(PDF→PNG), フォント
+# 認識に必要なネイティブ依存: Tesseract(OCR), poppler(PDF→PNG), フォント,
+# GTK/OpenGL（Audiverisはバッチ実行でも GTK/JavaFX を初期化するため必要）,
+# xvfb（ディスプレイ無し環境で GUI 初期化を通すための仮想ディスプレイ）
 RUN apt-get update && apt-get install -y --no-install-recommends \
       tesseract-ocr tesseract-ocr-eng \
       poppler-utils \
       fontconfig libfreetype6 \
+      libgtk-3-0 libgl1 libxtst6 \
+      xvfb xauth \
     && rm -rf /var/lib/apt/lists/*
 
 # Node ランタイム（バイナリのみ流用。npm は不要）
@@ -46,9 +50,12 @@ COPY --from=node:20-bookworm-slim /usr/local/bin/node /usr/local/bin/node
 
 # Audiveris 本体
 COPY --from=audiveris-build /opt/audiveris /opt/audiveris
-# 起動スクリプト名（Audiveris / audiveris 等の差）を吸収して固定パスへ
-RUN ln -sf "$(find /opt/audiveris/bin -maxdepth 1 -type f ! -name '*.bat' | head -1)" \
-      /usr/local/bin/audiveris
+# 起動スクリプト名（Audiveris / audiveris 等の差）を吸収しつつ、
+# 仮想ディスプレイ(xvfb-run)経由で起動するラッパーを /usr/local/bin/audiveris に作る
+RUN L="$(find /opt/audiveris/bin -maxdepth 1 -type f ! -name '*.bat' | head -1)" && \
+    printf '#!/bin/sh\nexec xvfb-run -a -e /dev/stderr "%s" "$@"\n' "$L" \
+      > /usr/local/bin/audiveris && \
+    chmod +x /usr/local/bin/audiveris
 
 WORKDIR /app
 COPY --from=node-deps /app/node_modules ./node_modules
