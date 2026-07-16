@@ -12,7 +12,8 @@
 # =====================================================================
 
 # ---- Stage 1: Audiveris を source からビルド ----
-FROM eclipse-temurin:21-jdk-jammy AS audiveris-build
+# Audiveris master は Java 25 でのコンパイルを要求するため JDK 25 を使う
+FROM eclipse-temurin:25-jdk-jammy AS audiveris-build
 RUN apt-get update && apt-get install -y --no-install-recommends git ca-certificates && \
     rm -rf /var/lib/apt/lists/*
 WORKDIR /src
@@ -31,7 +32,8 @@ COPY package.json ./
 RUN npm install --omit=dev --no-audit --no-fund
 
 # ---- Stage 3: 実行イメージ ----
-FROM eclipse-temurin:21-jre-jammy AS runtime
+# 実行も Java 25 が必要（JDKイメージを流用。25-jre-jammy が無い環境でも確実にpullできる）
+FROM eclipse-temurin:25-jdk-jammy AS runtime
 # 認識に必要なネイティブ依存: Tesseract(OCR), poppler(PDF→PNG), フォント
 RUN apt-get update && apt-get install -y --no-install-recommends \
       tesseract-ocr tesseract-ocr-eng \
