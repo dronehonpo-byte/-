@@ -1,0 +1,139 @@
+{
+  "comment": "動物10タイプの特徴プロファイル。値は 0.0〜1.0 の正規化値。コード改変なしでここを編集して調整可能。normalization は Vision 生特徴量→0..1 正規化レンジ [min,max]。match は 類似度→マッチ率% の変換 (percent = min + similarity*(max-min))。featureWeights は類似度計算の重み。TODO(Miyabee): 動物PNG素材提供後、imageName を実アセット名に差し替え（現状 emoji プレースホルダ表示）",
+  "normalization": {
+    "faceAspectRatio": [1.05, 1.55],
+    "eyeSize": [0.008, 0.035],
+    "eyeSlant": [-0.18, 0.18],
+    "faceWidth": [0.60, 0.95],
+    "jawSharpness": [0.35, 0.85],
+    "cheekFullness": [0.75, 1.05],
+    "mouthSize": [0.30, 0.55],
+    "featureProminence": [0.05, 0.16]
+  },
+  "match": {
+    "percentMin": 62,
+    "percentMax": 98
+  },
+  "featureWeights": {
+    "faceAspectRatio": 1.2,
+    "eyeSize": 1.1,
+    "eyeSlant": 1.1,
+    "faceWidth": 0.8,
+    "jawSharpness": 1.0,
+    "cheekFullness": 1.0,
+    "mouthSize": 0.8,
+    "featureProminence": 0.9
+  },
+  "animals": [
+    {
+      "id": "tanuki",
+      "nameJa": "たぬき顔",
+      "emoji": "🦝",
+      "imageName": "animal_tanuki",
+      "impressionWords": ["優しそう", "親しみやすい"],
+      "profile": {
+        "faceAspectRatio": 0.20, "eyeSize": 0.85, "eyeSlant": 0.40, "faceWidth": 0.70,
+        "jawSharpness": 0.20, "cheekFullness": 0.90, "mouthSize": 0.50, "featureProminence": 0.60
+      }
+    },
+    {
+      "id": "kitsune",
+      "nameJa": "きつね顔",
+      "emoji": "🦊",
+      "imageName": "animal_kitsune",
+      "impressionWords": ["知的", "大人っぽい"],
+      "profile": {
+        "faceAspectRatio": 0.85, "eyeSize": 0.40, "eyeSlant": 0.80, "faceWidth": 0.35,
+        "jawSharpness": 0.90, "cheekFullness": 0.20, "mouthSize": 0.40, "featureProminence": 0.50
+      }
+    },
+    {
+      "id": "inu",
+      "nameJa": "犬顔",
+      "emoji": "🐶",
+      "imageName": "animal_inu",
+      "impressionWords": ["誠実", "話しやすい"],
+      "profile": {
+        "faceAspectRatio": 0.50, "eyeSize": 0.65, "eyeSlant": 0.15, "faceWidth": 0.55,
+        "jawSharpness": 0.35, "cheekFullness": 0.60, "mouthSize": 0.60, "featureProminence": 0.55
+      }
+    },
+    {
+      "id": "neko",
+      "nameJa": "猫顔",
+      "emoji": "🐱",
+      "imageName": "animal_neko",
+      "impressionWords": ["ミステリアス", "個性的"],
+      "profile": {
+        "faceAspectRatio": 0.55, "eyeSize": 0.60, "eyeSlant": 0.90, "faceWidth": 0.30,
+        "jawSharpness": 0.70, "cheekFullness": 0.30, "mouthSize": 0.40, "featureProminence": 0.70
+      }
+    },
+    {
+      "id": "usagi",
+      "nameJa": "うさぎ顔",
+      "emoji": "🐰",
+      "imageName": "animal_usagi",
+      "impressionWords": ["可愛い", "癒される"],
+      "profile": {
+        "faceAspectRatio": 0.45, "eyeSize": 0.90, "eyeSlant": 0.35, "faceWidth": 0.45,
+        "jawSharpness": 0.30, "cheekFullness": 0.55, "mouthSize": 0.20, "featureProminence": 0.60
+      }
+    },
+    {
+      "id": "risu",
+      "nameJa": "リス顔",
+      "emoji": "🐿️",
+      "imageName": "animal_risu",
+      "impressionWords": ["明るい", "元気"],
+      "profile": {
+        "faceAspectRatio": 0.35, "eyeSize": 0.85, "eyeSlant": 0.50, "faceWidth": 0.60,
+        "jawSharpness": 0.25, "cheekFullness": 0.85, "mouthSize": 0.45, "featureProminence": 0.65
+      }
+    },
+    {
+      "id": "shika",
+      "nameJa": "鹿顔",
+      "emoji": "🦌",
+      "imageName": "animal_shika",
+      "impressionWords": ["上品", "清楚"],
+      "profile": {
+        "faceAspectRatio": 0.90, "eyeSize": 0.75, "eyeSlant": 0.50, "faceWidth": 0.30,
+        "jawSharpness": 0.60, "cheekFullness": 0.25, "mouthSize": 0.35, "featureProminence": 0.50
+      }
+    },
+    {
+      "id": "ookami",
+      "nameJa": "狼顔",
+      "emoji": "🐺",
+      "imageName": "animal_ookami",
+      "impressionWords": ["かっこいい", "頼りになる"],
+      "profile": {
+        "faceAspectRatio": 0.70, "eyeSize": 0.55, "eyeSlant": 0.70, "faceWidth": 0.55,
+        "jawSharpness": 0.95, "cheekFullness": 0.15, "mouthSize": 0.55, "featureProminence": 0.80
+      }
+    },
+    {
+      "id": "hamster",
+      "nameJa": "ハムスター顔",
+      "emoji": "🐹",
+      "imageName": "animal_hamster",
+      "impressionWords": ["可愛い", "若く見える"],
+      "profile": {
+        "faceAspectRatio": 0.15, "eyeSize": 0.70, "eyeSlant": 0.40, "faceWidth": 0.75,
+        "jawSharpness": 0.15, "cheekFullness": 0.95, "mouthSize": 0.35, "featureProminence": 0.50
+      }
+    },
+    {
+      "id": "lion",
+      "nameJa": "ライオン顔",
+      "emoji": "🦁",
+      "imageName": "animal_lion",
+      "impressionWords": ["リーダー的", "堂々"],
+      "profile": {
+        "faceAspectRatio": 0.60, "eyeSize": 0.80, "eyeSlant": 0.60, "faceWidth": 0.65,
+        "jawSharpness": 0.75, "cheekFullness": 0.40, "mouthSize": 0.75, "featureProminence": 0.95
+      }
+    }
+  ]
+}

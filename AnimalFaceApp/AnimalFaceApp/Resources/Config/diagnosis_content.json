@@ -1,0 +1,160 @@
+{
+  "comment": "診断項目の定義・スコアリング重み・結果文。項目追加/変更はここに追記するだけ（コード改変不要）。診断文はプレースホルダ。TODO(Miyabee): 本番の診断文に差し替え。トーン=エッジ寄りで攻める（先方指定）が、断定は避け『〜な印象/雰囲気』を基本とし、全結果にエンタメ注記を表示する。表示名を審査対策でソフト化する場合は title のみ差し替え可（id=sm/menhera/psychopath は内部固定）。",
+  "disclaimer": "本診断はエンタメ目的であり、医学的・専門的な判定ではありません。",
+  "items": [
+    {
+      "id": "animal",
+      "title": "動物顔診断",
+      "subtitle": "あなたはどの動物タイプ？全10種類から判定！",
+      "icon": "🐾",
+      "isPremium": false,
+      "kind": "animalMatch",
+      "animalTexts": {
+        "tanuki": "あなたは親しみやすさ満点のたぬき顔タイプ！まわりをほっとさせる優しい雰囲気の持ち主です。",
+        "kitsune": "あなたは知的でクールなきつね顔タイプ！大人っぽい雰囲気で一目置かれる存在です。",
+        "inu": "あなたは誠実さがにじみ出る犬顔タイプ！話しかけやすい雰囲気でみんなの人気者です。",
+        "neko": "あなたはミステリアスな魅力の猫顔タイプ！スッと通った個性が印象に残るタイプです。",
+        "usagi": "あなたは癒しの存在うさぎ顔タイプ！ぱっちりした目元でまわりをキュンとさせます。",
+        "risu": "あなたは元気いっぱいリス顔タイプ！愛嬌たっぷりの笑顔で場をパッと明るくします。",
+        "shika": "あなたは上品で清楚な鹿顔タイプ！すらっとした印象で思わず振り返られる存在です。",
+        "ookami": "あなたは頼れるかっこよさの狼顔タイプ！キリッとした目力でまわりを引っ張ります。",
+        "hamster": "あなたは愛されキャラのハムスター顔タイプ！ふんわり若々しい印象で癒しをふりまきます。",
+        "lion": "あなたは堂々たる存在感のライオン顔タイプ！パーツの華やかさでその場の主役になれます。"
+      }
+    },
+    {
+      "id": "babyface",
+      "title": "童顔度診断",
+      "subtitle": "あなたの若見え度を5段階でチェック！",
+      "icon": "🍼",
+      "isPremium": false,
+      "kind": "percentage",
+      "scoring": {
+        "bias": 0.60,
+        "weights": {
+          "faceAspectRatio": -0.20,
+          "eyeSize": 0.15,
+          "cheekFullness": 0.15,
+          "jawSharpness": -0.10,
+          "faceDepth": -0.10,
+          "verticalBalance": -0.10
+        },
+        "percentMin": 4,
+        "percentMax": 99
+      },
+      "bands": [
+        { "minPercent": 80, "text": "TODO(Miyabee): 差し替え。フレッシュな童顔MAX！いつまでも若く見られる、反則級のベビーフェイスです🍼" },
+        { "minPercent": 60, "text": "TODO(Miyabee): 差し替え。しっかり童顔。実年齢より下に見られること、多いのでは？🌱" },
+        { "minPercent": 40, "text": "TODO(Miyabee): 差し替え。童顔と大人顔のいいとこ取り。かわいさと落ち着きの二刀流です✨" },
+        { "minPercent": 20, "text": "TODO(Miyabee): 差し替え。やや大人顔。頼れる落ち着いた雰囲気で一目置かれるタイプです🕶️" },
+        { "minPercent": 0, "text": "TODO(Miyabee): 差し替え。凛とした大人顔。余裕と色気のある、憧れられる顔立ちです🌹" }
+      ]
+    },
+    {
+      "id": "sm",
+      "title": "SM度診断",
+      "subtitle": "あなたはドS？それともドM？5段階で判定！",
+      "icon": "⛓️",
+      "isPremium": true,
+      "kind": "percentage",
+      "scoring": {
+        "bias": 0.23,
+        "weights": {
+          "jawSharpness": 0.30,
+          "eyeSlant": 0.22,
+          "browSlant": 0.12,
+          "featureProminence": 0.12,
+          "cheekFullness": -0.14,
+          "eyeSize": -0.08
+        },
+        "percentMin": 3,
+        "percentMax": 99
+      },
+      "bands": [
+        { "minPercent": 80, "text": "TODO(Miyabee): 差し替え。まぎれもないドS。相手を手のひらで転がすタイプの雰囲気が全開です👑" },
+        { "minPercent": 60, "text": "TODO(Miyabee): 差し替え。S寄り。ぐいぐいリードして相手をドキッとさせる空気感があります😏" },
+        { "minPercent": 40, "text": "TODO(Miyabee): 差し替え。スイッチ切替型。場面によってSにもMにも化ける、読めない魅力です🔥" },
+        { "minPercent": 20, "text": "TODO(Miyabee): 差し替え。M寄り。甘え上手で、構われるほど可愛くなるタイプの雰囲気です🥺" },
+        { "minPercent": 0, "text": "TODO(Miyabee): 差し替え。まぎれもないドM。尽くして愛されて、ぜんぶ許しちゃうやさしさが漂います🎀" }
+      ]
+    },
+    {
+      "id": "menhera",
+      "title": "メンヘラ度診断",
+      "subtitle": "あなたの隠れメンヘラ度を5段階で数値化！",
+      "icon": "💔",
+      "isPremium": true,
+      "kind": "percentage",
+      "scoring": {
+        "bias": 0.53,
+        "weights": {
+          "eyeSize": 0.26,
+          "eyeSlant": -0.16,
+          "mouthSize": -0.12,
+          "browEyeGap": -0.12,
+          "cheekFullness": 0.08
+        },
+        "percentMin": 3,
+        "percentMax": 99
+      },
+      "bands": [
+        { "minPercent": 80, "text": "TODO(Miyabee): 差し替え。重ためメンヘラの気配MAX。愛が深すぎて、たまに束縛モンスター化するかも💣" },
+        { "minPercent": 60, "text": "TODO(Miyabee): 差し替え。隠れメンヘラ度high。普段はクールでも、好きになると一気に沼るタイプ🕳️" },
+        { "minPercent": 40, "text": "TODO(Miyabee): 差し替え。ほどよくメンヘラ。かまってほしい夜と、放っておいてほしい夜の落差が魅力🌙" },
+        { "minPercent": 20, "text": "TODO(Miyabee): 差し替え。メンヘラ控えめ。感情に振り回されず、恋も自分もちゃんと保てる安定型です🌿" },
+        { "minPercent": 0, "text": "TODO(Miyabee): 差し替え。メンヘラ耐性つよつよ。むしろ相手のメンヘラを受け止める側のどっしり感です🛡️" }
+      ]
+    },
+    {
+      "id": "shoyu_sauce",
+      "title": "醤油顔/ソース顔診断",
+      "subtitle": "あなたはあっさり派？こってり派？",
+      "icon": "🥢",
+      "isPremium": true,
+      "kind": "type2",
+      "scoring": {
+        "bias": 0.19,
+        "weights": {
+          "featureProminence": 0.35,
+          "noseHeight": 0.15,
+          "noseWidth": 0.10,
+          "eyeSize": 0.10,
+          "faceAspectRatio": -0.08
+        },
+        "percentMin": 5,
+        "percentMax": 95
+      },
+      "outcomes": {
+        "high": { "label": "ソース顔", "emoji": "🍛", "text": "TODO(Miyabee): 差し替え。しっかりソース顔！パーツの存在感が際立つ、華やかで印象的なお顔立ちです🍛" },
+        "low": { "label": "醤油顔", "emoji": "🍶", "text": "TODO(Miyabee): 差し替え。きれいな醤油顔！あっさり整った、飽きのこない正統派の和風フェイスです🍶" }
+      }
+    },
+    {
+      "id": "psychopath",
+      "title": "サイコパス度診断",
+      "subtitle": "あなたの隠れサイコパス度を5段階で診断！",
+      "icon": "🖤",
+      "isPremium": true,
+      "kind": "percentage",
+      "scoring": {
+        "bias": 0.33,
+        "weights": {
+          "featureProminence": 0.24,
+          "eyeSlant": 0.16,
+          "jawSharpness": 0.18,
+          "cheekFullness": -0.16,
+          "eyeSize": -0.08
+        },
+        "percentMin": 3,
+        "percentMax": 99
+      },
+      "bands": [
+        { "minPercent": 80, "text": "TODO(Miyabee): 差し替え。サイコパス指数トップクラス。何を考えてるか読めない、ゾクッとするカリスマ性😈" },
+        { "minPercent": 60, "text": "TODO(Miyabee): 差し替え。隠れサイコパス。感情に流されず淡々と勝ちにいく、静かな支配者オーラ🖤" },
+        { "minPercent": 40, "text": "TODO(Miyabee): 差し替え。ときどきサイコパス。優しさとドライさを使い分ける、二面性の魅力です🎭" },
+        { "minPercent": 20, "text": "TODO(Miyabee): 差し替え。サイコパス控えめ。情に厚くて、まわりの気持ちに気づける共感タイプ💗" },
+        { "minPercent": 0, "text": "TODO(Miyabee): 差し替え。サイコパス度ほぼゼロ。裏表のない素直さで、みんなに安心感を与えるタイプ😊" }
+      ]
+    }
+  ]
+}
