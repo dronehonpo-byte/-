@@ -20,9 +20,16 @@ def create_app(config_class: type | object = Config) -> Flask:
     app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
 
     # ストレージ・instance ディレクトリ準備
-    Path(app.instance_path).mkdir(parents=True, exist_ok=True)
-    Path(app.config["CONTRACT_PDF_DIR"]).mkdir(parents=True, exist_ok=True)
-    Path(app.config["SIGNATURE_DIR"]).mkdir(parents=True, exist_ok=True)
+    # (Vercel など読み取り専用FSでは作成に失敗しうるので起動をブロックしない)
+    for _d in (
+        Path(app.instance_path),
+        Path(app.config["CONTRACT_PDF_DIR"]),
+        Path(app.config["SIGNATURE_DIR"]),
+    ):
+        try:
+            _d.mkdir(parents=True, exist_ok=True)
+        except OSError:
+            app.logger.warning("ディレクトリを作成できませんでした (読み取り専用FS?): %s", _d)
 
     # 本番では SECRET_KEY が dev デフォルトのままだと拒否
     _validate_secret(app)
@@ -82,8 +89,11 @@ def create_app(config_class: type | object = Config) -> Flask:
 
     # SQLite + dev 環境のみ create_all で初期化補助 (本番は flask db upgrade)
     if app.config["SQLALCHEMY_DATABASE_URI"].startswith("sqlite:") and not app.config.get("TESTING"):
-        with app.app_context():
-            db.create_all()
+        try:
+            with app.app_context():
+                db.create_all()
+        except Exception:  # noqa: BLE001 — 読み取り専用FS等でもアプリ起動は継続
+            app.logger.warning("SQLite の初期化に失敗しました。DB機能は利用できない可能性があります。")
 
     # ロギング (gunicorn で動くときは gunicorn のロガーに合わせる)
     if not app.debug:
