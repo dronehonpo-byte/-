@@ -8,7 +8,17 @@
 {% endif %}
 {% endblock %}
 {% block content %}
-<h2 class="page-title">依頼の詳細 <span class="chip chip-orange">{{ req.status.label }}</span></h2>
+<h2 class="page-title">依頼の詳細
+  <span class="chip {% if req.status == RequestStatus.COMPLETED %}chip-green{% elif req.status == RequestStatus.CANCELLED or req.status == RequestStatus.EXPIRED %}chip-gray{% else %}chip-orange{% endif %}">{{ req.status.label }}</span>
+</h2>
+
+{% if req.status == RequestStatus.COMPLETED %}
+<div class="card center" style="border:1.5px solid var(--green); background:#f2fbf6">
+  <div style="font-size:34px">✅</div>
+  <h3 style="margin:6px 0">対応が完了しました</h3>
+  <p class="muted small">ご利用ありがとうございました。<br>料金はドライバーと現地で精算済みです。</p>
+</div>
+{% endif %}
 
 {% set e = req.confirmed_entry %}
 {% if e %}
@@ -55,6 +65,15 @@
 <script>
 const cfg = { lat: {{ default_lat }}, lng: {{ default_lng }}, tileUrl: "{{ map_tile_url }}", osrmUrl: "{{ osrm_url }}", nominatimUrl: "{{ nominatim_url }}" };
 DaikoMap.route('map', cfg, { lat: {{ req.origin_lat }}, lng: {{ req.origin_lng }} }, { lat: {{ req.dest_lat }}, lng: {{ req.dest_lng }} });
+
+// ドライバーが「完了」やキャンセルにしたら、お客様の画面へ自動反映（5秒ごとに確認）
+let _last = "{{ req.status.value }}";
+setInterval(() => {
+  fetch("{{ url_for('customer.entries_json', request_id=req.id) }}")
+    .then((r) => r.json())
+    .then((d) => { if (d.status && d.status !== _last) location.reload(); })
+    .catch(() => {});
+}, 5000);
 </script>
 {% endif %}
 {% endblock %}

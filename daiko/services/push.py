@@ -53,19 +53,47 @@ def public_key() -> str:
     return pub
 
 
+def ensure_schema() -> None:
+    """push_subscriptions の一意制約を「endpoint単独」→「endpoint×role」へ移行（冪等）.
+
+    既存テーブルは db.create_all() では変更されないため、デプロイ時に一度だけ調整する。
+    同一端末で お客様/ドライバー を切り替えても両方の購読が保持されるようにするため。
+    Postgres のみ対象（SQLite はテスト毎に新規作成のため不要）。
+    """
+    from sqlalchemy import text
+
+    eng = db.engine
+    if eng.dialect.name != "postgresql":
+        return
+    try:
+        with eng.begin() as conn:
+            conn.execute(text(
+                "ALTER TABLE IF EXISTS push_subscriptions "
+                "DROP CONSTRAINT IF EXISTS push_subscriptions_endpoint_key"
+            ))
+            conn.execute(text(
+                "DO $$ BEGIN "
+                "IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname='uq_push_endpoint_role') THEN "
+                "ALTER TABLE push_subscriptions ADD CONSTRAINT uq_push_endpoint_role UNIQUE (endpoint, role); "
+                "END IF; END $$;"
+            ))
+    except Exception:
+        current_app.logger.exception("push schema migration skipped")
+
+
 def save_subscription(role: str, recipient_id: int, sub: dict) -> bool:
-    """購読を保存（同じ端末=endpointは上書き）."""
+    """購読を保存（端末×役割ごとに1件。同一端末でも役割が違えば両方保持）."""
     endpoint = (sub or {}).get("endpoint")
     keys = (sub or {}).get("keys") or {}
     if not endpoint or "p256dh" not in keys or "auth" not in keys:
         return False
-    row = PushSubscription.query.filter_by(endpoint=endpoint).first()
+    row = PushSubscription.query.filter_by(endpoint=endpoint, role=role).first()
     if row is None:
         row = PushSubscription(endpoint=endpoint, role=role, recipient_id=recipient_id,
                                p256dh=keys["p256dh"], auth=keys["auth"])
         db.session.add(row)
     else:
-        row.role, row.recipient_id = role, recipient_id
+        row.recipient_id = recipient_id
         row.p256dh, row.auth = keys["p256dh"], keys["auth"]
     db.session.commit()
     return True

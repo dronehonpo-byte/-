@@ -199,4 +199,9 @@ def do_logout(role: str):
     if role in {"customer", "driver", "admin"}:
         logout(role)
     flash("ログアウトしました。", "info")
-    return redirect(url_for("main.index"))
+    dest = {
+        "customer": "auth.customer_login",
+        "driver": "auth.driver_login",
+        "admin": "auth.admin_login",
+    }.get(role, "main.index")
+    return redirect(url_for(dest))

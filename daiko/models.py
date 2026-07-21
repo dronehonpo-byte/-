@@ -306,14 +306,19 @@ class Entry(db.Model):
 
 
 class PushSubscription(db.Model):
-    """Web Push の購読情報 — 端末ごとに保存し、通知時に送信する."""
+    """Web Push の購読情報 — 「端末×役割」ごとに保存し、通知時に送信する.
+
+    同じ端末でお客様とドライバーを切り替えてテストしても両方の役割に届くよう、
+    endpoint+role の組で一意にする（endpoint 単独では重複を許可）。
+    """
 
     __tablename__ = "push_subscriptions"
+    __table_args__ = (db.UniqueConstraint("endpoint", "role", name="uq_push_endpoint_role"),)
 
     id = db.Column(db.Integer, primary_key=True)
     role = db.Column(db.String(16), nullable=False, index=True)      # customer/driver/admin
     recipient_id = db.Column(db.Integer, nullable=False, index=True)
-    endpoint = db.Column(db.Text, nullable=False, unique=True)
+    endpoint = db.Column(db.Text, nullable=False)
     p256dh = db.Column(db.String(255), nullable=False)
     auth = db.Column(db.String(64), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)

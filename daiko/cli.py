@@ -26,8 +26,11 @@ def register_cli(app: Flask) -> None:
         デモ客（09011112222）が作成される。
         """
         from .seed import ensure_seed
+        from .services import push
 
         ensure_seed(app, demo=True)
+        with app.app_context():
+            push.ensure_schema()
         click.echo("デモ/テストデータを投入しました。")
 
     @app.cli.command("seed")

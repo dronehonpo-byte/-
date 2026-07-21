@@ -93,14 +93,9 @@ function render(data) {
   const box = document.getElementById('entries');
   const entries = data.entries.filter((e) => e.status === 'offered');  // エントリー順（早い順）
   document.getElementById('waiting').style.display = entries.length ? 'none' : 'block';
-  const minPrice = entries.length ? Math.min(...entries.map((e) => e.price)) : null;
-  let cheapestShown = false;
   box.innerHTML = entries.map((e) => {
-    const isCheapest = e.price === minPrice && !cheapestShown;
-    if (isCheapest) cheapestShown = true;
     return `
-    <div class="entry ${isCheapest ? 'best' : ''}">
-      ${isCheapest ? '<span class="chip chip-orange">最安</span>' : ''}
+    <div class="entry">
       <div class="flex">
         <div><div class="vendor">${e.vendor_name}</div>
           <div class="small muted">到着 約 ${e.eta_minutes} 分</div>
