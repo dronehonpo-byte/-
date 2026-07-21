@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import streamlit as st
 
-from modules.common import load_css, render_sidebar_credit
+from modules.common import load_css, render_sidebar_credit, require_password
 
 st.set_page_config(
     page_title="StatEasy — 自動統計解析ツール",
@@ -20,6 +20,9 @@ st.set_page_config(
 )
 
 load_css()
+
+# ---- アクセス制限（パスワードゲート）----
+require_password()
 
 # ---- 研究目的ベースのナビゲーション ----
 home = st.Page("pages/00_home.py", title="ホーム / 使い方ガイド", icon="🏠", default=True)

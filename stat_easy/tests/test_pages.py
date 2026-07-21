@@ -39,8 +39,28 @@ def test_page_runs(page):
 
 def test_app_entry_runs():
     at = AppTest.from_file(str(ROOT / "app.py"), default_timeout=60)
+    # パスワードゲートを通過した状態で本体が動くこと
+    at.session_state["stateasy_authed"] = True
     at.run()
     assert not at.exception
+
+
+def test_password_gate_blocks_and_accepts():
+    # 未認証だとログインフォームが出て本体（サイドバー見出し）は出ない
+    at = AppTest.from_file(str(ROOT / "app.py"), default_timeout=60)
+    at.run()
+    assert not at.exception
+    assert len(at.text_input) >= 1, "ログイン用パスワード入力欄が表示されるはず"
+
+    # 誤ったパスワードでは認証されない
+    at.text_input[0].set_value("wrong").run()
+    at.button[0].click().run()
+    assert "stateasy_authed" not in at.session_state
+
+    # 正しいパスワードで認証される
+    at.text_input[0].set_value("STAT0703").run()
+    at.button[0].click().run()
+    assert at.session_state["stateasy_authed"] is True
 
 
 def test_web_build_module_consistency():

@@ -19,6 +19,10 @@ CREDIT_TEXT = "開発：土居拓務・株式会社Miyabee"
 # 版数（更新が反映されているか一目で確認できるよう画面に表示する）
 APP_VERSION = "2026-07-09 更新版"
 
+# アプリのアクセスパスワード（簡易ゲート）。
+# ※ブラウザ実行版ではコードに埋め込まれるため高度な秘匿性はない（軽い入室制限用）。
+APP_PASSWORD = "STAT0703"
+
 ROOT_DIR = Path(__file__).resolve().parent.parent
 ASSETS_DIR = ROOT_DIR / "assets"
 SAMPLE_DIR = ROOT_DIR / "sample_data"
@@ -163,6 +167,41 @@ def render_sidebar_credit() -> None:
         f"<br><span style='color:#9AA7B4;'>版: {APP_VERSION}</span></div>",
         unsafe_allow_html=True,
     )
+
+
+def require_password() -> None:
+    """簡易パスワードゲート。未認証ならログイン画面を出して停止する。
+
+    app.py の冒頭（ナビ表示前）で呼ぶことで全ページを保護する。
+    """
+    import streamlit as st
+
+    if st.session_state.get("stateasy_authed"):
+        return
+
+    _, center, _ = st.columns([1, 2, 1])
+    with center:
+        st.markdown(
+            "<div class='stateasy-hero'><h1>StatEasy</h1>"
+            "<p>統計の面白さを、もっと身近に。</p></div>",
+            unsafe_allow_html=True,
+        )
+        st.markdown("#### 🔒 パスワードを入力してください")
+        with st.form("stateasy_login", clear_on_submit=False):
+            pw = st.text_input("パスワード", type="password",
+                               label_visibility="collapsed", placeholder="パスワード")
+            submitted = st.form_submit_button("ログイン", use_container_width=True)
+        if submitted:
+            if pw == APP_PASSWORD:
+                st.session_state["stateasy_authed"] = True
+                st.rerun()
+            else:
+                st.error("パスワードが正しくありません。")
+        st.markdown(
+            f"<div class='stateasy-footer'>{CREDIT_TEXT}　／　版: {APP_VERSION}</div>",
+            unsafe_allow_html=True,
+        )
+    st.stop()
 
 
 def get_data():
