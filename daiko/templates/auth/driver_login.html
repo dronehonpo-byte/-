@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}ドライバーログイン｜{{ service_name }}{% endblock %}
+{% block content %}
+<h2 class="page-title">ドライバーログイン</h2>
+<div class="card">
+  <form method="post" action="{{ url_for('auth.driver_login') }}">
+    <label>電話番号 <span class="req">*</span></label>
+    <input type="tel" name="phone" inputmode="numeric" required autofocus>
+    <label>パスワード <span class="req">*</span></label>
+    <input type="password" name="password" required>
+    <br><br>
+    <button class="btn btn-green btn-block btn-lg" type="submit">ログイン</button>
+  </form>
+</div>
+<div class="card center">
+  <p class="small muted">まだ登録がない代行業者の方は</p>
+  <a class="btn btn-outline btn-block" href="{{ url_for('auth.vendor_register') }}">業者登録（認定書アップロード）</a>
+</div>
+<p class="center small"><a href="{{ url_for('main.index') }}">← 戻る</a></p>
+{% endblock %}

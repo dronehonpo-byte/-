@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}依頼 #{{ req.id }}｜{{ service_name }}{% endblock %}
+{% block head %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+{% endblock %}
+{% block content %}
+<h2 class="page-title">依頼 #{{ req.id }} <span class="chip chip-orange">{{ req.status.label }}</span></h2>
+
+<div class="card">
+  <h3>車両情報</h3>
+  <table>
+    <tr><th>車種</th><td>{{ req.car_type or '—' }}</td></tr>
+    <tr><th>ミッション</th><td><b>{{ req.transmission.value }}</b></td></tr>
+    <tr><th>ハンドル</th><td>{{ req.handle.label }}</td></tr>
+    <tr><th>経由回数</th><td>{{ req.via_count }}回</td></tr>
+    <tr><th>希望時間</th><td>{{ req.time_label }}</td></tr>
+  </table>
+  {% if req.note %}<p class="small muted" style="margin-top:8px">メモ: {{ req.note }}</p>{% endif %}
+</div>
+
+<div class="card">
+  <h3>場所</h3>
+  <div id="map" class="map-sm"></div>
+  <div class="small" style="margin-top:8px">🟠 出発：{{ req.origin_label or '—' }}</div>
+  <div class="small">🟢 目的：{{ req.dest_label or '—' }}</div>
+</div>
+
+{% set confirmed = req.confirmed_entry %}
+{% if my_entry and my_entry.status == EntryStatus.ACCEPTED %}
+  <div class="card">
+    <div class="flash flash-success">あなたに決まりました 🎉 お客様の連絡先を表示します。</div>
+    <p class="small">提示料金: <b>{{ my_entry.price | yen }}</b> ／ 到着 約{{ my_entry.eta_minutes }}分</p>
+    <a class="btn btn-green btn-block" href="tel:{{ req.customer.phone }}">📞 お客様に電話（{{ req.customer.phone }}）</a>
+    <div class="row" style="margin-top:10px">
+      {% if req.status == RequestStatus.CONFIRMED %}
+      <form method="post" action="{{ url_for('driver.start', request_id=req.id) }}"><button class="btn btn-primary btn-block">対応開始（向かう）</button></form>
+      {% endif %}
+      <form method="post" action="{{ url_for('driver.complete', request_id=req.id) }}" onsubmit="return confirm('対応を完了しますか？')"><button class="btn btn-outline btn-block">対応完了</button></form>
+    </div>
+  </div>
+{% elif my_entry and my_entry.status == EntryStatus.REJECTED %}
+  <div class="card center muted">今回は他の方に決まりました。</div>
+{% elif my_entry %}
+  <div class="card">
+    <div class="flash flash-info">エントリー済み：{{ my_entry.price | yen }} ／ 約{{ my_entry.eta_minutes }}分<br>お客様の選択をお待ちください。</div>
+  </div>
+{% elif req.status.is_open %}
+  <div class="card">
+    <h3>エントリー（料金・到着時間を提示）</h3>
+    {% if not g.driver.can_operate %}
+      <div class="flash flash-warning">業者承認後にエントリーできます。</div>
+    {% else %}
+    <form method="post" action="{{ url_for('driver.entry', request_id=req.id) }}">
+      <label>提示料金（円） <span class="req">*</span></label>
+      <input type="number" name="price" min="0" step="100" inputmode="numeric" placeholder="例：3000" required>
+      <label>到着予定（分） <span class="req">*</span></label>
+      <input type="number" name="eta_minutes" min="1" step="1" inputmode="numeric" placeholder="例：15" required>
+      <label>キャンセル料の案内（任意）</label>
+      <input type="text" name="cancellation_fee" value="{{ g.driver.vendor.cancellation_policy or '' }}" placeholder="例：確定後のキャンセルは1,000円">
+      <br><br>
+      <button class="btn btn-green btn-block btn-lg" type="submit">この条件でエントリー</button>
+    </form>
+    {% endif %}
+  </div>
+{% else %}
+  <div class="card center muted">このリクエストは締め切られました。</div>
+{% endif %}
+
+<a class="btn btn-outline btn-block" href="{{ url_for('driver.dashboard') }}">← 依頼一覧へ</a>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/map.js') }}"></script>
+<script>
+const cfg = { lat: {{ default_lat }}, lng: {{ default_lng }}, tileUrl: "{{ map_tile_url }}", osrmUrl: "{{ osrm_url }}", nominatimUrl: "{{ nominatim_url }}" };
+DaikoMap.route('map', cfg, { lat: {{ req.origin_lat }}, lng: {{ req.origin_lng }} }, { lat: {{ req.dest_lat }}, lng: {{ req.dest_lng }} });
+</script>
+{% endblock %}

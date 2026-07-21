@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+{% block title %}代行を依頼｜{{ service_name }}{% endblock %}
+{% block head %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+{% endblock %}
+{% block content %}
+<h2 class="page-title">代行を依頼する</h2>
+
+<form method="post" action="{{ url_for('customer.new_request') }}" id="req-form">
+  <div class="card">
+    <h3>① 出発地・目的地</h3>
+    <div class="row" style="margin-bottom:8px">
+      <input type="text" id="search-origin" placeholder="出発地の住所を入力→Enter">
+      <button type="button" class="btn btn-outline" id="btn-locate" style="flex:0 0 auto">現在地</button>
+    </div>
+    <input type="text" id="search-dest" placeholder="目的地の住所を入力→Enter" style="margin-bottom:8px">
+    <div class="seg" id="pin-mode" style="margin-bottom:8px">
+      <label id="mode-origin"><span>🟠 出発地を置く</span></label>
+      <label id="mode-dest"><span>🟢 目的地を置く</span></label>
+    </div>
+    <div id="map"></div>
+    <p class="hint">上のボタンで「出発地／目的地」を選び、地図をタップしてピンを置きます。<br>出発地を置くと自動で目的地モードに切り替わります。ピンはドラッグで微調整できます。</p>
+    <div class="small">🟠 出発地：<span id="lbl-origin" class="muted">未設定</span></div>
+    <div class="small">🟢 目的地：<span id="lbl-dest" class="muted">未設定</span></div>
+    <input type="hidden" name="origin_lat" id="origin_lat"><input type="hidden" name="origin_lng" id="origin_lng">
+    <input type="hidden" name="origin_label" id="origin_label">
+    <input type="hidden" name="dest_lat" id="dest_lat"><input type="hidden" name="dest_lng" id="dest_lng">
+    <input type="hidden" name="dest_label" id="dest_label">
+  </div>
+
+  <div class="card">
+    <h3>② お車の情報</h3>
+    <p class="hint">運転代行はお客様のお車を運転するため、ドライバーの対応可否に直結します。</p>
+    <label>車種・車名（任意）</label>
+    <input type="text" name="car_type" placeholder="例：トヨタ アルファード 白 / 宇都宮 300 あ 12-34">
+    <p class="hint">わからない場合は空欄で構いません。おわかりであれば車名・<strong>車の色・ナンバー</strong>をご記入いただくと、ドライバーが見つけやすくなります。</p>
+    <label>ミッション <span class="req">*</span></label>
+    <div class="seg">
+      <label><input type="radio" name="transmission" value="AT" checked><span>AT</span></label>
+      <label><input type="radio" name="transmission" value="MT"><span>MT</span></label>
+    </div>
+    <label>ハンドル位置 <span class="req">*</span></label>
+    <div class="seg">
+      <label><input type="radio" name="handle" value="right" checked><span>右ハンドル</span></label>
+      <label><input type="radio" name="handle" value="left"><span>左ハンドル（輸入車）</span></label>
+    </div>
+    <label>経由回数</label>
+    <select name="via_count">
+      <option value="0">0回（直行）</option><option value="1">1回</option>
+      <option value="2">2回</option><option value="3">3回以上</option>
+    </select>
+  </div>
+
+  <div class="card">
+    <h3>③ 到着希望時間</h3>
+    <div class="seg" id="time-seg">
+      <label><input type="radio" name="asap" value="1" checked><span>今すぐ</span></label>
+      <label><input type="radio" name="asap" value="0"><span>日時を指定</span></label>
+    </div>
+    <div id="sched-wrap" style="display:none">
+      <label>日付（1週間先まで）</label>
+      <div id="date-chips" class="date-chips"></div>
+      <label>時刻</label>
+      <div class="time-dial">
+        <select id="sel-hour" class="dial-select" aria-label="時"></select>
+        <span class="dial-colon">:</span>
+        <select id="sel-min" class="dial-select" aria-label="分"></select>
+      </div>
+      <p class="hint center" id="sched-summary" style="font-size:14px;font-weight:700;color:var(--green-dark)"></p>
+      <input type="hidden" name="scheduled_time" id="scheduled_time">
+    </div>
+    <label>ドライバーへの連絡（任意）</label>
+    <textarea name="note" placeholder="例：店の前で待っています"></textarea>
+  </div>
+
+  <button class="btn btn-primary btn-block btn-lg" type="submit" id="submit-btn" disabled>この内容で代行を呼ぶ</button>
+  <p class="hint center">送信すると近くのドライバーへ通知され、料金・到着時間の提示が届きます。</p>
+</form>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/map.js') }}"></script>
+<script>
+const cfg = { lat: {{ default_lat }}, lng: {{ default_lng }}, tileUrl: "{{ map_tile_url }}",
+  nominatimUrl: "{{ nominatim_url }}", osrmUrl: "{{ osrm_url }}" };
+function setVal(which, ll, label) {
+  document.getElementById(which + '_lat').value = ll.lat;
+  document.getElementById(which + '_lng').value = ll.lng;
+  document.getElementById(which + '_label').value = label;
+  document.getElementById('lbl-' + which).textContent = label;
+  document.getElementById('lbl-' + which).classList.remove('muted');
+  const ok = document.getElementById('origin_lat').value && document.getElementById('dest_lat').value;
+  document.getElementById('submit-btn').disabled = !ok;
+}
+function updateModeUI(m) {
+  document.getElementById('mode-origin').classList.toggle('pin-on', m === 'origin');
+  document.getElementById('mode-dest').classList.toggle('pin-on', m === 'dest');
+}
+const picker = DaikoMap.picker('map', cfg, setVal, updateModeUI);
+document.getElementById('mode-origin').onclick = () => picker.setMode('origin');
+document.getElementById('mode-dest').onclick = () => picker.setMode('dest');
+document.getElementById('btn-locate').onclick = () => { picker.setMode('origin'); picker.locate(); };
+function bindSearch(id, which) {
+  const el = document.getElementById(id);
+  el.addEventListener('change', () => picker.search(el.value, which));
+  el.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); picker.search(el.value, which); }
+  });
+}
+bindSearch('search-origin', 'origin');
+bindSearch('search-dest', 'dest');
+</script>
+<script>
+// 時刻指定の表示切替（地図スクリプトとは独立して動作させる）
+document.querySelectorAll('input[name=asap]').forEach((el) => el.addEventListener('change', () => {
+  document.getElementById('sched-wrap').style.display =
+    document.querySelector('input[name=asap]:checked').value === '0' ? 'block' : 'none';
+}));
+
+// ── 日時ピッカー（7日分の日付チップ ＋ 大きな時/分ダイヤル） ──
+(function () {
+  const DOW = ['日', '月', '火', '水', '木', '金', '土'];
+  const pad = (n) => String(n).padStart(2, '0');
+  const chips = document.getElementById('date-chips');
+  const selH = document.getElementById('sel-hour');
+  const selM = document.getElementById('sel-min');
+  const hidden = document.getElementById('scheduled_time');
+  const summary = document.getElementById('sched-summary');
+  let selectedDate = null; // 'YYYY-MM-DD'
+
+  // 日付チップ（今日から7日分）
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(today); d.setDate(today.getDate() + i);
+    const ymd = d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+    const top = i === 0 ? '今日' : i === 1 ? '明日' : DOW[d.getDay()] + '曜';
+    const chip = document.createElement('button');
+    chip.type = 'button';
+    chip.className = 'date-chip' + (i === 0 ? ' active' : '');
+    chip.dataset.date = ymd;
+    chip.innerHTML = `<span class="dow">${top}</span><span class="day">${d.getMonth() + 1}/${d.getDate()}</span>`;
+    chip.addEventListener('click', () => {
+      chips.querySelectorAll('.date-chip').forEach((c) => c.classList.remove('active'));
+      chip.classList.add('active');
+      selectedDate = ymd;
+      sync();
+    });
+    chips.appendChild(chip);
+    if (i === 0) selectedDate = ymd;
+  }
+
+  // 時（0〜23）・分（5分刻み）
+  for (let h = 0; h < 24; h++) selH.add(new Option(pad(h) + ' 時', pad(h)));
+  for (let m = 0; m < 60; m += 5) selM.add(new Option(pad(m) + ' 分', pad(m)));
+  // 既定：次の30分（5分単位に丸め）
+  const now = new Date();
+  let dh = now.getHours(), dm = Math.ceil((now.getMinutes() + 30) / 5) * 5;
+  if (dm >= 60) { dm -= 60; dh = (dh + 1) % 24; }
+  selH.value = pad(dh); selM.value = pad(dm);
+
+  function sync() {
+    hidden.value = selectedDate + 'T' + selH.value + ':' + selM.value;
+    const d = new Date(selectedDate + 'T00:00');
+    summary.textContent = `${d.getMonth() + 1}月${d.getDate()}日(${DOW[d.getDay()]}) ${selH.value}:${selM.value} に到着希望`;
+  }
+  selH.addEventListener('change', sync);
+  selM.addEventListener('change', sync);
+  sync();
+})();
+</script>
+{% endblock %}

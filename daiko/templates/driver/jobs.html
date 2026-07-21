@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}確定案件｜{{ service_name }}{% endblock %}
+{% block content %}
+<h2 class="page-title">確定案件</h2>
+{% if not entries %}<div class="card center muted">確定中の案件はありません。</div>{% endif %}
+{% for e in entries %}
+  <div class="card">
+    <div class="flex">
+      <div>
+        <span class="chip chip-orange">{{ e.request.status.label }}</span>
+        <div style="font-weight:700;margin-top:4px">{{ e.request.origin_label or '出発地' }} → {{ e.request.dest_label or '目的地' }}</div>
+        <div class="small muted">{{ e.request.car_type or "車種未入力" }} / {{ e.request.transmission.value }} / {{ e.price | yen }}</div>
+      </div>
+    </div>
+    <a class="btn btn-green btn-block" style="margin-top:8px" href="{{ url_for('driver.request_detail', request_id=e.request_id) }}">案件を開く</a>
+  </div>
+{% endfor %}
+{% endblock %}
+{% block tabbar %}
+<div class="tabbar">
+  <a href="{{ url_for('driver.dashboard') }}"><span class="ic">📍</span>依頼</a>
+  <a class="active" href="{{ url_for('driver.jobs') }}"><span class="ic">✅</span>確定案件</a>
+  <a href="{{ url_for('driver.history') }}"><span class="ic">📋</span>履歴</a>
+</div>
+{% endblock %}

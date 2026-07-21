@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}対応履歴｜{{ service_name }}{% endblock %}
+{% block content %}
+<h2 class="page-title">対応履歴</h2>
+{% if not entries %}<div class="card center muted">まだエントリー履歴はありません。</div>{% endif %}
+{% for e in entries %}
+  <a class="list-item" href="{{ url_for('driver.request_detail', request_id=e.request_id) }}">
+    <div class="flex">
+      <div>
+        <span class="chip {% if e.status == EntryStatus.ACCEPTED %}chip-green{% elif e.status == EntryStatus.REJECTED %}chip-gray{% else %}chip-orange{% endif %}">{{ e.status.label }}</span>
+        <div class="small" style="margin-top:4px">{{ e.request.origin_label or '出発地' }} → {{ e.request.dest_label or '目的地' }}</div>
+      </div>
+      <div class="small muted">{{ e.price | yen }}<br>{{ e.created_at | dt('%m/%d %H:%M') }}</div>
+    </div>
+  </a>
+{% endfor %}
+{% endblock %}
+{% block tabbar %}
+<div class="tabbar">
+  <a href="{{ url_for('driver.dashboard') }}"><span class="ic">📍</span>依頼</a>
+  <a href="{{ url_for('driver.jobs') }}"><span class="ic">✅</span>確定案件</a>
+  <a class="active" href="{{ url_for('driver.history') }}"><span class="ic">📋</span>履歴</a>
+</div>
+{% endblock %}

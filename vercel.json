@@ -1,0 +1,17 @@
+{
+  "version": 2,
+  "builds": [
+    { "src": "api/index.py", "use": "@vercel/python", "config": { "includeFiles": "daiko/**" } }
+  ],
+  "routes": [
+    { "src": "/(.*)", "dest": "api/index.py" }
+  ],
+  "env": {
+    "DAIKO_DATABASE_URI": "sqlite:////tmp/daiko.db",
+    "DAIKO_STORAGE_DIR": "/tmp/daiko-storage",
+    "DAIKO_INSTANCE_DIR": "/tmp/daiko-instance",
+    "DAIKO_SECRET_KEY": "preview-only-not-a-real-secret",
+    "DAIKO_ADMIN_PASSWORD": "adminpass",
+    "FLASK_ENV": "production"
+  }
+}

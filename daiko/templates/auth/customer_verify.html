@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}認証コード｜{{ service_name }}{% endblock %}
+{% block content %}
+<h2 class="page-title">認証コードを入力</h2>
+<div class="card">
+  {% if dev_code %}
+    <div class="flash flash-info">
+      【デモ環境】SMS送信の代わりに認証コードを表示しています：<b style="font-size:20px">{{ dev_code }}</b><br>
+      <span class="small">本番では花田様名義のSMS契約後、実際にSMSで届きます。</span>
+    </div>
+  {% endif %}
+  <form method="post" action="{{ url_for('auth.customer_verify') }}">
+    <input type="hidden" name="phone" value="{{ phone }}">
+    <p class="small muted">{{ phone }} に送信したコードを入力してください。</p>
+    <label>認証コード（6桁） <span class="req">*</span></label>
+    <input type="text" name="code" inputmode="numeric" maxlength="6" placeholder="000000" required autofocus>
+    <br><br>
+    <button class="btn btn-primary btn-block btn-lg" type="submit">ログイン</button>
+  </form>
+</div>
+<p class="center small"><a href="{{ url_for('auth.customer_login') }}">← 番号を入力し直す</a></p>
+{% endblock %}

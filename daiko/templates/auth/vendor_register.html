@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% import "_payment.html" as pay with context %}
+{% block title %}業者登録｜{{ service_name }}{% endblock %}
+{% block content %}
+<h2 class="page-title">代行業者の登録申請</h2>
+<div class="card">
+  <p class="small muted">公安委員会認定書をアップロードして申請してください。管理者（運営者）の承認後に稼働できます。
+  代表ドライバー1名のログインも同時に作成します。</p>
+  <form method="post" action="{{ url_for('auth.vendor_register') }}" enctype="multipart/form-data">
+    <h3>事業者情報</h3>
+    <label>業者名 <span class="req">*</span></label>
+    <input type="text" name="vendor_name" value="{{ form.vendor_name or '' }}" required>
+    <label>業者の電話番号 <span class="req">*</span></label>
+    <input type="tel" name="vendor_phone" inputmode="numeric" value="{{ form.vendor_phone or '' }}" required>
+    <label>連絡用メール（任意）</label>
+    <input type="email" name="email" value="{{ form.email or '' }}">
+    <label>公安委員会認定書（PDF / 画像） <span class="req">*</span></label>
+    <input type="file" name="cert" accept=".pdf,.png,.jpg,.jpeg,.webp" required>
+    <label>キャンセル料・料金に関する案内（任意）</label>
+    <textarea name="cancellation_policy" placeholder="例：確定後のキャンセルは1,000円を申し受けます">{{ form.cancellation_policy or '' }}</textarea>
+
+    <label>対応するお支払い方法（任意・複数選択可）</label>
+    <p class="hint" style="margin-top:0">選んだ方法はアイコンでお客様に表示されます（料金案内）。</p>
+    {{ pay.selector(selected_payments) }}
+
+    <hr class="sep">
+    <h3>代表ドライバー（ログイン用）</h3>
+    <label>ドライバー氏名 <span class="req">*</span></label>
+    <input type="text" name="driver_name" value="{{ form.driver_name or '' }}" required>
+    <label>ドライバーの電話番号 <span class="req">*</span></label>
+    <input type="tel" name="driver_phone" inputmode="numeric" value="{{ form.driver_phone or '' }}" required>
+    <label>パスワード（6文字以上） <span class="req">*</span></label>
+    <input type="password" name="password" required>
+
+    <br><br>
+    <button class="btn btn-green btn-block btn-lg" type="submit">登録を申請する</button>
+  </form>
+</div>
+<p class="center small"><a href="{{ url_for('auth.driver_login') }}">← ログインに戻る</a></p>
+{% endblock %}

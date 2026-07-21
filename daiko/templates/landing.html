@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="center" style="padding:22px 0 8px">
+  <img class="hero-logo" src="{{ url_for('static', filename='img/icon-square.png') }}" alt="{{ service_name }}">
+  <h1 style="margin:18px 0 8px; font-size:46px; font-weight:900; letter-spacing:-.045em; line-height:1.1; color:var(--green-dark)">お客様の窓口</h1>
+  <p class="muted" style="font-size:15px; max-width:22em; margin-left:auto; margin-right:auto">宇都宮市の運転代行をスマホで簡単、ワンストップで繋ぐ。<br>料金と到着時間を見くらべて選べます。</p>
+</div>
+
+<div class="card">
+  <h3>🚗 代行を呼ぶ</h3>
+  <p class="small muted">電話番号だけで始められます。出発地・目的地と車種を入れて、近くのドライバーからの料金・到着時間の提示を見くらべて選べます。</p>
+  {% if customer %}
+    <a class="btn btn-primary btn-block btn-lg" href="{{ url_for('customer.home') }}">アプリを開く</a>
+  {% else %}
+    <a class="btn btn-primary btn-block btn-lg" href="{{ url_for('auth.customer_login') }}">はじめる / ログイン</a>
+  {% endif %}
+</div>
+
+<p class="center small muted" style="margin-top:8px">
+  運営: {{ operator_name }} ／ お問い合わせ: <a href="mailto:{{ contact_email }}">{{ contact_email }}</a><br>
+  対応エリア: {{ area }}
+</p>
+{% endblock %}

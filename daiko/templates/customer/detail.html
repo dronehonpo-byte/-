@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% import "_payment.html" as pay with context %}
+{% block title %}依頼の詳細｜{{ service_name }}{% endblock %}
+{% block head %}
+{% if req.status in (RequestStatus.CONFIRMED, RequestStatus.IN_PROGRESS) %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+{% endif %}
+{% endblock %}
+{% block content %}
+<h2 class="page-title">依頼の詳細
+  <span class="chip {% if req.status == RequestStatus.COMPLETED %}chip-green{% elif req.status == RequestStatus.CANCELLED or req.status == RequestStatus.EXPIRED %}chip-gray{% else %}chip-orange{% endif %}">{{ req.status.label }}</span>
+</h2>
+
+{% if req.status == RequestStatus.COMPLETED %}
+<div class="card center" style="border:1.5px solid var(--green); background:#f2fbf6">
+  <div style="font-size:34px">✅</div>
+  <h3 style="margin:6px 0">対応が完了しました</h3>
+  <p class="muted small">ご利用ありがとうございました。<br>料金はドライバーと現地で精算済みです。</p>
+</div>
+{% endif %}
+
+{% set e = req.confirmed_entry %}
+{% if e %}
+<div class="card">
+  <h3>確定ドライバー</h3>
+  <div class="flex">
+    <div>
+      <div class="vendor" style="font-weight:700">{{ e.vendor.name }}</div>
+      <div class="small muted">担当: {{ e.driver.name }}</div>
+    </div>
+    <div class="price" style="font-size:22px;font-weight:800;color:var(--orange-d)">{{ e.price | yen }}</div>
+  </div>
+  {% if e.vendor.payment_method_list %}
+  <div class="small muted" style="margin-top:8px">お支払い方法</div>
+  {{ pay.badges(e.vendor.payment_method_list) }}
+  {% endif %}
+  <hr class="sep">
+  <a class="btn btn-green btn-block" href="tel:{{ e.driver.phone }}">📞 ドライバーに電話する（{{ e.driver.phone }}）</a>
+  <p class="hint">料金は現地でドライバーと精算してください。{% if e.cancellation_fee %}／ キャンセル料: {{ e.cancellation_fee }}{% endif %}</p>
+</div>
+{% endif %}
+
+<div class="card">
+  <h3>ルート</h3>
+  {% if req.status in (RequestStatus.CONFIRMED, RequestStatus.IN_PROGRESS) %}
+    <div id="map" class="map-sm"></div>
+  {% endif %}
+  <div class="small" style="margin-top:8px">🟠 出発：{{ req.origin_label or '—' }}</div>
+  <div class="small">🟢 目的：{{ req.dest_label or '—' }}</div>
+  <div class="small muted" style="margin-top:6px">{{ req.car_type or "車種未入力" }} ／ {{ req.transmission.value }} ／ {{ req.handle.label }} ／ 経由{{ req.via_count }}回 ／ {{ req.time_label }}</div>
+</div>
+
+{% if req.status.is_active %}
+<form method="post" action="{{ url_for('customer.cancel', request_id=req.id) }}" onsubmit="return confirm('キャンセルしますか？')">
+  <button class="btn btn-danger btn-block" type="submit">この依頼をキャンセル</button>
+</form>
+{% else %}
+<a class="btn btn-primary btn-block" href="{{ url_for('customer.home') }}">ホームへ戻る</a>
+{% endif %}
+{% endblock %}
+{% block scripts %}
+{% if req.status in (RequestStatus.CONFIRMED, RequestStatus.IN_PROGRESS) %}
+<script src="{{ url_for('static', filename='js/map.js') }}"></script>
+<script>
+const cfg = { lat: {{ default_lat }}, lng: {{ default_lng }}, tileUrl: "{{ map_tile_url }}", osrmUrl: "{{ osrm_url }}", nominatimUrl: "{{ nominatim_url }}" };
+DaikoMap.route('map', cfg, { lat: {{ req.origin_lat }}, lng: {{ req.origin_lng }} }, { lat: {{ req.dest_lat }}, lng: {{ req.dest_lng }} });
+
+// ドライバーが「完了」やキャンセルにしたら、お客様の画面へ自動反映（5秒ごとに確認）
+let _last = "{{ req.status.value }}";
+setInterval(() => {
+  fetch("{{ url_for('customer.entries_json', request_id=req.id) }}")
+    .then((r) => r.json())
+    .then((d) => { if (d.status && d.status !== _last) location.reload(); })
+    .catch(() => {});
+}, 5000);
+</script>
+{% endif %}
+{% endblock %}

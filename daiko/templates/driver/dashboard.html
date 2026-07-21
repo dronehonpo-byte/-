@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}近くの依頼｜{{ service_name }}{% endblock %}
+{% block head %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+{% endblock %}
+{% block content %}
+<h2 class="page-title">近くの依頼</h2>
+<div class="small muted" style="margin-bottom:8px">
+  {{ driver.name }}（{{ driver.vendor.name }}）
+  {% if not driver.can_operate %}<span class="chip chip-danger">承認待ち</span>{% else %}<span class="chip chip-green">稼働中</span>{% endif %}
+</div>
+
+{% if not driver.can_operate %}
+<div class="flash flash-warning">業者の承認が完了するとエントリーできるようになります。</div>
+{% endif %}
+
+<div id="map" class="map-sm" style="margin-bottom:12px"></div>
+<div id="list"></div>
+{% endblock %}
+{% block tabbar %}
+<div class="tabbar">
+  <a class="active" href="{{ url_for('driver.dashboard') }}"><span class="ic">📍</span>依頼</a>
+  <a href="{{ url_for('driver.jobs') }}"><span class="ic">✅</span>確定案件</a>
+  <a href="{{ url_for('driver.history') }}"><span class="ic">📋</span>履歴</a>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/map.js') }}"></script>
+<script>
+const cfg = { lat: {{ default_lat }}, lng: {{ default_lng }}, tileUrl: "{{ map_tile_url }}", nominatimUrl: "{{ nominatim_url }}", osrmUrl: "{{ osrm_url }}" };
+const reqMap = DaikoMap.requests('map', cfg);
+function render(items) {
+  const list = document.getElementById('list');
+  if (!items.length) { list.innerHTML = '<div class="card center muted">現在、募集中の依頼はありません。</div>'; return; }
+  list.innerHTML = items.map((it) => `
+    <a class="list-item" href="/d/request/${it.id}">
+      <div class="flex">
+        <div>
+          <div style="font-weight:700">#${it.id} ${it.origin_label || '出発地'} <span style="font-weight:400">→ ${it.dest_label || ''}</span></div>
+          <div class="small muted">${it.car_type || '車種未入力'} / ${it.transmission} / ${it.handle} / 経由${it.via_count}回 / ${it.time_label}</div>
+        </div>
+        <div class="small">
+          ${it.my_entry ? `<span class="chip chip-info">${it.my_entry === 'accepted' ? '成立' : it.my_entry === 'rejected' ? '不成立' : '提示中'}</span>` : `<span class="chip chip-orange">${it.entry_count}件提示中</span>`}
+        </div>
+      </div>
+    </a>`).join('');
+}
+function poll() {
+  fetch("{{ url_for('driver.requests_json') }}").then((r) => r.json()).then((d) => { render(d.items); reqMap.update(d.items); }).catch(() => {});
+}
+poll(); setInterval(poll, 7000);
+</script>
+{% endblock %}

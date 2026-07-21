@@ -1,0 +1,10 @@
+# 運転代行マッチング「代行の窓口」 依存パッケージ
+Flask>=3.0
+Flask-SQLAlchemy>=3.1
+SQLAlchemy>=2.0
+gunicorn>=21.2
+psycopg2-binary>=2.9      # 本番 Postgres 用（SQLite のみなら不要）
+# SMS 認証を Twilio で実送信する場合のみ必要（console モードでは不要）
+twilio>=8.0
+# スマホプッシュ通知（Web Push）
+pywebpush>=1.14

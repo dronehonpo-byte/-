@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}利用者一覧｜{{ service_name }}{% endblock %}
+{% block content %}
+<h2 class="page-title">利用者一覧</h2>
+<div class="card">
+  <table>
+    <tr><th>ID</th><th>電話番号</th><th>表示名</th><th>登録日</th></tr>
+    {% for c in customers %}
+    <tr><td>{{ c.id }}</td><td>{{ c.phone }}</td><td>{{ c.display_name or '—' }}</td><td class="small muted">{{ c.created_at | dt('%Y/%m/%d') }}</td></tr>
+    {% else %}<tr><td colspan="4" class="center muted">利用者はまだいません。</td></tr>{% endfor %}
+  </table>
+</div>
+{% endblock %}
+{% block tabbar %}
+<div class="tabbar">
+  <a href="{{ url_for('admin.dashboard') }}"><span class="ic">📊</span>概況</a>
+  <a href="{{ url_for('admin.vendors') }}"><span class="ic">🏢</span>業者</a>
+  <a class="active" href="{{ url_for('admin.customers') }}"><span class="ic">👥</span>利用者</a>
+  <a href="{{ url_for('admin.matching') }}"><span class="ic">🔀</span>マッチング</a>
+</div>
+{% endblock %}

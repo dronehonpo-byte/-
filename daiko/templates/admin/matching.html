@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}マッチング状況｜{{ service_name }}{% endblock %}
+{% block content %}
+<h2 class="page-title">マッチング状況・履歴</h2>
+{% for r in reqs %}
+<div class="card" style="padding:14px;margin-bottom:10px">
+  <div class="flex">
+    <div><b>#{{ r.id }}</b>&nbsp;
+      <span class="chip {% if r.status == RequestStatus.COMPLETED %}chip-green{% elif r.status == RequestStatus.CANCELLED %}chip-gray{% elif r.status == RequestStatus.EXPIRED %}chip-gray{% else %}chip-orange{% endif %}">{{ r.status.label }}</span>
+    </div>
+    <div class="small muted">{{ r.created_at | dt('%m/%d %H:%M') }}</div>
+  </div>
+  <div style="margin-top:7px;font-weight:700;line-height:1.5">{{ r.origin_label or '—' }} → {{ r.dest_label or '—' }}</div>
+  <div class="small muted" style="margin-top:5px">
+    車両 {{ r.transmission.value }}/{{ r.handle.label }}　・　提示 {{ r.entries.count() }}件　・
+    確定 {% if r.confirmed_entry %}{{ r.confirmed_entry.vendor.name }}（{{ r.confirmed_entry.price | yen }}）{% else %}—{% endif %}
+  </div>
+  <form method="post" action="{{ url_for('admin.delete_request', request_id=r.id) }}"
+        onsubmit="return confirm('リクエスト #{{ r.id }} を削除しますか？（エントリー・通知も消えます）')"
+        style="text-align:right; margin-top:8px">
+    <button type="submit" class="btn btn-danger" style="padding:5px 12px; font-size:12px">🗑 削除</button>
+  </form>
+</div>
+{% else %}
+<div class="card center muted">リクエストはまだありません。</div>
+{% endfor %}
+{% endblock %}
+{% block tabbar %}
+<div class="tabbar">
+  <a href="{{ url_for('admin.dashboard') }}"><span class="ic">📊</span>概況</a>
+  <a href="{{ url_for('admin.vendors') }}"><span class="ic">🏢</span>業者</a>
+  <a href="{{ url_for('admin.customers') }}"><span class="ic">👥</span>利用者</a>
+  <a class="active" href="{{ url_for('admin.matching') }}"><span class="ic">🔀</span>マッチング</a>
+</div>
+{% endblock %}

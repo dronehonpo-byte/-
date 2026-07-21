@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+{% block title %}ドライバーを探しています｜{{ service_name }}{% endblock %}
+{% block content %}
+<h2 class="page-title">ドライバーを選ぶ</h2>
+<div class="card">
+  <div class="small muted">{{ req.origin_label or '出発地' }} → {{ req.dest_label or '目的地' }}</div>
+  <div class="small muted">{{ req.car_type or "車種未入力" }} ／ {{ req.transmission.value }} ／ {{ req.handle.label }} ／ {{ req.time_label }}</div>
+</div>
+
+<div id="countdown" class="card center" style="padding:14px;margin-bottom:12px">
+  <div class="small muted">募集の締め切りまで</div>
+  <div id="countdown-val" style="font-size:30px;font-weight:900;letter-spacing:-.04em;color:var(--green-dark)">--:--</div>
+  <div class="small muted">10分以内に提示の中からお選びください</div>
+</div>
+
+<div class="center small muted" style="margin:2px 0 12px">
+  <span id="elapsed">募集開始から 0:00</span>
+  ・<span style="color:var(--green-dark);font-weight:700">自動更新中（5秒ごと）</span>
+</div>
+
+<div id="waiting" class="waiting">
+  <div class="spin"></div>
+  <p class="muted">ドライバーを探しています…<br>料金・到着時間の提示が届くと、ここに自動で表示されます。</p>
+</div>
+
+<div id="expired" class="card center" style="display:none">
+  <div style="font-size:34px">⌛</div>
+  <h3 style="margin:6px 0">募集を締め切りました</h3>
+  <p class="muted small">制限時間（10分）内にドライバーが確定しませんでした。<br>恐れ入りますが、もう一度依頼してください。</p>
+  <a class="btn btn-primary btn-block" href="{{ url_for('customer.new_request') }}" style="margin-top:8px">もう一度依頼する</a>
+  <a class="btn btn-outline btn-block" href="{{ url_for('customer.home') }}" style="margin-top:8px">トップへ戻る</a>
+</div>
+
+<div id="entries"></div>
+
+<form method="post" id="confirm-form" action="{{ url_for('customer.confirm', request_id=req.id) }}" style="display:none">
+  <input type="hidden" name="entry_id" id="entry_id">
+</form>
+
+<form method="post" action="{{ url_for('customer.cancel', request_id=req.id) }}" onsubmit="return confirm('このリクエストをキャンセルしますか？')" style="margin-top:14px">
+  <button class="btn btn-danger btn-block" type="submit">依頼をキャンセル</button>
+</form>
+{% endblock %}
+{% block scripts %}
+<script>
+const reqId = {{ req.id }};
+const PAY = {{ PAYMENT_METHODS_BY_KEY | tojson }};
+function payBadges(keys) {
+  if (!keys || !keys.length) return '';
+  const items = keys.map((k) => PAY[k]).filter(Boolean)
+    .map((m) => `<span class="pay-badge" style="background:${m.bg}" title="${m.label}">${m.short}</span>`).join('');
+  return `<div class="pay-badges" style="margin-top:8px">${items}</div>`;
+}
+function selectEntry(id, vendor, price) {
+  if (!confirm(vendor + ' / ' + price.toLocaleString() + '円 で確定しますか？\n確定後は連絡先が表示されます。')) return;
+  document.getElementById('entry_id').value = id;
+  document.getElementById('confirm-form').submit();
+}
+let elapsed = 0;
+let secondsLeft = {{ req.seconds_left }};
+let stopped = false;
+function fmt(s) { const m = Math.floor(s / 60); return m + ':' + String(s % 60).padStart(2, '0'); }
+function showExpired() {
+  stopped = true;
+  document.getElementById('waiting').style.display = 'none';
+  document.getElementById('entries').innerHTML = '';
+  document.getElementById('countdown').style.display = 'none';
+  document.getElementById('expired').style.display = 'block';
+}
+function paintCountdown() {
+  const el = document.getElementById('countdown-val');
+  el.textContent = fmt(Math.max(0, secondsLeft));
+  el.style.color = secondsLeft <= 60 ? 'var(--danger)' : 'var(--green-dark)';
+}
+function tick() {
+  if (stopped) return;
+  elapsed += 1;
+  document.getElementById('elapsed').textContent = '募集開始から ' + fmt(elapsed);
+  if (secondsLeft > 0) { secondsLeft -= 1; paintCountdown(); }
+  else { showExpired(); poll(); }
+}
+function render(data) {
+  if (typeof data.elapsed_seconds === 'number') {
+    elapsed = data.elapsed_seconds;
+    document.getElementById('elapsed').textContent = '募集開始から ' + fmt(elapsed);
+  }
+  if (typeof data.seconds_left === 'number') { secondsLeft = data.seconds_left; paintCountdown(); }
+  if (data.status === 'confirmed' || data.status === 'in_progress' || data.status === 'completed') {
+    location.href = "{{ url_for('customer.detail', request_id=req.id) }}"; return;
+  }
+  if (data.status === 'cancelled') { location.href = "{{ url_for('customer.home') }}"; return; }
+  if (data.status === 'expired') { showExpired(); return; }
+  const box = document.getElementById('entries');
+  const entries = data.entries.filter((e) => e.status === 'offered');  // エントリー順（早い順）
+  document.getElementById('waiting').style.display = entries.length ? 'none' : 'block';
+  box.innerHTML = entries.map((e) => {
+    return `
+    <div class="entry">
+      <div class="flex">
+        <div><div class="vendor">${e.vendor_name}</div>
+          <div class="small muted">到着 約 ${e.eta_minutes} 分</div>
+          ${e.cancellation_fee ? `<div class="small muted">キャンセル料: ${e.cancellation_fee}</div>` : ''}
+        </div>
+        <div class="price">${e.price.toLocaleString()}<span style="font-size:13px">円</span></div>
+      </div>
+      ${payBadges(e.payment_methods)}
+      <button class="btn btn-green btn-block" style="margin-top:10px"
+        onclick="selectEntry(${e.id}, '${e.vendor_name.replace(/'/g, '')}', ${e.price})">このドライバーに決める</button>
+    </div>`;
+  }).join('');
+}
+function poll() {
+  fetch("{{ url_for('customer.entries_json', request_id=req.id) }}")
+    .then((r) => r.json()).then(render).catch(() => {});
+}
+paintCountdown();
+if (secondsLeft <= 0) showExpired();
+poll(); setInterval(poll, 5000); setInterval(tick, 1000);
+</script>
+{% endblock %}

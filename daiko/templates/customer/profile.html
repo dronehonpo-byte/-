@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}プロフィール｜{{ service_name }}{% endblock %}
+{% block content %}
+<h2 class="page-title">お名前の登録</h2>
+<div class="card">
+  <form method="post" action="{{ url_for('customer.profile') }}">
+    <label>表示名（任意）</label>
+    <input type="text" name="display_name" value="{{ cur_customer.display_name or '' }}" placeholder="例：田中">
+    <div class="hint">ドライバーへの表示に使われます。未入力でもご利用いただけます。</div>
+    <br>
+    <button class="btn btn-primary btn-block btn-lg" type="submit">保存して始める</button>
+  </form>
+</div>
+{% endblock %}
