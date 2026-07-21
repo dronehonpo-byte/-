@@ -50,8 +50,11 @@ INCLUDE = [
     ".streamlit/config.toml",
 ]
 
-# Pyodide で利用可能なパッケージのみ（xgboost / japanize-matplotlib / pingouin /
-# missingno は Pyodide 非対応または不要。コード側で欠如を許容済み）。
+# Pyodide で確実に導入できるパッケージのみ。
+# reportlab は Pyodide 用 wheel が無く micropip.install がバッチごと失敗し、
+# 結果として scipy 等まで未導入になり「No module named 'scipy'」を招くため除外する
+# （PDF 出力のみブラウザ版で劣化。Excel/Word・全分析は動作）。
+# xgboost / japanize-matplotlib / pingouin / missingno も同様に除外（コード側で許容済み）。
 REQUIREMENTS = [
     "numpy",
     "pandas",
@@ -62,7 +65,6 @@ REQUIREMENTS = [
     "seaborn",
     "openpyxl",
     "python-docx",
-    "reportlab",
     "chardet",
 ]
 

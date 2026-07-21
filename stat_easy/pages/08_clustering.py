@@ -75,7 +75,13 @@ st.subheader("2. クラスタリングの実行")
 method_choice = st.radio("手法", ["k-means", "階層的クラスタリング"], horizontal=True)
 
 default_k = suggestion.suggested_k if suggestion is not None else 3
-k = st.slider("クラスタ数 (k)", min_value=2, max_value=10, value=int(default_k))
+# クラスタ数の上限は 50（ただしサンプル数-1 を超えられない）
+n_valid = len(df[features].dropna()) if features else len(df)
+k_max = max(2, min(50, n_valid - 1))
+k = st.slider(
+    "クラスタ数 (k)", min_value=2, max_value=k_max,
+    value=min(int(default_k), k_max),
+)
 
 linkage_method = "ward"
 if method_choice == "階層的クラスタリング":

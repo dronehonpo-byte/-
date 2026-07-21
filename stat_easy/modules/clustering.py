@@ -41,7 +41,7 @@ def _prepare(df: pd.DataFrame, features: list[str] | None):
 
 
 def suggest_k(df: pd.DataFrame, features: list[str] | None = None,
-             k_range=range(2, 11)) -> ClusterSuggestion:
+             k_range=range(2, 21)) -> ClusterSuggestion:
     from sklearn.cluster import KMeans
     from sklearn.preprocessing import StandardScaler
     from sklearn.metrics import silhouette_score

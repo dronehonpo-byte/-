@@ -52,7 +52,6 @@ nav = st.navigation(
 )
 
 st.sidebar.markdown("## 📊 StatEasy")
-st.sidebar.caption("統計の面白さを、手法名を知らなくても。")
 render_sidebar_credit()
 
 nav.run()
