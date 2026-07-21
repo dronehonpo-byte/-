@@ -14,7 +14,7 @@ OUT = ROOT / "web" / "loader.html"
 
 REPO = "dronehonpo-byte/-"
 # 反映確実性のためブランチ名でなくコミットSHAで固定
-COMMIT = "cf827e14cdd7488af6abbc06e4abdd029adb3a8d"
+COMMIT = "9d8f27b35c41262a28e4e9048c7e2fe8df8e7915"
 BASE = f"https://cdn.jsdelivr.net/gh/{REPO}@{COMMIT}/stat_easy/"
 
 PATHS = [
