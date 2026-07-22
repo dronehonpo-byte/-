@@ -1,0 +1,73 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --navy: #2b4fd4;
+  --accent: #c8102e;
+  --paper: #f7f9fc;
+  --ink: #0f1a3a;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  color: var(--ink);
+  background-color: var(--paper);
+  font-feature-settings: "palt";
+}
+
+/* 日本語の行間・字間を最適化 */
+.text-jp {
+  letter-spacing: 0.02em;
+  line-height: 1.85;
+}
+
+/* セクション見出し */
+.heading-xl {
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+
+/* 選択色 */
+::selection {
+  background: var(--accent);
+  color: white;
+}
+
+/* スクロールバー微調整 */
+@media (min-width: 768px) {
+  ::-webkit-scrollbar {
+    width: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #eef1f7;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #c3ccde;
+    border-radius: 8px;
+  }
+}
+
+/* フォーカスリング（アクセシビリティ） */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* フローティングCTAが画面最下部に重ならないための下余白ユーティリティ */
+.pb-floating {
+  padding-bottom: 6rem;
+}
+@media (min-width: 768px) {
+  .pb-floating {
+    padding-bottom: 5rem;
+  }
+}
