@@ -1,0 +1,25 @@
+# Python 仮想環境（開発ローカル専用・コミット不要）
+.venv/
+venv/
+env/
+
+# Python キャッシュ
+__pycache__/
+*.pyc
+*.pyo
+
+# 環境変数
+.env
+.env.local
+
+# Flask instance / SQLite DB（ローカル生成物）
+econtract/instance/
+
+# 生成ストレージ
+econtract/storage/contracts/*.pdf
+econtract/storage/signatures/*.png
+
+# テスト
+.pytest_cache/
+.coverage
+htmlcov/
