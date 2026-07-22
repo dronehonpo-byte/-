@@ -1,5 +1,5 @@
 /* 代行の窓口 — Service Worker（PWA: オフラインで起動できる最小キャッシュ） */
-const CACHE = 'daiko-v3';
+const CACHE = 'daiko-v4';
 const ASSETS = ['/', '/static/css/app.css', '/static/img/icon-192.png', '/static/img/icon-512.png'];
 
 self.addEventListener('install', (e) => {

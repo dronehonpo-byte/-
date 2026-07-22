@@ -4,25 +4,61 @@
     window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => {}));
   }
 
-  // 通知バッジのポーリング（ログイン中のみ）
+  // 通知バッジのポーリング＋ベルのパネル（ログイン中のみ）
   const badge = document.getElementById('notif-badge');
+  const bell = document.getElementById('notif-link');
+  const panel = document.getElementById('notif-panel');
+  const list = document.getElementById('notif-list');
+  let lastItems = [];
   if (badge) {
+    const setBadge = (n) => {
+      if (n > 0) { badge.textContent = n; badge.style.display = ''; }
+      else { badge.style.display = 'none'; }
+    };
     const poll = () => {
       fetch('/api/notifications')
         .then((r) => (r.ok ? r.json() : null))
-        .then((d) => {
-          if (!d) return;
-          if (d.unread > 0) {
-            badge.textContent = d.unread;
-            badge.style.display = '';
-          } else {
-            badge.style.display = 'none';
-          }
-        })
+        .then((d) => { if (!d) return; lastItems = d.items || []; setBadge(d.unread || 0); })
         .catch(() => {});
     };
     poll();
     setInterval(poll, 15000);
+
+    // ベルを押すとお知らせ一覧を表示し、未読を既読化（数字が消える）
+    if (bell && panel && list) {
+      const timeAgo = (iso) => {
+        const s = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
+        if (s < 60) return 'たった今';
+        if (s < 3600) return Math.floor(s / 60) + '分前';
+        if (s < 86400) return Math.floor(s / 3600) + '時間前';
+        return Math.floor(s / 86400) + '日前';
+      };
+      const rolePrefix = document.body.getAttribute('data-role-prefix') || '';
+      bell.addEventListener('click', (e) => {
+        e.preventDefault(); e.stopPropagation();
+        const open = panel.style.display !== 'none';
+        if (open) { panel.style.display = 'none'; return; }
+        list.innerHTML = lastItems.length
+          ? lastItems.map((n) => {
+              const cls = n.is_read ? 'notif-item' : 'notif-item unread';
+              const inner = `<div class="notif-t">${n.title || ''}</div>`
+                + (n.body ? `<div class="notif-b">${n.body}</div>` : '')
+                + `<div class="notif-time">${timeAgo(n.created_at)}</div>`;
+              return (n.request_id && rolePrefix)
+                ? `<a class="${cls}" href="${rolePrefix}request/${n.request_id}">${inner}</a>`
+                : `<div class="${cls}">${inner}</div>`;
+            }).join('')
+          : '<div class="notif-empty">お知らせはありません</div>';
+        panel.style.display = 'block';
+        // 既読化
+        fetch('/api/notifications/read', { method: 'POST' }).then(() => setBadge(0)).catch(() => {});
+      });
+      document.addEventListener('click', (e) => {
+        if (panel.style.display !== 'none' && !panel.contains(e.target) && e.target !== bell) {
+          panel.style.display = 'none';
+        }
+      });
+    }
   }
 
   /* ── スマホプッシュ通知の購読 ── */

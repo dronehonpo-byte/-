@@ -2,30 +2,31 @@
 <html lang="ja">
 <head>
   <meta charset="utf-8">
-  <meta name="build-marker" content="fixes-1to5-v2">
+  <meta name="build-marker" content="pwa-split-v1">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>{% block title %}{{ service_name }}{% endblock %}</title>
+  {# ページの種類（お客様/ドライバー/管理）を判定し、以降で共通利用 #}
+  {%- set _p = request.path -%}
+  {%- if _p == '/driver' or _p.startswith('/d/') or _p.startswith('/auth/driver') or _p.startswith('/auth/vendor') -%}
+    {%- set _app = 'driver' -%}{%- set _brand = 'ドライバーの窓口' -%}{%- set _home = url_for('driver.dashboard') if cur_driver else url_for('main.driver_entry') -%}
+  {%- elif _p == '/staff' or _p.startswith('/admin') or _p.startswith('/auth/admin') -%}
+    {%- set _app = 'admin' -%}{%- set _brand = '管理者の窓口' -%}{%- set _home = url_for('admin.dashboard') if cur_admin else url_for('main.staff_entry') -%}
+  {%- else -%}
+    {%- set _app = 'customer' -%}{%- set _brand = 'お客様の窓口' -%}{%- set _home = url_for('customer.home') if cur_customer else url_for('main.index') -%}
+  {%- endif -%}
+  <title>{% block title %}{{ _brand }}{% endblock %}</title>
   <meta name="theme-color" content="#ffffff">
-  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="manifest" href="/manifest.webmanifest?app={{ _app }}">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="{{ _brand }}">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <link rel="apple-touch-icon" href="/static/img/icon-192.png">
   <link rel="icon" href="/static/img/icon-192.png">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
   {% block head %}{% endblock %}
 </head>
-<body>
+<body data-role-prefix="{% if cur_customer %}/c/{% elif cur_driver %}/d/{% endif %}">
   {% block appbar %}
-  {# 窓口名は「いま開いているページの種類」で決める（ログイン中の役割より優先） #}
-  {% set _p = request.path %}
-  {% if _p == '/driver' or _p.startswith('/d/') or _p.startswith('/auth/driver') or _p.startswith('/auth/vendor') %}
-    {% set _brand = 'ドライバーの窓口' %}
-    {% set _home = url_for('driver.dashboard') if cur_driver else url_for('main.driver_entry') %}
-  {% elif _p == '/staff' or _p.startswith('/admin') or _p.startswith('/auth/admin') %}
-    {% set _brand = '管理者の窓口' %}
-    {% set _home = url_for('admin.dashboard') if cur_admin else url_for('main.staff_entry') %}
-  {% else %}
-    {% set _brand = 'お客様の窓口' %}
-    {% set _home = url_for('customer.home') if cur_customer else url_for('main.index') %}
-  {% endif %}
   <div class="appbar">
     <a class="brand" href="{{ _home }}">
       <img src="{{ url_for('static', filename='img/icon-192.png') }}" alt="">
@@ -33,13 +34,19 @@
     </a>
     <span class="spacer"></span>
     {% if cur_customer or cur_driver or cur_admin %}
-      <a class="iconbtn" href="#" id="notif-link">🔔<span class="badge-dot" id="notif-badge" style="display:none">0</span></a>
+      <button class="iconbtn" type="button" id="notif-link" aria-label="お知らせ">🔔<span class="badge-dot" id="notif-badge" style="display:none">0</span></button>
       &nbsp;&nbsp;
       {% if cur_customer %}<a class="iconbtn" href="{{ url_for('auth.do_logout', role='customer') }}">ログアウト</a>
       {% elif cur_driver %}<a class="iconbtn" href="{{ url_for('auth.do_logout', role='driver') }}">ログアウト</a>
       {% elif cur_admin %}<a class="iconbtn" href="{{ url_for('auth.do_logout', role='admin') }}">ログアウト</a>{% endif %}
     {% endif %}
   </div>
+  {% if cur_customer or cur_driver or cur_admin %}
+  <div id="notif-panel" class="notif-panel" style="display:none">
+    <div class="notif-head">お知らせ</div>
+    <div id="notif-list"><div class="notif-empty">読み込み中…</div></div>
+  </div>
+  {% endif %}
   {% endblock %}
 
   <div class="container">

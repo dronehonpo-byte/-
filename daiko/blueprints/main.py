@@ -36,7 +36,38 @@ def healthz():
 # ── PWA ──
 @bp.route("/manifest.webmanifest")
 def manifest():
-    return current_app.send_static_file("manifest.webmanifest")
+    """役割ごとに start_url / 名前を変えた PWA マニフェストを返す.
+
+    これにより「お客様/ドライバー/管理者」をそれぞれ別アプリとしてホーム画面に
+    追加でき、アイコンから開くと各アプリのトップが起動する（?app= で切替）。
+    """
+    apps = {
+        "customer": ("お客様の窓口", "/"),
+        "driver": ("ドライバーの窓口", "/driver"),
+        "admin": ("管理者の窓口", "/staff"),
+    }
+    name, start = apps.get(request.args.get("app", "customer"), apps["customer"])
+    data = {
+        "id": start,
+        "name": name,
+        "short_name": name,
+        "description": "運転代行マッチング — 宇都宮市の運転代行をスマホで",
+        "start_url": start,
+        "scope": "/",
+        "display": "standalone",
+        "background_color": "#ffffff",
+        "theme_color": "#00c46a",
+        "icons": [
+            {"src": "/static/img/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+            {"src": "/static/img/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"},
+            {"src": "/static/img/icon-maskable-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable"},
+            {"src": "/static/img/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"},
+        ],
+    }
+    resp = jsonify(data)
+    resp.headers["Content-Type"] = "application/manifest+json"
+    resp.headers["Cache-Control"] = "no-cache"
+    return resp
 
 
 @bp.route("/sw.js")
