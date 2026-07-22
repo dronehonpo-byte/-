@@ -1,0 +1,975 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+<title>KidsHabit（デモ）</title>
+<style>
+  /*
+    KidsHabit Web デモ（クライアント確認用）
+    - 単一HTML・自己完結。ビルド不要。ブラウザで index.html を開くだけ。
+    - 実アセット未支給のため、キャラ/アイテムは絵文字＋図形のプレースホルダー。
+    - 音声案内は Web Speech API（日本語TTS）を仮利用。SEは WebAudio 合成。
+    - 画面は 1280x720 の横向きステージを画面に合わせて拡大縮小（レターボックス）。
+  */
+  :root {
+    --stage-w: 1280px;
+    --stage-h: 720px;
+    --pink: #ffd6e0;
+    --mint: #c8f2e0;
+    --sky: #cfeaff;
+    --sun: #ffe9a8;
+    --ink: #4a4a5a;
+    --lock: #ff9a3c;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    margin: 0; padding: 0; height: 100%; overflow: hidden;
+    background: #2b2340;
+    font-family: -apple-system, "Hiragino Maru Gothic ProN", "Hiragino Sans", "Yu Gothic", sans-serif;
+    color: var(--ink);
+    touch-action: none;
+    user-select: none; -webkit-user-select: none;
+  }
+  #viewport {
+    position: fixed; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+  }
+  #stage {
+    position: relative;
+    width: var(--stage-w); height: var(--stage-h);
+    background: var(--sky);
+    border-radius: 28px;
+    overflow: hidden;
+    transform-origin: center center;
+    box-shadow: 0 20px 60px rgba(0,0,0,.4);
+  }
+  /* 縦向きスマホ用の回転案内 */
+  #rotate-hint {
+    position: fixed; inset: 0; display: none;
+    align-items: center; justify-content: center; flex-direction: column;
+    background: #2b2340; color: #fff; z-index: 9999; text-align: center; gap: 12px;
+    font-size: 22px;
+  }
+  #rotate-hint .emoji { font-size: 64px; animation: rot 2s ease-in-out infinite; }
+  @keyframes rot { 0%,100%{transform:rotate(0)} 50%{transform:rotate(90deg)} }
+
+  .screen { position: absolute; inset: 0; display: none; }
+  .screen.active { display: block; }
+  /* スプラッシュは中央寄せのため flex（ID+classでIDのみ指定に勝たせる） */
+  #splash.active { display: flex; }
+
+  /* 共通: ホームボタン（常に左上） */
+  .home-btn {
+    position: absolute; top: 18px; left: 18px; z-index: 50;
+    width: 74px; height: 74px; border-radius: 50%;
+    border: none; background: #fff; color: var(--ink);
+    font-size: 36px; cursor: pointer;
+    box-shadow: 0 6px 0 rgba(0,0,0,.15);
+    display: flex; align-items: center; justify-content: center;
+    transition: transform .1s;
+  }
+  .home-btn:active { transform: scale(.92); }
+
+  /* 共通: シーン案内テキスト（音声併記） */
+  .guide {
+    position: absolute; top: 22px; left: 50%; transform: translateX(-50%);
+    background: #fff; border-radius: 999px; padding: 14px 30px;
+    font-size: 30px; font-weight: 700; color: var(--ink);
+    box-shadow: 0 6px 0 rgba(0,0,0,.12); z-index: 40; white-space: nowrap;
+  }
+  .replay-voice {
+    position: absolute; top: 22px; right: 18px; z-index: 50;
+    width: 74px; height: 74px; border-radius: 50%;
+    border: none; background: #fff; font-size: 34px; cursor: pointer;
+    box-shadow: 0 6px 0 rgba(0,0,0,.15);
+  }
+  .replay-voice:active { transform: scale(.92); }
+
+  /* 進捗ドット */
+  .progress { position: absolute; bottom: 18px; left: 50%; transform: translateX(-50%); display: flex; gap: 12px; z-index: 40; }
+  .progress .dot { width: 18px; height: 18px; border-radius: 50%; background: rgba(255,255,255,.6); }
+  .progress .dot.done { background: #ffcf3f; }
+  .progress .dot.current { background: #fff; outline: 4px solid #ffcf3f; }
+
+  /* ===== スプラッシュ ===== */
+  #splash { background: linear-gradient(160deg, var(--sun), var(--pink)); }
+  #splash .inner { margin: auto; text-align: center; }
+  #splash .logo { font-size: 96px; animation: bob 1.4s ease-in-out infinite; }
+  #splash h1 { font-size: 64px; margin: 8px 0; color: #fff; text-shadow: 0 4px 0 rgba(0,0,0,.12); }
+  #splash .tap { font-size: 30px; color: #fff; margin-top: 18px; animation: blink 1.2s infinite; }
+  @keyframes bob { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-18px)} }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+  /* ===== ホーム ===== */
+  #home { background: linear-gradient(160deg, var(--sky), var(--mint)); }
+  #home h2 { text-align: center; font-size: 40px; margin: 24px 0 6px; color: var(--ink); }
+  .cards { display: flex; gap: 26px; justify-content: center; align-items: stretch; padding: 30px 40px; flex-wrap: wrap; }
+  .card {
+    width: 250px; height: 340px; background: #fff; border-radius: 26px;
+    box-shadow: 0 10px 0 rgba(0,0,0,.12); cursor: pointer; position: relative;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
+    transition: transform .12s;
+  }
+  .card:active { transform: scale(.96); }
+  .card .ic { font-size: 108px; }
+  .card .name { font-size: 34px; font-weight: 800; }
+  .card .tag { position: absolute; top: 14px; right: 14px; font-size: 20px; font-weight: 800; padding: 6px 14px; border-radius: 999px; }
+  .card .tag.free { background: var(--mint); color: #128a5b; }
+  .card .tag.premium { background: var(--lock); color: #fff; }
+  .card .lock { position: absolute; bottom: 14px; font-size: 30px; }
+
+  /* ===== ゲーム共通ステージ ===== */
+  .play { position: absolute; inset: 0; }
+  .play-bg { position: absolute; inset: 0; }
+
+  .draggable { position: absolute; cursor: grab; touch-action: none; will-change: transform; }
+  .draggable.locked { cursor: default; }
+  .food, .cloth, .item {
+    display: flex; align-items: center; justify-content: center;
+    background: #fff; border-radius: 22px; box-shadow: 0 6px 0 rgba(0,0,0,.12);
+  }
+
+  .drop-target {
+    position: absolute; border: 5px dashed rgba(0,0,0,.22); border-radius: 22px;
+    display: flex; align-items: center; justify-content: center; flex-direction: column;
+    color: rgba(0,0,0,.4); font-size: 24px; font-weight: 800; gap: 6px;
+  }
+  .drop-target .th { font-size: 56px; }
+
+  /* 歯磨き */
+  #teeth-area { position: absolute; left: 50%; top: 52%; transform: translate(-50%,-50%); width: 720px; height: 380px; }
+  .mouth { position: absolute; inset: 0; background: #ff9fb0; border-radius: 40px; overflow: hidden; box-shadow: inset 0 0 0 18px #ff7f95; }
+  .teeth-row { position: absolute; left: 30px; right: 30px; height: 150px; display: flex; gap: 10px; }
+  .teeth-row.top { top: 34px; } .teeth-row.bottom { bottom: 34px; }
+  .tooth { flex: 1; background: #fff; border-radius: 14px; box-shadow: 0 4px 0 rgba(0,0,0,.06); }
+  #dirt-canvas { position: absolute; left: 0; top: 0; width: 720px; height: 380px; }
+  #brush { position: absolute; font-size: 90px; pointer-events: none; transform: translate(-50%,-60%); z-index: 30; transition: opacity .2s; }
+
+  /* 食事・着替えキャラ */
+  .char { position: absolute; font-size: 200px; user-select: none; }
+
+  /* ===== Paywall ===== */
+  #paywall { background: linear-gradient(160deg, #fff3d6, #ffd9e6); }
+  #paywall .sheet {
+    position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%);
+    width: 640px; background: #fff; border-radius: 28px; padding: 34px; text-align: center;
+    box-shadow: 0 16px 40px rgba(0,0,0,.25);
+  }
+  #paywall h2 { font-size: 40px; margin: 6px 0 4px; }
+  #paywall .price { font-size: 30px; color: var(--lock); font-weight: 900; margin: 10px 0; }
+  #paywall ul { list-style: none; padding: 0; margin: 14px auto; font-size: 22px; text-align: left; width: 340px; line-height: 1.9; }
+  .btn {
+    border: none; border-radius: 999px; padding: 16px 30px; font-size: 26px; font-weight: 800;
+    cursor: pointer; box-shadow: 0 6px 0 rgba(0,0,0,.15); margin: 8px;
+  }
+  .btn:active { transform: translateY(3px); box-shadow: 0 3px 0 rgba(0,0,0,.15); }
+  .btn.primary { background: var(--lock); color: #fff; }
+  .btn.ghost { background: #eee; color: var(--ink); }
+  .btn.big { font-size: 32px; padding: 20px 46px; }
+  .note { font-size: 16px; color: #999; margin-top: 12px; }
+
+  /* 保護者ゲート */
+  #gate { position: absolute; inset: 0; background: rgba(0,0,0,.55); display: none; z-index: 200; }
+  #gate .box { position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%); background: #fff; border-radius: 24px; padding: 30px 40px; text-align: center; width: 520px; }
+  #gate h3 { font-size: 28px; margin: 4px 0 14px; }
+  #gate .q { font-size: 40px; font-weight: 900; margin: 10px 0 18px; }
+  #gate .keys { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+  #gate .keys .btn { margin: 4px; min-width: 84px; }
+
+  /* ===== エフェクト・クリア ===== */
+  #fx { position: absolute; inset: 0; pointer-events: none; z-index: 300; }
+  #overlay {
+    position: absolute; inset: 0; z-index: 320; display: none;
+    align-items: center; justify-content: center; flex-direction: column; text-align: center;
+    background: radial-gradient(circle at center, rgba(255,255,255,.9), rgba(255,240,200,.85));
+  }
+  #overlay.show { display: flex; }
+  #overlay .big-emoji { font-size: 140px; animation: pop .5s ease; }
+  #overlay h2 { font-size: 56px; margin: 10px; color: #ff5c8a; text-shadow: 0 4px 0 rgba(0,0,0,.08); }
+  #overlay p { font-size: 30px; color: var(--ink); margin: 4px; }
+  #overlay .actions { margin-top: 22px; }
+  @keyframes pop { 0%{transform:scale(0)} 70%{transform:scale(1.2)} 100%{transform:scale(1)} }
+
+  .toast {
+    position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%);
+    background: rgba(0,0,0,.0); z-index: 310; text-align: center; pointer-events: none;
+    display: none;
+  }
+  .toast.show { display: block; animation: toastPop 1.2s ease forwards; }
+  .toast .e { font-size: 120px; }
+  .toast .t { font-size: 40px; font-weight: 900; color: #ff5c8a; }
+  @keyframes toastPop { 0%{opacity:0; transform:translate(-50%,-40%) scale(.6)} 25%{opacity:1; transform:translate(-50%,-50%) scale(1.1)} 80%{opacity:1} 100%{opacity:0; transform:translate(-50%,-56%) scale(1)} }
+
+  .demo-badge {
+    position: fixed; bottom: 8px; right: 12px; z-index: 10000;
+    font-size: 12px; color: rgba(255,255,255,.5); pointer-events: none;
+  }
+</style>
+</head>
+<body>
+<div id="rotate-hint"><div class="emoji">📱</div><div>よこむきにしてね</div></div>
+
+<div id="viewport">
+  <div id="stage">
+    <!-- スプラッシュ -->
+    <section id="splash" class="screen active">
+      <div class="inner">
+        <div class="logo">🦷🧸🍱👕</div>
+        <h1>KidsHabit</h1>
+        <div class="tap">タッチしてね</div>
+      </div>
+    </section>
+
+    <!-- ホーム -->
+    <section id="home" class="screen">
+      <h2>なにして あそぶ？</h2>
+      <div class="cards" id="cards"></div>
+    </section>
+
+    <!-- ゲーム画面（動的生成） -->
+    <section id="game" class="screen"></section>
+
+    <!-- Paywall -->
+    <section id="paywall" class="screen">
+      <button class="home-btn" onclick="App.goHome()">🏠</button>
+      <div class="sheet">
+        <div style="font-size:70px">👨‍👩‍👧</div>
+        <h2>おうちのひとと いっしょに</h2>
+        <div class="price">つきがく ¥200（デモ）</div>
+        <ul>
+          <li>🍱 ごはんの あそび</li>
+          <li>👕 きがえの あそび</li>
+          <li>✨ これから ふえる あそび</li>
+        </ul>
+        <button class="btn primary big" onclick="App.startPurchase()">こうどく する</button><br />
+        <button class="btn ghost" onclick="App.restore()">こうにゅうを ふくげん</button>
+        <div class="note">※ デモ版です。じっさいの けっさいは おこないません（本番は StoreKit 2 / 保護者ゲート）。</div>
+      </div>
+    </section>
+
+    <!-- 保護者ゲート -->
+    <div id="gate">
+      <div class="box">
+        <h3>おうちのひとに ききます</h3>
+        <div class="q" id="gate-q">3 + 4 = ?</div>
+        <div class="keys" id="gate-keys"></div>
+        <button class="btn ghost" style="margin-top:14px" onclick="Gate.close()">やめる</button>
+      </div>
+    </div>
+
+    <!-- エフェクト層 -->
+    <canvas id="fx"></canvas>
+    <div class="toast" id="toast"><div class="e"></div><div class="t"></div></div>
+    <div id="overlay">
+      <div class="big-emoji" id="ov-emoji">🎉</div>
+      <h2 id="ov-title"></h2>
+      <p id="ov-sub"></p>
+      <div class="actions" id="ov-actions"></div>
+    </div>
+  </div>
+</div>
+<div class="demo-badge">KidsHabit demo · placeholder assets</div>
+
+<script>
+"use strict";
+
+/* ============================================================
+   Constants — マジックナンバーはここに集約（要件準拠）
+   ============================================================ */
+const C = {
+  STAGE_W: 1280,
+  STAGE_H: 720,
+  CLEAR_RATIO: 0.8,        // 歯磨き: 80% 以上でクリア
+  SNAP_RADIUS: 90,         // ドラッグのスナップ判定（大きめ＝幼児向け）
+  BRUSH_RADIUS: 46,        // 歯ブラシで一度に落ちる汚れ半径
+  RETURN_MS: 320,          // 誤操作時に優しく戻るアニメ時間
+  SCENE_CLEAR_DELAY: 900,  // 1場面クリア演出の表示後、次へ
+};
+
+/* ============================================================
+   Sound — WebAudio 合成の仮SE / TTS 音声案内（差し替え前提）
+   ============================================================ */
+const Sound = {
+  ctx: null, on: true,
+  ensure() { if (!this.ctx) { try { this.ctx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e){} } return this.ctx; },
+  tone(freq, dur, type = "sine", vol = 0.2, delay = 0) {
+    if (!this.on) return; const ctx = this.ensure(); if (!ctx) return;
+    const t0 = ctx.currentTime + delay;
+    const osc = ctx.createOscillator(), g = ctx.createGain();
+    osc.type = type; osc.frequency.value = freq;
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.exponentialRampToValueAtTime(vol, t0 + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    osc.connect(g).connect(ctx.destination); osc.start(t0); osc.stop(t0 + dur + 0.02);
+  },
+  sparkle() { this.tone(1200, 0.18, "triangle", .2); this.tone(1800, 0.22, "triangle", .15, .06); },
+  snap()    { this.tone(660, 0.12, "square", .18); this.tone(990, 0.12, "square", .12, .05); },
+  gentle()  { this.tone(300, 0.16, "sine", .14); },   // 誤操作: 優しい低音
+  eat()     { this.tone(500, 0.09, "sine", .2); this.tone(360, 0.12, "sine", .18, .05); },
+  brushing(){ this.tone(180 + Math.random()*120, 0.06, "sawtooth", .05); }, // シャカシャカ
+  fanfare() {
+    const seq = [523, 659, 784, 1047];
+    seq.forEach((f,i)=> this.tone(f, 0.24, "triangle", .22, i*0.12));
+  },
+  celebrate() {
+    const seq = [784, 988, 1319, 1047, 1319, 1568];
+    seq.forEach((f,i)=> this.tone(f, 0.22, "triangle", .2, i*0.11));
+  },
+  speak(text) {
+    if (!this.on || !("speechSynthesis" in window)) return;
+    try {
+      window.speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(text);
+      u.lang = "ja-JP"; u.rate = 0.95; u.pitch = 1.25;
+      window.speechSynthesis.speak(u);
+    } catch(e) {}
+  }
+};
+
+/* ============================================================
+   Storage — 課金フラグのみ（本番は UserDefaults 相当）
+   ============================================================ */
+const Storage = {
+  KEY: "kidshabit_demo_premium",
+  isPremium() { return localStorage.getItem(this.KEY) === "1"; },
+  setPremium(v) { localStorage.setItem(this.KEY, v ? "1" : "0"); }
+};
+
+/* ============================================================
+   カテゴリ定義 — enum 的に一元管理（フェーズ2で追加しやすく）
+   ============================================================ */
+const CATEGORIES = [
+  { id: "tooth",   name: "はみがき",   icon: "🪥", premium: false, color: "#cfeaff" },
+  { id: "cleanup", name: "おかたづけ", icon: "🧸", premium: false, color: "#d8f5cf" },
+  { id: "meal",    name: "ごはん",     icon: "🍱", premium: true,  color: "#ffe0cf" },
+  { id: "dressing",name: "きがえ",     icon: "👕", premium: true,  color: "#f0d6ff" },
+];
+
+/* ============================================================
+   FX — スパークル/紙吹雪パーティクル（SpriteKit相当の仮演出）
+   ============================================================ */
+const FX = {
+  canvas: null, ctx: null, parts: [], raf: null,
+  init() {
+    this.canvas = document.getElementById("fx");
+    this.canvas.width = C.STAGE_W; this.canvas.height = C.STAGE_H;
+    this.ctx = this.canvas.getContext("2d");
+  },
+  burst(x, y, colors = ["#ffcf3f","#ff8fb0","#8fd4ff","#a0f0c0","#fff"], n = 34) {
+    for (let i=0;i<n;i++) {
+      const a = Math.random()*Math.PI*2, sp = 3 + Math.random()*7;
+      this.parts.push({ x, y, vx: Math.cos(a)*sp, vy: Math.sin(a)*sp - 3,
+        life: 1, size: 6 + Math.random()*10, color: colors[i%colors.length], rot: Math.random()*6, vr: (Math.random()-.5)*.4 });
+    }
+    this.run();
+  },
+  rain(colors = ["#ffcf3f","#ff8fb0","#8fd4ff","#a0f0c0","#c9a0ff","#fff"], n = 120) {
+    for (let i=0;i<n;i++) {
+      this.parts.push({ x: Math.random()*C.STAGE_W, y: -20 - Math.random()*300,
+        vx: (Math.random()-.5)*2, vy: 2 + Math.random()*4, life: 1.6,
+        size: 8 + Math.random()*12, color: colors[i%colors.length], rot: Math.random()*6, vr:(Math.random()-.5)*.3 });
+    }
+    this.run();
+  },
+  run() {
+    if (this.raf) return;
+    const step = () => {
+      this.ctx.clearRect(0,0,C.STAGE_W,C.STAGE_H);
+      for (let i=this.parts.length-1;i>=0;i--) {
+        const p = this.parts[i];
+        p.vy += 0.25; p.x += p.vx; p.y += p.vy; p.rot += p.vr; p.life -= 0.012;
+        if (p.life <= 0 || p.y > C.STAGE_H + 40) { this.parts.splice(i,1); continue; }
+        this.ctx.save(); this.ctx.globalAlpha = Math.max(0, Math.min(1, p.life));
+        this.ctx.translate(p.x, p.y); this.ctx.rotate(p.rot);
+        this.ctx.fillStyle = p.color; this.ctx.fillRect(-p.size/2, -p.size/2, p.size, p.size);
+        this.ctx.restore();
+      }
+      if (this.parts.length) { this.raf = requestAnimationFrame(step); }
+      else { cancelAnimationFrame(this.raf); this.raf = null; this.ctx.clearRect(0,0,C.STAGE_W,C.STAGE_H); }
+    };
+    this.raf = requestAnimationFrame(step);
+  }
+};
+
+/* ============================================================
+   共通UI: トースト / クリアオーバーレイ
+   ============================================================ */
+function showToast(emoji, text, voice) {
+  const el = document.getElementById("toast");
+  el.querySelector(".e").textContent = emoji;
+  el.querySelector(".t").textContent = text;
+  el.classList.remove("show"); void el.offsetWidth; el.classList.add("show");
+  Sound.sparkle(); if (voice) Sound.speak(voice);
+  setTimeout(()=> el.classList.remove("show"), 1200);
+}
+
+function showOverlay({ emoji, title, sub, voice, sound, effect, actions }) {
+  const ov = document.getElementById("overlay");
+  document.getElementById("ov-emoji").textContent = emoji;
+  document.getElementById("ov-title").textContent = title;
+  document.getElementById("ov-sub").textContent = sub || "";
+  const act = document.getElementById("ov-actions"); act.innerHTML = "";
+  (actions || []).forEach(a => {
+    const b = document.createElement("button");
+    b.className = "btn big " + (a.kind || "primary"); b.textContent = a.label;
+    b.onclick = a.onClick; act.appendChild(b);
+  });
+  ov.classList.add("show");
+  if (sound === "fanfare") Sound.fanfare(); else if (sound === "celebrate") Sound.celebrate(); else Sound.sparkle();
+  if (effect === "rain") { FX.rain(); setTimeout(()=>FX.rain(undefined, 80), 700); }
+  else FX.burst(C.STAGE_W/2, C.STAGE_H/2, undefined, 60);
+  if (voice) setTimeout(()=> Sound.speak(voice), 250);
+}
+function hideOverlay() { document.getElementById("overlay").classList.remove("show"); }
+
+/* ============================================================
+   座標ヘルパ — 拡大縮小したステージ内のポインタ座標へ変換
+   ============================================================ */
+function stagePoint(e) {
+  const st = document.getElementById("stage");
+  const r = st.getBoundingClientRect();
+  const scale = r.width / C.STAGE_W;
+  return { x: (e.clientX - r.left) / scale, y: (e.clientY - r.top) / scale };
+}
+
+/* ============================================================
+   ドラッグ共通 — 大きめヒット判定・スナップ・優しい復帰
+   ============================================================ */
+function makeDraggable(el, { onDrop }) {
+  let start = null;
+  el.addEventListener("pointerdown", (e) => {
+    if (el.classList.contains("locked")) return;
+    el.setPointerCapture(e.pointerId);
+    const p = stagePoint(e);
+    start = { px: p.x, py: p.y, ox: parseFloat(el.dataset.x), oy: parseFloat(el.dataset.y) };
+    el.style.transition = "none"; el.style.zIndex = 100;
+    el.style.cursor = "grabbing";
+  });
+  el.addEventListener("pointermove", (e) => {
+    if (!start) return;
+    const p = stagePoint(e);
+    const nx = start.ox + (p.x - start.px), ny = start.oy + (p.y - start.py);
+    el.dataset.x = nx; el.dataset.y = ny;
+    el.style.transform = `translate(${nx}px, ${ny}px)`;
+  });
+  const end = () => {
+    if (!start) return;
+    start = null; el.style.cursor = "grab"; el.style.zIndex = "";
+    onDrop(el);
+  };
+  el.addEventListener("pointerup", end);
+  el.addEventListener("pointercancel", end);
+}
+function setPos(el, x, y) { el.dataset.x = x; el.dataset.y = y; el.style.transform = `translate(${x}px, ${y}px)`; }
+function center(el) { const x = parseFloat(el.dataset.x), y = parseFloat(el.dataset.y); return { x: x + el.offsetWidth/2, y: y + el.offsetHeight/2 }; }
+function targetCenter(t) { return { x: t.left + t.w/2, y: t.top + t.h/2 }; }
+function dist(a, b) { return Math.hypot(a.x - b.x, a.y - b.y); }
+function returnGently(el, x, y) {
+  Sound.gentle();
+  el.style.transition = `transform ${C.RETURN_MS}ms cubic-bezier(.34,1.4,.5,1)`;
+  setPos(el, x, y);
+  setTimeout(()=> el.style.transition = "none", C.RETURN_MS);
+}
+
+/* ============================================================
+   保護者ゲート — Kids Category 準拠のダミー（本番は要件準拠実装）
+   ============================================================ */
+const Gate = {
+  onPass: null,
+  open(onPass) {
+    this.onPass = onPass;
+    const a = 2 + Math.floor(Math.random()*6), b = 2 + Math.floor(Math.random()*5);
+    const ans = a + b;
+    document.getElementById("gate-q").textContent = `${a} + ${b} = ?`;
+    const opts = new Set([ans]);
+    while (opts.size < 4) opts.add(ans + (Math.floor(Math.random()*7) - 3));
+    const arr = [...opts].sort(()=> Math.random()-0.5);
+    const keys = document.getElementById("gate-keys"); keys.innerHTML = "";
+    arr.forEach(v => {
+      const btn = document.createElement("button");
+      btn.className = "btn ghost"; btn.textContent = v;
+      btn.onclick = () => { if (v === ans) { this.close(); if (this.onPass) this.onPass(); } else { Sound.gentle(); } };
+      keys.appendChild(btn);
+    });
+    document.getElementById("gate").style.display = "block";
+  },
+  close() { document.getElementById("gate").style.display = "none"; }
+};
+
+/* ============================================================
+   ゲーム基盤 — シーン列を管理する薄い共通フレーム
+   ============================================================ */
+function renderGameFrame({ title, bgColor }) {
+  const g = document.getElementById("game");
+  g.innerHTML = `
+    <div class="play-bg" style="background:${bgColor}"></div>
+    <button class="home-btn" onclick="App.goHome()">🏠</button>
+    <button class="replay-voice" id="replay-voice">🔊</button>
+    <div class="guide" id="guide">${title}</div>
+    <div class="play" id="play"></div>
+    <div class="progress" id="progress"></div>
+  `;
+  return { play: g.querySelector("#play"), guide: g.querySelector("#guide"), progress: g.querySelector("#progress") };
+}
+function renderProgress(container, total, current) {
+  container.innerHTML = "";
+  for (let i=0;i<total;i++) {
+    const d = document.createElement("div");
+    d.className = "dot" + (i < current ? " done" : i === current ? " current" : "");
+    container.appendChild(d);
+  }
+}
+function setGuide(text, voice) {
+  document.getElementById("guide").textContent = text;
+  Sound.speak(voice || text);
+  const rv = document.getElementById("replay-voice");
+  if (rv) rv.onclick = () => Sound.speak(voice || text);
+}
+
+/* ============================================================
+   ① 歯磨き（無料・なぞり）
+   ============================================================ */
+const ToothGame = {
+  scenes: [
+    { label: "したの は（かみあわせ）", voice: "したの はを みがいてみよう！" },
+    { label: "したの は（おもて）",     voice: "したの はの おもてを みがこう！" },
+    { label: "うえの は（かみあわせ）", voice: "うえの はも みがいてみよう！" },
+    { label: "うえの は（おもて）",     voice: "うえの はの おもてを みがこう！" },
+  ],
+  idx: 0, dirtCtx: null, initialOpaque: 1, cleared: false, sampleTimer: 0,
+  start() { this.idx = 0; this.render(); },
+  render() {
+    const { play, progress } = renderGameFrame({ title: this.scenes[this.idx].label, bgColor: "linear-gradient(160deg,#cfeaff,#e8f7ff)" });
+    renderProgress(progress, this.scenes.length + 1, this.idx); // +1 = うがい
+    setGuide(this.scenes[this.idx].label, this.scenes[this.idx].voice);
+    play.innerHTML = `
+      <div id="teeth-area">
+        <div class="mouth">
+          <div class="teeth-row top"></div>
+          <div class="teeth-row bottom"></div>
+        </div>
+        <canvas id="dirt-canvas" width="720" height="380"></canvas>
+      </div>
+      <div id="brush">🪥</div>
+    `;
+    for (const r of play.querySelectorAll(".teeth-row")) {
+      for (let i=0;i<8;i++) { const t = document.createElement("div"); t.className = "tooth"; r.appendChild(t); }
+    }
+    this.setupDirt();
+  },
+  setupDirt() {
+    this.cleared = false;
+    const cv = document.getElementById("dirt-canvas");
+    const ctx = cv.getContext("2d"); this.dirtCtx = ctx;
+    ctx.clearRect(0,0,cv.width,cv.height);
+    // 汚れ・くすみ（茶色の斑点）を描画
+    for (let i=0;i<520;i++) {
+      const x = Math.random()*cv.width, y = 40 + Math.random()*(cv.height-80);
+      const rad = 6 + Math.random()*14;
+      ctx.fillStyle = `rgba(${150+Math.random()*60|0}, ${110+Math.random()*40|0}, ${40+Math.random()*30|0}, ${0.5+Math.random()*0.4})`;
+      ctx.beginPath(); ctx.arc(x,y,rad,0,Math.PI*2); ctx.fill();
+    }
+    this.initialOpaque = this.countOpaque();
+
+    const brush = document.getElementById("brush");
+    const area = document.getElementById("teeth-area");
+    let brushing = false;
+    const localPoint = (e) => {
+      const r = cv.getBoundingClientRect(); const scale = r.width / cv.width;
+      return { x: (e.clientX - r.left)/scale, y: (e.clientY - r.top)/scale };
+    };
+    const moveBrush = (e) => {
+      const p = stagePoint(e); const ar = area.getBoundingClientRect(); const st = document.getElementById("stage").getBoundingClientRect();
+      const scale = st.width / C.STAGE_W;
+      brush.style.left = (p.x - (ar.left - st.left)/scale) + "px";
+      brush.style.top  = (p.y - (ar.top  - st.top)/scale) + "px";
+    };
+    const scrub = (e) => {
+      const lp = localPoint(e);
+      ctx.save(); ctx.globalCompositeOperation = "destination-out";
+      ctx.beginPath(); ctx.arc(lp.x, lp.y, C.BRUSH_RADIUS, 0, Math.PI*2); ctx.fill();
+      ctx.restore();
+      Sound.brushing();
+      if (performance.now() - this.sampleTimer > 120) { this.sampleTimer = performance.now(); this.checkCleared(); }
+    };
+    cv.style.touchAction = "none";
+    cv.addEventListener("pointerdown", (e)=>{ cv.setPointerCapture(e.pointerId); brushing = true; moveBrush(e); scrub(e); });
+    cv.addEventListener("pointermove", (e)=>{ moveBrush(e); if (brushing) scrub(e); });
+    const stop = ()=>{ brushing = false; this.checkCleared(); };
+    cv.addEventListener("pointerup", stop); cv.addEventListener("pointercancel", stop);
+  },
+  countOpaque() {
+    const cv = document.getElementById("dirt-canvas");
+    const data = this.dirtCtx.getImageData(0,0,cv.width,cv.height).data;
+    let n = 0; for (let i=3;i<data.length;i+=4*6) if (data[i] > 20) n++; // 間引きサンプル
+    return Math.max(1, n);
+  },
+  checkCleared() {
+    if (this.cleared) return;
+    const ratio = 1 - this.countOpaque() / this.initialOpaque;  // 落とした割合
+    if (ratio >= C.CLEAR_RATIO) { this.cleared = true; this.onSceneClear(); }
+  },
+  onSceneClear() {
+    const area = document.getElementById("teeth-area").getBoundingClientRect();
+    const st = document.getElementById("stage").getBoundingClientRect();
+    FX.burst(C.STAGE_W/2, C.STAGE_H/2);
+    showToast("✨", "ピカピカ！", "ピカピカ！");
+    setTimeout(()=> {
+      this.idx++;
+      if (this.idx < this.scenes.length) this.render();
+      else this.rinse();
+    }, C.SCENE_CLEAR_DELAY);
+  },
+  rinse() {
+    const { play, progress } = renderGameFrame({ title: "うがいを しよう", bgColor: "linear-gradient(160deg,#cfeaff,#e8f7ff)" });
+    renderProgress(progress, this.scenes.length + 1, this.scenes.length);
+    setGuide("コップを おくちに もっていってね", "コップを おくちに もっていってね");
+    play.innerHTML = `
+      <div class="char" style="left:50%; top:44%; transform:translate(-50%,-50%);">😀</div>
+      <div class="drop-target" id="mouth-t" style="left:560px; top:250px; width:160px; height:160px; border-radius:50%;"><div class="th">👄</div></div>
+    `;
+    const cup = document.createElement("div");
+    cup.className = "draggable item"; cup.style.width = "120px"; cup.style.height = "120px"; cup.style.fontSize = "72px";
+    cup.textContent = "🥤"; setPos(cup, 120, 460); play.appendChild(cup);
+    const t = { left: 560, top: 250, w: 160, h: 160 };
+    let gargled = false;
+    makeDraggable(cup, { onDrop: (el) => {
+      if (dist(center(el), targetCenter(t)) < C.SNAP_RADIUS && !gargled) {
+        gargled = true;
+        setPos(el, t.left + 20, t.top + 20);
+        el.classList.add("locked");
+        for (let i=0;i<6;i++) setTimeout(()=> Sound.tone(240+Math.random()*200,0.1,"sawtooth",.12), i*140); // ガラガラ
+        showToast("💧", "ガラガラ〜", "のども スッキリ！");
+        setTimeout(()=> this.complete(), 1400);
+      } else if (!gargled) { returnGently(el, 120, 460); }
+    }});
+  },
+  complete() {
+    showOverlay({
+      emoji: "🦷✨", title: "ピカピカ！えらい！", sub: "はみがき ぜんぶ できたね",
+      voice: "ピカピカ！えらい！", sound: "fanfare",
+      actions: [
+        { label: "もういちど", kind: "ghost", onClick: ()=>{ hideOverlay(); ToothGame.start(); } },
+        { label: "おうちへ", onClick: ()=>{ hideOverlay(); App.goHome(); } },
+      ]
+    });
+  }
+};
+
+/* ============================================================
+   ② 片付け（無料・ドラッグ＆ドロップ + スナップ）
+   ============================================================ */
+const CleanupGame = {
+  scenes: [
+    { label: "リビングを かたづけよう", voice: "おもちゃと えほんを かたづけよう！",
+      targets: [ {id:"toy", emoji:"📦", label:"おもちゃ", left:120, top:430, w:220, h:200},
+                 {id:"book", emoji:"📚", label:"えほん", left:940, top:430, w:220, h:200} ],
+      items: [ {emoji:"🧸",t:"toy"},{emoji:"⚽",t:"toy"},{emoji:"🚗",t:"toy"},{emoji:"📖",t:"book"},{emoji:"📕",t:"book"} ] },
+    { label: "ベッドを ととのえよう", voice: "まくらと ぬいぐるみを もどそう！",
+      targets: [ {id:"bed", emoji:"🛏️", label:"ベッド", left:820, top:360, w:320, h:280} ],
+      items: [ {emoji:"🛌",t:"bed"},{emoji:"🧸",t:"bed"},{emoji:"🐰",t:"bed"},{emoji:"🌙",t:"bed"} ] },
+    { label: "つくえを かたづけよう", voice: "ぶんぼうぐを はこに いれよう！",
+      targets: [ {id:"box", emoji:"🗃️", label:"はこ", left:500, top:420, w:280, h:220} ],
+      items: [ {emoji:"✏️",t:"box"},{emoji:"🖍️",t:"box"},{emoji:"📐",t:"box"},{emoji:"✂️",t:"box"},{emoji:"📎",t:"box"} ] },
+    { label: "くつを そろえよう（ペア）", voice: "おなじ いろの くつを そろえよう！", isShoe: true,
+      targets: [ {id:"r", emoji:"🟥", label:"あか", left:180, top:470, w:150, h:150},
+                 {id:"b", emoji:"🟦", label:"あお", left:560, top:470, w:150, h:150},
+                 {id:"g", emoji:"🟩", label:"みどり", left:940, top:470, w:150, h:150} ],
+      items: [ {emoji:"👟",t:"r",tint:"#ff6b6b"},{emoji:"👟",t:"r",tint:"#ff6b6b"},
+               {emoji:"👟",t:"b",tint:"#4d96ff"},{emoji:"👟",t:"b",tint:"#4d96ff"},
+               {emoji:"👟",t:"g",tint:"#3ecf8e"},{emoji:"👟",t:"g",tint:"#3ecf8e"} ] },
+  ],
+  idx: 0, remaining: 0,
+  start() { this.idx = 0; this.render(); },
+  render() {
+    const sc = this.scenes[this.idx];
+    const { play, progress } = renderGameFrame({ title: sc.label, bgColor: "linear-gradient(160deg,#d8f5cf,#eefbe8)" });
+    renderProgress(progress, this.scenes.length, this.idx);
+    setGuide(sc.label, sc.voice);
+    // ターゲット配置
+    const counts = {};
+    sc.targets.forEach(t => {
+      counts[t.id] = 0;
+      const el = document.createElement("div");
+      el.className = "drop-target"; el.style.left = t.left+"px"; el.style.top = t.top+"px";
+      el.style.width = t.w+"px"; el.style.height = t.h+"px";
+      el.innerHTML = `<div class="th">${t.emoji}</div><div>${t.label}</div>`;
+      play.appendChild(el);
+    });
+    // アイテム配置（上部に散らばり）
+    this.remaining = sc.items.length;
+    sc.items.forEach((it, i) => {
+      const el = document.createElement("div");
+      el.className = "draggable item";
+      el.style.width = "110px"; el.style.height = "110px"; el.style.fontSize = "64px";
+      if (it.tint) { el.style.background = it.tint; el.style.color = "#fff"; }
+      el.textContent = it.emoji;
+      const homeX = 120 + (i % 5) * 200, homeY = 150 + Math.floor(i/5)*10 + (i%2)*20;
+      setPos(el, homeX, homeY); el.dataset.home = JSON.stringify({x:homeX,y:homeY});
+      play.appendChild(el);
+      makeDraggable(el, { onDrop: (node) => {
+        const tgt = sc.targets.find(t => t.id === it.t);
+        const box = { left: tgt.left, top: tgt.top, w: tgt.w, h: tgt.h };
+        // 「正しい収納先」に近ければスナップ。それ以外は優しく戻す（誤りを強調しない）
+        const nearCorrect = dist(center(node), targetCenter(box)) < C.SNAP_RADIUS + tgt.w/2 - 40;
+        if (nearCorrect) {
+          node.classList.add("locked");
+          const n = counts[tgt.id]++;
+          const px = tgt.left + 24 + (n%3)*56, py = tgt.top + 30 + Math.floor(n/3)*46;
+          node.style.transition = "transform .2s"; setPos(node, px, py);
+          Sound.snap(); FX.burst(px+40, py+40, undefined, 14);
+          if (--this.remaining === 0) setTimeout(()=> this.onSceneClear(), 500);
+        } else {
+          const h = JSON.parse(node.dataset.home); returnGently(node, h.x, h.y);
+        }
+      }});
+    });
+  },
+  onSceneClear() {
+    showToast("✨", "おかたづけ できた！", "おかたづけ できたね！");
+    setTimeout(()=> {
+      this.idx++;
+      if (this.idx < this.scenes.length) this.render(); else this.complete();
+    }, C.SCENE_CLEAR_DELAY);
+  },
+  complete() {
+    showOverlay({
+      emoji: "🏠✨", title: "おへや ピカピカ！", sub: "ぜんぶ かたづけられて えらい！",
+      voice: "おへや ピカピカ！えらいね！", sound: "fanfare",
+      actions: [
+        { label: "もういちど", kind: "ghost", onClick: ()=>{ hideOverlay(); CleanupGame.start(); } },
+        { label: "おうちへ", onClick: ()=>{ hideOverlay(); App.goHome(); } },
+      ]
+    });
+  }
+};
+
+/* ============================================================
+   ③ 食事（サブスク・タップ＆ドラッグ）
+   ============================================================ */
+const MealGame = {
+  sets: [
+    { name:"セット1", foods:["🥦","🥕","🍔","🌽"] },
+    { name:"セット2", foods:["🥞","🥝","🍌","🍓"] },
+    { name:"セット3", foods:["🍅","🐟","🥬","🍠"] },
+    { name:"セット4", foods:["🪷","🍤","🍗","🥚"] },
+  ],
+  setIdx: 0, remaining: 0,
+  start() { this.setIdx = 0; this.render(); },
+  render() {
+    const sc = this.sets[this.setIdx];
+    const { play, progress } = renderGameFrame({ title: sc.name + "：たべてみよう", bgColor: "linear-gradient(160deg,#ffe0cf,#fff2e8)" });
+    renderProgress(progress, this.sets.length, this.setIdx);
+    setGuide("たべものを おくちへ はこんでね", "たべものを おくちへ はこんでね");
+    play.innerHTML = `
+      <div class="char" id="meal-char" style="left:50%; top:36%; transform:translate(-50%,-50%);">🧒</div>
+      <div style="position:absolute; left:50%; bottom:16px; transform:translateX(-50%); font-size:70px; opacity:.5" id="mouth-visual">🍽️</div>
+      <div class="drop-target" id="meal-mouth" style="left:560px; top:280px; width:160px; height:160px; border-radius:50%; opacity:0"></div>
+    `;
+    // 口の位置（キャラの顔の中央あたり）。ここへ運べば食べる。
+    const mouth = { left: 560, top: 280, w: 160, h: 160 };
+    this.remaining = sc.foods.length;
+    sc.foods.forEach((f, i) => {
+      const el = document.createElement("div");
+      el.className = "draggable food";
+      el.style.width = "120px"; el.style.height = "120px"; el.style.fontSize = "72px";
+      el.textContent = f;
+      const cols = [130, 330, 830, 1030], hx = cols[i], hy = 470;
+      setPos(el, hx, hy); el.dataset.home = JSON.stringify({x:hx,y:hy});
+      play.appendChild(el);
+      makeDraggable(el, { onDrop: (node) => {
+        if (dist(center(node), targetCenter(mouth)) < C.SNAP_RADIUS + 20) {
+          node.remove();
+          const ch = document.getElementById("meal-char"); ch.textContent = "😋";
+          Sound.eat(); FX.burst(650, 200, ["#ffcf3f","#ff8fb0"], 16);
+          setTimeout(()=> { if (document.getElementById("meal-char")) document.getElementById("meal-char").textContent = "🧒"; }, 350);
+          if (--this.remaining === 0) setTimeout(()=> this.onSetClear(), 500);
+        } else {
+          const h = JSON.parse(node.dataset.home); returnGently(node, h.x, h.y);
+        }
+      }});
+    });
+  },
+  onSetClear() {
+    this.setIdx++;
+    if (this.setIdx < this.sets.length) {
+      showOverlay({
+        emoji: "🍽️", title: "ごちそうさまでした！", sub: "ぜんぶ たべれて えらい！",
+        voice: "ごちそうさまでした！ぜんぶ たべれて えらいね！", sound: "fanfare",
+        actions: [ { label: "つぎへ", onClick: ()=>{ hideOverlay(); MealGame.render(); } } ]
+      });
+    } else {
+      this.complete();
+    }
+  },
+  complete() {
+    showOverlay({
+      emoji: "🌈🌟", title: "すごいね！！", sub: "きらいなものが なくて えらい！",
+      voice: "きらいなものが なくて えらい！すごいね！", sound: "celebrate", effect: "rain",
+      actions: [
+        { label: "もういちど", kind: "ghost", onClick: ()=>{ hideOverlay(); MealGame.start(); } },
+        { label: "おうちへ", onClick: ()=>{ hideOverlay(); App.goHome(); } },
+      ]
+    });
+  }
+};
+
+/* ============================================================
+   ④ 着替え（サブスク・4部位ドラッグ + スナップ）
+   ============================================================ */
+const DressGame = {
+  // 部位ターゲット（キャラは左）。頭・上半身・下半身・足元
+  parts: [
+    { id:"head",  label:"あたま",   left:210, top:120, w:150, h:130 },
+    { id:"torso", label:"じょうはんしん", left:190, top:250, w:190, h:150 },
+    { id:"legs",  label:"したはんしん", left:200, top:400, w:170, h:150 },
+    { id:"feet",  label:"あしもと",  left:200, top:545, w:170, h:120 },
+  ],
+  scenes: [
+    { label:"ふだんぎ",   voice:"ふくを からだに つけてみよう！", items:{head:"🧢",torso:"👕",legs:"👖",feet:"👟"} },
+    { label:"スーツふう", voice:"かっこよく きがえよう！",       items:{head:"🎩",torso:"👔",legs:"👖",feet:"👞"} },
+    { label:"あめの ひ",  voice:"あめの ひの ふくを きよう！",   items:{head:"🧢",torso:"🧥",legs:"👖",feet:"🥾"} },
+    { label:"なつふく",   voice:"すずしい ふくを きよう！",       items:{head:"👒",torso:"👕",legs:"🩳",feet:"🩴"} },
+  ],
+  idx: 0, remaining: 0,
+  start() { this.idx = 0; this.render(); },
+  render() {
+    const sc = this.scenes[this.idx];
+    const { play, progress } = renderGameFrame({ title: "きがえ："+sc.label, bgColor: "linear-gradient(160deg,#f0d6ff,#faf0ff)" });
+    renderProgress(progress, this.scenes.length, this.idx);
+    setGuide("ふくを ただしい ところへ", sc.voice);
+    // キャラ（左）
+    const char = document.createElement("div");
+    char.className = "char"; char.id = "dress-char";
+    char.style.left = "150px"; char.style.top = "120px"; char.textContent = "🧒";
+    play.appendChild(char);
+    // 部位ターゲット
+    this.parts.forEach(p => {
+      const el = document.createElement("div");
+      el.className = "drop-target"; el.dataset.id = p.id;
+      el.style.left = p.left+"px"; el.style.top = p.top+"px"; el.style.width = p.w+"px"; el.style.height = p.h+"px";
+      el.innerHTML = `<div>${p.label}</div>`;
+      play.appendChild(el);
+    });
+    // 服アイテム（右）
+    const order = ["head","torso","legs","feet"];
+    this.remaining = order.length;
+    order.forEach((pid, i) => {
+      const el = document.createElement("div");
+      el.className = "draggable cloth";
+      el.style.width = "120px"; el.style.height = "120px"; el.style.fontSize = "72px";
+      el.textContent = sc.items[pid]; el.dataset.part = pid;
+      const hx = 900 + (i%2)*180, hy = 120 + Math.floor(i/2)*230;
+      setPos(el, hx, hy); el.dataset.home = JSON.stringify({x:hx,y:hy});
+      play.appendChild(el);
+      makeDraggable(el, { onDrop: (node) => {
+        const p = this.parts.find(pp => pp.id === node.dataset.part);
+        const box = { left:p.left, top:p.top, w:p.w, h:p.h };
+        if (dist(center(node), targetCenter(box)) < C.SNAP_RADIUS + 30) {
+          node.classList.add("locked");
+          node.style.transition = "transform .2s";
+          setPos(node, p.left + p.w/2 - 60, p.top + p.h/2 - 60);
+          Sound.snap(); FX.burst(p.left + p.w/2, p.top + p.h/2, undefined, 16);
+          if (--this.remaining === 0) setTimeout(()=> this.onSceneClear(), 500);
+        } else {
+          const h = JSON.parse(node.dataset.home); returnGently(node, h.x, h.y);
+        }
+      }});
+    });
+  },
+  onSceneClear() {
+    const char = document.getElementById("dress-char");
+    if (char) { char.textContent = "🕺"; char.style.transition = "transform .4s"; char.style.transform = "scale(1.25)"; }
+    showToast("✨", "きれたね！", "じぶんで きれたね！かっこいい！");
+    setTimeout(()=> {
+      this.idx++;
+      if (this.idx < this.scenes.length) this.render(); else this.complete();
+    }, C.SCENE_CLEAR_DELAY + 300);
+  },
+  complete() {
+    showOverlay({
+      emoji: "👕🌟", title: "かっこいい！", sub: "じぶんで きがえ できたね！",
+      voice: "じぶんで きれたね！かっこいい！", sound: "celebrate", effect: "rain",
+      actions: [
+        { label: "もういちど", kind: "ghost", onClick: ()=>{ hideOverlay(); DressGame.start(); } },
+        { label: "おうちへ", onClick: ()=>{ hideOverlay(); App.goHome(); } },
+      ]
+    });
+  }
+};
+
+/* ============================================================
+   App — 画面遷移・入場
+   ============================================================ */
+const App = {
+  screens: ["splash","home","game","paywall"],
+  show(id) {
+    document.querySelectorAll(".screen").forEach(s => s.classList.toggle("active", s.id === id));
+    hideOverlay();
+  },
+  init() {
+    FX.init();
+    this.fitStage();
+    window.addEventListener("resize", ()=> this.fitStage());
+    this.renderHome();
+    // スプラッシュ → タッチで開始（オーディオ解放も兼ねる）
+    document.getElementById("splash").addEventListener("pointerdown", () => {
+      Sound.ensure(); this.goHome();
+    }, { once: false });
+  },
+  fitStage() {
+    const st = document.getElementById("stage");
+    const scale = Math.min(window.innerWidth / C.STAGE_W, window.innerHeight / C.STAGE_H);
+    st.style.transform = `scale(${scale})`;
+    // 縦向きの狭い画面では回転案内
+    document.getElementById("rotate-hint").style.display =
+      (window.innerHeight > window.innerWidth && window.innerWidth < 600) ? "flex" : "none";
+  },
+  renderHome() {
+    const box = document.getElementById("cards"); box.innerHTML = "";
+    CATEGORIES.forEach(cat => {
+      const card = document.createElement("div");
+      card.className = "card"; card.style.background = "#fff";
+      card.innerHTML = `
+        <span class="tag ${cat.premium ? "premium":"free"}">${cat.premium ? "サブスク":"むりょう"}</span>
+        <div class="ic">${cat.icon}</div>
+        <div class="name">${cat.name}</div>
+        ${cat.premium && !Storage.isPremium() ? '<div class="lock">🔒</div>' : ''}
+      `;
+      card.onclick = () => this.openCategory(cat);
+      box.appendChild(card);
+    });
+  },
+  openCategory(cat) {
+    Sound.ensure(); Sound.snap();
+    if (cat.premium && !Storage.isPremium()) { this.show("paywall"); return; }
+    this.show("game");
+    if (cat.id === "tooth") ToothGame.start();
+    else if (cat.id === "cleanup") CleanupGame.start();
+    else if (cat.id === "meal") MealGame.start();
+    else if (cat.id === "dressing") DressGame.start();
+  },
+  goHome() { this.renderHome(); this.show("home"); Sound.speak("なにして あそぶ？"); },
+
+  // Paywall（デモ）: 保護者ゲート → 疑似購入
+  startPurchase() {
+    Gate.open(() => {
+      Storage.setPremium(true);
+      showOverlay({
+        emoji: "🎉", title: "こうどく ありがとう！", sub: "ぜんぶの あそびが できるよ",
+        sound: "fanfare",
+        actions: [ { label: "OK", onClick: ()=>{ hideOverlay(); App.renderHome(); App.goHome(); } } ]
+      });
+    });
+  },
+  restore() {
+    // 本番は StoreKit 2 の Restore。デモは保護者ゲート後にフラグ復元。
+    Gate.open(() => { Storage.setPremium(true); App.renderHome(); showToast("✅","ふくげん できた！","こうにゅうを ふくげん しました"); App.goHome(); });
+  }
+};
+
+window.addEventListener("DOMContentLoaded", () => App.init());
+</script>
+</body>
+</html>
