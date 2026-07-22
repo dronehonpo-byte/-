@@ -1,0 +1,9 @@
+# 検証に必要なコアパッケージ
+oemer>=0.1.8        # OMR 本体 (画像 -> MusicXML)
+music21>=9.1.0      # MusicXML 解析
+Pillow>=10.0.0      # 画像処理
+verovio>=4.0.0      # MusicXML -> SVG 描画 (visualize.py)
+
+# サンプル画像の再生成 (make_sample.py) にのみ必要。検証本体には不要。
+# 環境によっては cairo のシステムライブラリが必要になることがあります。
+cairosvg>=2.7.0

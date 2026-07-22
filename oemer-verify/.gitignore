@@ -1,0 +1,10 @@
+# Python venv
+venv/
+__pycache__/
+*.pyc
+
+# 実行時に生成される検証結果（git 管理外）
+output/
+
+# サンプル生成の一時ファイル
+input/*.gen.musicxml
