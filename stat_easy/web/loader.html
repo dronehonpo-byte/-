@@ -28,7 +28,7 @@
   </div>
   <script src="https://cdn.jsdelivr.net/npm/@stlite/mountable@0.75.0/build/stlite.js"></script>
   <script>
-    const BASE = "https://cdn.jsdelivr.net/gh/dronehonpo-byte/-@9d8f27b35c41262a28e4e9048c7e2fe8df8e7915/stat_easy/";
+    const BASE = "https://cdn.jsdelivr.net/gh/dronehonpo-byte/-@55f8fdc6fda901d39962b5c59b9502dc08f9a828/stat_easy/";
     const PATHS = ["app.py", "modules/__init__.py", "modules/common.py", "modules/data_loader.py", "modules/data_quality.py", "modules/descriptive_stats.py", "modules/hypothesis_test.py", "modules/effect_size.py", "modules/correlation.py", "modules/clustering.py", "modules/visualizer.py", "exporters/__init__.py", "exporters/excel_exporter.py", "exporters/word_exporter.py", "exporters/pdf_exporter.py", "pages/00_home.py", "pages/01_upload.py", "pages/02_quality.py", "pages/03_descriptive.py", "pages/04_hypothesis.py", "pages/05_effect.py", "pages/06_regression.py", "pages/08_clustering.py", "pages/09_visualization.py", "sample_data/sample_experiment.csv", "sample_data/sample_survey.csv", "assets/style.css", ".streamlit/config.toml", "assets/fonts/ipaexg.ttf"];
     const files = {};
     for (const p of PATHS) { files[p] = { url: BASE + p }; }
