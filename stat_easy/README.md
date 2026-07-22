@@ -117,7 +117,7 @@ python -m pytest
 ### 設計上の約束
 
 - 統計計算に生成 AI を使用しない（OpenAI API 等の呼び出し禁止）。再現性を最優先します。
-- 図の日本語が文字化けしないよう `japanize-matplotlib` を使用します。
+- 図の日本語が文字化けしないよう、日本語フォント IPAexGothic（`assets/fonts/ipaexg.ttf`）をアプリに同梱して使用します。
 - APA 形式の表は三線表（上下に太線、ヘッダー下に細線）を基本スタイルとします。
 
 ---
