@@ -7,6 +7,8 @@ from __future__ import annotations
 import streamlit as st
 
 from modules import common, data_loader, data_quality, descriptive_stats, visualizer
+
+common.require_password()  # 全ページでパスワード必須（直接アクセス時も保護）
 from exporters import excel_exporter, word_exporter, pdf_exporter
 
 df = common.require_data()

@@ -8,6 +8,8 @@ import streamlit as st
 
 from modules import common, data_loader, data_quality, descriptive_stats, visualizer
 
+common.require_password()  # 全ページでパスワード必須（直接アクセス時も保護）
+
 df = common.require_data()
 
 st.title("🔍 データ品質診断")

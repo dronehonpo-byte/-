@@ -8,6 +8,8 @@ import streamlit as st
 
 from modules import common, data_loader
 
+common.require_password()  # 全ページでパスワード必須（直接アクセス時も保護）
+
 common.load_css()
 
 st.title("データアップロード")

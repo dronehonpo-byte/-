@@ -20,8 +20,23 @@ def _load_sample():
 
 
 @pytest.mark.parametrize("page", PAGES, ids=[p.name for p in PAGES])
+def test_page_blocked_without_password(page):
+    """未認証では各ページが直接アクセスされてもログイン画面で止まること。"""
+    at = AppTest.from_file(str(page), default_timeout=60)
+    res = _load_sample()
+    at.session_state["df"] = res.df
+    at.session_state["column_types"] = res.column_types
+    at.session_state["source_name"] = res.source_name
+    at.run()
+    # ログイン用パスワード入力欄が出て、本体は描画されない
+    assert len(at.text_input) >= 1, f"{page.name}: 未認証なのにログイン欄が無い"
+    assert "stateasy_authed" not in at.session_state
+
+
+@pytest.mark.parametrize("page", PAGES, ids=[p.name for p in PAGES])
 def test_page_runs(page):
     at = AppTest.from_file(str(page), default_timeout=60)
+    at.session_state["stateasy_authed"] = True  # パスワードゲート通過済み扱い
     res = _load_sample()
     at.session_state["df"] = res.df
     at.session_state["column_types"] = res.column_types

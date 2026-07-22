@@ -8,6 +8,8 @@ import streamlit as st
 import pandas as pd
 
 from modules import common, data_loader, correlation, visualizer
+
+common.require_password()  # 全ページでパスワード必須（直接アクセス時も保護）
 from exporters import excel_exporter, word_exporter, pdf_exporter
 
 df = common.require_data()

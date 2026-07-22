@@ -10,6 +10,8 @@ import pandas as pd
 import streamlit as st
 
 from modules import common, data_loader, hypothesis_test, effect_size, visualizer
+
+common.require_password()  # 全ページでパスワード必須（直接アクセス時も保護）
 from exporters import excel_exporter, word_exporter, pdf_exporter
 
 common.load_css()
