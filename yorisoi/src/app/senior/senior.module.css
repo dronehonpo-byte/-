@@ -1,0 +1,65 @@
+.main {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 28px 20px 40px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.title {
+  font-size: var(--font-2xl);
+  color: var(--color-primary-dark);
+}
+
+.settingsLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px;
+  border-radius: 12px;
+  border: 2px solid var(--color-border);
+  background: var(--color-surface);
+  font-size: 17px;
+  color: var(--color-text-muted);
+}
+
+.loading {
+  font-size: var(--font-lg);
+  color: var(--color-text-muted);
+  text-align: center;
+  padding: 48px 0;
+}
+
+/* カテゴリ子画面のボタン一覧 */
+.buttonGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+
+@media (max-width: 560px) {
+  .buttonGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.footer {
+  margin-top: auto;
+  padding-top: 16px;
+}
+
+.empty {
+  text-align: center;
+  font-size: var(--font-lg);
+  color: var(--color-text-muted);
+  padding: 40px 0;
+}

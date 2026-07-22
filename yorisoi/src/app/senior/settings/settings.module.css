@@ -1,0 +1,270 @@
+.main {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 28px 20px 40px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.title {
+  font-size: var(--font-xl);
+  color: var(--color-primary-dark);
+}
+
+.desc {
+  margin: -12px 0 0;
+  font-size: 17px;
+  color: var(--color-text-muted);
+}
+
+.loading {
+  font-size: var(--font-lg);
+  color: var(--color-text-muted);
+  padding: 40px 0;
+  text-align: center;
+}
+
+.section {
+  padding: 24px;
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  border: 3px solid var(--color-border);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.sectionTitle {
+  font-size: var(--font-lg);
+  color: var(--color-text);
+}
+
+/* --- TTS スライダー --- */
+.sliderRow {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sliderLabel {
+  font-size: 18px;
+}
+
+.sliderHint {
+  font-size: 15px;
+  color: var(--color-text-muted);
+  margin-left: 6px;
+}
+
+.slider {
+  width: 100%;
+  height: 40px;
+  accent-color: var(--color-primary);
+}
+
+.testBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 64px;
+  border-radius: 12px;
+  border: 3px solid var(--color-accent);
+  background: var(--color-accent);
+  color: #fff;
+  font-size: var(--font-base);
+  font-weight: 700;
+}
+
+/* --- リスト共通 --- */
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.catRow,
+.btnRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 14px;
+  background: var(--color-surface-warm);
+}
+
+.catIcon,
+.btnIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+  border-radius: 10px;
+  background: var(--color-surface);
+  color: var(--color-primary);
+}
+
+.inlineInput {
+  flex: 1;
+  min-width: 0;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 2px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: 18px;
+  font-family: inherit;
+}
+
+.rowActions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.iconBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  border: 2px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.iconBtn:disabled {
+  opacity: 0.4;
+}
+
+.danger {
+  color: var(--color-danger);
+  border-color: #e6c4bd;
+}
+
+.btnText {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.btnTitle {
+  font-size: 19px;
+  font-weight: 700;
+}
+
+.btnAnswer {
+  font-size: 15px;
+  color: var(--color-text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* --- カテゴリ追加 --- */
+.addCat {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 4px;
+}
+
+.addCatTop {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.iconChoose {
+  padding: 0 16px;
+  min-height: 52px;
+  border-radius: 10px;
+  border: 2px solid var(--color-border);
+  background: var(--color-surface);
+  font-size: 16px;
+  color: var(--color-text-muted);
+}
+
+.catIconPicker {
+  padding: 12px;
+  border-radius: 12px;
+  background: var(--color-surface-warm);
+}
+
+.addBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 18px;
+  min-height: 52px;
+  border-radius: 10px;
+  border: 3px solid var(--color-primary);
+  background: var(--color-primary);
+  color: #fff;
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.addBtn:disabled {
+  opacity: 0.5;
+}
+
+/* --- ボタンブロック --- */
+.catBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-bottom: 8px;
+  border-bottom: 2px dashed var(--color-border);
+}
+
+.catBlock:last-child {
+  border-bottom: none;
+}
+
+.catBlockHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.catBlockTitle {
+  font-size: var(--font-base);
+  color: var(--color-primary-dark);
+}
+
+.emptyHint {
+  margin: 0;
+  font-size: 16px;
+  color: var(--color-text-muted);
+}
+
+/* --- リセット --- */
+.resetBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 64px;
+  border-radius: 12px;
+  border: 3px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-danger);
+  font-size: var(--font-base);
+  font-weight: 700;
+}
+
+.footer {
+  margin-top: 8px;
+}

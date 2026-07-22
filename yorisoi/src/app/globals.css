@@ -1,0 +1,104 @@
+/*
+ * グローバルデザイントークン & ベーススタイル。
+ *
+ * 高齢者・認知症の方向け UI 原則:
+ *  - 基本フォント 20px 以上、見出し 32px 以上
+ *  - 温かみのある淡色系（ベージュ / オレンジ / くすんだ緑）
+ *  - 高コントラスト、アニメーション最小限
+ */
+
+:root {
+  /* --- 配色（温かみのある淡色系） --- */
+  --color-bg: #faf6ef; /* ベージュ地 */
+  --color-surface: #ffffff;
+  --color-surface-warm: #fbf1e4;
+  --color-text: #3a3128; /* 濃い茶（本文） */
+  --color-text-muted: #6f6355;
+  --color-border: #e6dccb;
+
+  --color-primary: #e8843c; /* 温かいオレンジ */
+  --color-primary-dark: #cf6d29;
+  --color-primary-contrast: #ffffff;
+
+  --color-accent: #7a9471; /* くすんだ緑 */
+  --color-accent-dark: #5f7a57;
+
+  --color-danger: #c0503f;
+  --color-warning: #d99411;
+  --color-success: #5f7a57;
+
+  /* --- タイポグラフィ --- */
+  --font-base: 20px;
+  --font-lg: 24px;
+  --font-xl: 32px;
+  --font-2xl: 40px;
+  --font-3xl: 52px;
+
+  /* --- 余白・角丸 --- */
+  --space-1: 8px;
+  --space-2: 16px;
+  --space-3: 24px;
+  --space-4: 32px;
+  --radius: 20px;
+
+  /* --- 操作対象最小サイズ --- */
+  --touch-min: 80px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  padding: 0;
+  margin: 0;
+}
+
+body {
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font-family: "Hiragino Maru Gothic ProN", "Hiragino Kaku Gothic ProN",
+    "Yu Gothic", "Meiryo", system-ui, -apple-system, sans-serif;
+  font-size: var(--font-base);
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+h1,
+h2,
+h3 {
+  margin: 0;
+  line-height: 1.3;
+  font-weight: 700;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* フォーカスリング（キーボード操作の視認性） */
+:focus-visible {
+  outline: 4px solid var(--color-primary);
+  outline-offset: 3px;
+}
+
+/* アニメーションを抑えたいユーザーへの配慮 */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+/* Leaflet の地図がコンテナに収まるように */
+.leaflet-container {
+  font-family: inherit;
+}
