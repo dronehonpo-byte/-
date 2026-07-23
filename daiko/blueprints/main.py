@@ -41,12 +41,13 @@ def manifest():
     これにより「お客様/ドライバー/管理者」をそれぞれ別アプリとしてホーム画面に
     追加でき、アイコンから開くと各アプリのトップが起動する（?app= で切替）。
     """
+    # (表示名, start_url, アイコンの接頭辞)  ※役割ごとに色違いアイコンで区別
     apps = {
-        "customer": ("お客様の窓口", "/"),
-        "driver": ("ドライバーの窓口", "/driver"),
-        "admin": ("管理者の窓口", "/staff"),
+        "customer": ("お客様の窓口", "/", "icon"),
+        "driver": ("ドライバーの窓口", "/driver", "icon-driver"),
+        "admin": ("管理者の窓口", "/staff", "icon-admin"),
     }
-    name, start = apps.get(request.args.get("app", "customer"), apps["customer"])
+    name, start, ic = apps.get(request.args.get("app", "customer"), apps["customer"])
     data = {
         "id": start,
         "name": name,
@@ -58,10 +59,10 @@ def manifest():
         "background_color": "#ffffff",
         "theme_color": "#00c46a",
         "icons": [
-            {"src": "/static/img/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
-            {"src": "/static/img/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"},
-            {"src": "/static/img/icon-maskable-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable"},
-            {"src": "/static/img/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"},
+            {"src": f"/static/img/{ic}-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+            {"src": f"/static/img/{ic}-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"},
+            {"src": f"/static/img/{ic}-maskable-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable"},
+            {"src": f"/static/img/{ic}-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"},
         ],
     }
     resp = jsonify(data)

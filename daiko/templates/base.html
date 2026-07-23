@@ -7,11 +7,11 @@
   {# ページの種類（お客様/ドライバー/管理）を判定し、以降で共通利用 #}
   {%- set _p = request.path -%}
   {%- if _p == '/driver' or _p.startswith('/d/') or _p.startswith('/auth/driver') or _p.startswith('/auth/vendor') -%}
-    {%- set _app = 'driver' -%}{%- set _brand = 'ドライバーの窓口' -%}{%- set _home = url_for('driver.dashboard') if cur_driver else url_for('main.driver_entry') -%}
+    {%- set _app = 'driver' -%}{%- set _brand = 'ドライバーの窓口' -%}{%- set _icon = 'icon-driver' -%}{%- set _home = url_for('driver.dashboard') if cur_driver else url_for('main.driver_entry') -%}
   {%- elif _p == '/staff' or _p.startswith('/admin') or _p.startswith('/auth/admin') -%}
-    {%- set _app = 'admin' -%}{%- set _brand = '管理者の窓口' -%}{%- set _home = url_for('admin.dashboard') if cur_admin else url_for('main.staff_entry') -%}
+    {%- set _app = 'admin' -%}{%- set _brand = '管理者の窓口' -%}{%- set _icon = 'icon-admin' -%}{%- set _home = url_for('admin.dashboard') if cur_admin else url_for('main.staff_entry') -%}
   {%- else -%}
-    {%- set _app = 'customer' -%}{%- set _brand = 'お客様の窓口' -%}{%- set _home = url_for('customer.home') if cur_customer else url_for('main.index') -%}
+    {%- set _app = 'customer' -%}{%- set _brand = 'お客様の窓口' -%}{%- set _icon = 'icon' -%}{%- set _home = url_for('customer.home') if cur_customer else url_for('main.index') -%}
   {%- endif -%}
   <title>{% block title %}{{ _brand }}{% endblock %}</title>
   <meta name="theme-color" content="#ffffff">
@@ -20,8 +20,8 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="{{ _brand }}">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <link rel="apple-touch-icon" href="/static/img/icon-192.png">
-  <link rel="icon" href="/static/img/icon-192.png">
+  <link rel="apple-touch-icon" href="/static/img/{{ _icon }}-192.png">
+  <link rel="icon" href="/static/img/{{ _icon }}-192.png">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
   {% block head %}{% endblock %}
 </head>
