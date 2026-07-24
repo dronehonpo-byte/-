@@ -151,3 +151,40 @@ def test_unapproved_vendor_cannot_entry(app, seed_data):
         d1 = db.session.get(Driver, seed_data["driver1_id"])
         with pytest.raises(MatchingError):
             matching.add_entry(rid, d1, price=3000, eta_minutes=15)
+
+
+def test_purge_request_removes_confirmed_request_and_children(app, seed_data):
+    """確定・対応中のリクエストを関連データごと削除できる（Postgres相当のFK厳格下）."""
+    from daiko.models import Entry, Notification
+
+    with app.app_context():
+        rid = matching.create_request(seed_data["customer_id"], dict(REQ_DATA)).id
+        drv = db.session.get(Driver, seed_data["driver1_id"])
+        e = matching.add_entry(rid, drv, 3000, 10)
+        matching.confirm_entry(rid, e.id, seed_data["customer_id"])
+        matching.start_progress(rid, drv.id)
+        assert Entry.query.filter_by(request_id=rid).count() == 1
+        assert Notification.query.filter_by(request_id=rid).count() > 0
+
+        matching.purge_request(db.session.get(Request, rid))
+
+        assert db.session.get(Request, rid) is None
+        assert Entry.query.filter_by(request_id=rid).count() == 0
+        assert Notification.query.filter_by(request_id=rid).count() == 0
+
+
+def test_suspended_vendor_driver_cannot_login(app, seed_data, client):
+    """停止した業者のドライバーはログインできない（管理者の停止が有効）."""
+    from daiko.models import Vendor, VendorStatus
+
+    with app.app_context():
+        v = db.session.get(Vendor, seed_data["vendor_id"])
+        v.status = VendorStatus.SUSPENDED
+        db.session.commit()
+    r = client.post("/auth/driver/login",
+                    data={"phone": "09000000001", "password": "pass123"},
+                    follow_redirects=True)
+    body = r.get_data(as_text=True)
+    assert "停止中" in body
+    # ダッシュボードに入れていない（ログイン不可）
+    assert "/d/" not in r.request.path or "login" in body

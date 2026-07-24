@@ -35,15 +35,23 @@ class MatchingError(Exception):
 def purge_request(req: Request) -> None:
     """リクエストを関連データ（エントリー・通知）ごと完全に削除する.
 
-    Postgres では notifications.request_id が FK のため、先に関連行を消さないと
-    削除がエラーになる（履歴削除ボタンの不具合の原因）。
+    Postgres は FK 制約を厳格に見るため、確実な順序で削除する：
+      1) requests.confirmed_entry_id の参照を外す（entries を消す前に）
+      2) 通知（notifications.request_id）を削除
+      3) エントリー（entries.request_id）を ORM で個別削除（セッション整合を保つ）
+      4) リクエスト本体を削除
+    ORM 個別削除にするのは、バルク削除だと親リクエスト削除時に
+    entries.request_id を NULL 化しようとして NOT NULL 違反になるのを避けるため。
     """
     from ..models import Notification
 
+    rid = req.id
     req.confirmed_entry_id = None
     db.session.flush()
-    Notification.query.filter_by(request_id=req.id).delete(synchronize_session=False)
-    Entry.query.filter_by(request_id=req.id).delete(synchronize_session=False)
+    Notification.query.filter_by(request_id=rid).delete(synchronize_session=False)
+    for e in Entry.query.filter_by(request_id=rid).all():
+        db.session.delete(e)
+    db.session.flush()
     db.session.delete(req)
     db.session.commit()
 

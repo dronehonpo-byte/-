@@ -96,6 +96,7 @@ a { color: var(--green-dark); }
 .btn-outline:hover { background: var(--green); color: #fff; }
 .btn-danger { background: #fff; color: var(--danger); border-color: var(--danger); }
 .btn-lg { padding: 18px; font-size: 17px; }
+.btn-sm { padding: 11px 16px; font-size: 14px; box-shadow: none; }
 .btn:disabled { opacity: .45; cursor: not-allowed; box-shadow: none; }
 
 /* ── フォーム ── */
@@ -138,6 +139,10 @@ textarea { min-height: 70px; }
 .chip-danger { background: #fde8e8; color: var(--danger); }
 
 /* ── テーブル ── */
+/* 横長テーブルはスマホで横スクロール（文字が縦崩れ・枠はみ出しを防ぐ） */
+.table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.table-wrap table { min-width: 460px; }
+.table-wrap th, .table-wrap td { white-space: nowrap; }
 table { width: 100%; border-collapse: collapse; font-size: 14px; }
 th, td { text-align: left; padding: 12px 8px; border-bottom: 1px solid var(--line); }
 th { color: var(--muted); font-weight: 700; white-space: nowrap; font-size: 12px; letter-spacing: .02em; text-transform: uppercase; }

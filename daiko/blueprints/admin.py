@@ -59,8 +59,13 @@ def delete_request(request_id: int):
     req = db.session.get(Request, request_id)
     if req is None:
         abort(404)
-    matching.purge_request(req)
-    flash(f"リクエスト #{request_id} を削除しました。", "info")
+    try:
+        matching.purge_request(req)
+        flash(f"リクエスト #{request_id} を削除しました。", "info")
+    except Exception as exc:  # 500を出さず、原因を画面に表示
+        db.session.rollback()
+        current_app.logger.exception("admin delete_request failed")
+        flash(f"削除に失敗しました：{type(exc).__name__}: {exc}", "danger")
     return redirect(request_referrer_or_dashboard())
 
 

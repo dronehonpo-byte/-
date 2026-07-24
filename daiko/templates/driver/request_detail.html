@@ -31,12 +31,12 @@
   <div class="card">
     <div class="flash flash-success">あなたに決まりました 🎉 お客様の連絡先を表示します。</div>
     <p class="small">提示料金: <b>{{ my_entry.price | yen }}</b> ／ 到着 約{{ my_entry.eta_minutes }}分</p>
-    <a class="btn btn-green btn-block" href="tel:{{ req.customer.phone }}">📞 お客様に電話（{{ req.customer.phone }}）</a>
+    <a class="btn btn-green btn-block btn-sm" href="tel:{{ req.customer.phone }}">📞 お客様に電話（{{ req.customer.phone }}）</a>
     <div class="row" style="margin-top:10px">
       {% if req.status == RequestStatus.CONFIRMED %}
-      <form method="post" action="{{ url_for('driver.start', request_id=req.id) }}"><button class="btn btn-primary btn-block">対応開始（向かう）</button></form>
+      <form method="post" action="{{ url_for('driver.start', request_id=req.id) }}"><button class="btn btn-primary btn-block btn-sm">対応開始（向かう）</button></form>
       {% endif %}
-      <form method="post" action="{{ url_for('driver.complete', request_id=req.id) }}" onsubmit="return confirm('対応を完了しますか？')"><button class="btn btn-outline btn-block">対応完了</button></form>
+      <form method="post" action="{{ url_for('driver.complete', request_id=req.id) }}" onsubmit="return confirm('対応を完了しますか？')"><button class="btn btn-outline btn-block btn-sm">対応完了</button></form>
     </div>
   </div>
 {% elif my_entry and my_entry.status == EntryStatus.REJECTED %}

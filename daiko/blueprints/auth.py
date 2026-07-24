@@ -94,8 +94,13 @@ def driver_login():
         if driver is None or not driver.check_password(password):
             flash("電話番号またはパスワードが違います。", "danger")
             return render_template("auth/driver_login.html")
-        if driver.vendor and driver.vendor.status == VendorStatus.PENDING:
-            flash("業者の承認待ちです。承認後にご利用いただけます。", "warning")
+        # 承認済み業者のドライバーのみログイン可（承認待ち・停止はブロック）
+        if driver.vendor is None or driver.vendor.status != VendorStatus.APPROVED:
+            if driver.vendor and driver.vendor.status == VendorStatus.SUSPENDED:
+                flash("この業者アカウントは現在停止中です。管理者にお問い合わせください。", "danger")
+            else:
+                flash("業者の承認待ちです。承認後にご利用いただけます。", "warning")
+            return render_template("auth/driver_login.html")
         login_driver(driver)
         return redirect(request.args.get("next") or url_for("driver.dashboard"))
     return render_template("auth/driver_login.html")

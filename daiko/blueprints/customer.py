@@ -5,6 +5,7 @@ from datetime import datetime
 
 from flask import (
     Blueprint,
+    current_app,
     flash,
     g,
     jsonify,
@@ -170,8 +171,13 @@ def delete_request(request_id: int):
     if req.status.is_active:
         flash("進行中の依頼は削除できません。先にキャンセルしてください。", "danger")
         return redirect(url_for("customer.history"))
-    matching.purge_request(req)
-    flash("履歴を削除しました。", "info")
+    try:
+        matching.purge_request(req)
+        flash("履歴を削除しました。", "info")
+    except Exception as exc:
+        db.session.rollback()
+        current_app.logger.exception("customer delete_request failed")
+        flash(f"削除に失敗しました：{type(exc).__name__}", "danger")
     return redirect(url_for("customer.history"))
 
 

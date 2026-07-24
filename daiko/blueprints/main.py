@@ -34,12 +34,14 @@ def healthz():
 
 
 # ── PWA ──
-@bp.route("/manifest.webmanifest")
-def manifest():
-    """役割ごとに start_url / 名前を変えた PWA マニフェストを返す.
+@bp.route("/manifest.webmanifest")  # 後方互換（?app=）
+@bp.route("/manifest.<app_kind>.webmanifest")  # 役割ごとに別URL（Androidで別アプリ認識されやすい）
+def manifest(app_kind: str | None = None):
+    """役割ごとに start_url / 名前 / アイコン / URL を変えた PWA マニフェストを返す.
 
-    これにより「お客様/ドライバー/管理者」をそれぞれ別アプリとしてホーム画面に
-    追加でき、アイコンから開くと各アプリのトップが起動する（?app= で切替）。
+    お客様/ドライバー/管理者を「別アプリ」としてホーム画面に追加でき、アイコンから
+    開くと各アプリのトップが起動する。Android では manifest の URL・id・scope・
+    アイコンをすべて別にすることで、別アプリとして個別インストールされやすくなる。
     """
     # (表示名, start_url, アイコンの接頭辞)  ※役割ごとに色違いアイコンで区別
     apps = {
@@ -47,7 +49,8 @@ def manifest():
         "driver": ("ドライバーの窓口", "/driver", "icon-driver"),
         "admin": ("管理者の窓口", "/staff", "icon-admin"),
     }
-    name, start, ic = apps.get(request.args.get("app", "customer"), apps["customer"])
+    kind = app_kind or request.args.get("app", "customer")
+    name, start, ic = apps.get(kind, apps["customer"])
     data = {
         "id": start,
         "name": name,
