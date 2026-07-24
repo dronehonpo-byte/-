@@ -26,7 +26,7 @@ from ..models import (
     Vendor,
     VendorStatus,
 )
-from ..services import matching
+from ..services.matching import purge_request  # ← モジュールimportは view 関数 matching() と衝突するため関数を直接import
 
 bp = Blueprint("admin", __name__, url_prefix="/admin")
 
@@ -60,7 +60,7 @@ def delete_request(request_id: int):
     if req is None:
         abort(404)
     try:
-        matching.purge_request(req)
+        purge_request(req)
         flash(f"リクエスト #{request_id} を削除しました。", "info")
     except Exception as exc:  # 500を出さず、原因を画面に表示
         db.session.rollback()

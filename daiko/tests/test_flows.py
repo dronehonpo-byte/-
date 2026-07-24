@@ -52,3 +52,26 @@ def test_admin_login_and_dashboard(client, seed_data):
     r = client.get("/admin/")
     assert r.status_code == 200
     assert "ダッシュボード".encode() in r.data
+
+
+def test_admin_delete_request_route(client, app, seed_data):
+    """管理者の削除ルートが実際に機能する（モジュール名衝突の回帰防止）."""
+    from daiko.extensions import db
+    from daiko.models import Driver, Request
+    from daiko.services import matching
+
+    with app.app_context():
+        rid = matching.create_request(seed_data["customer_id"], {
+            "origin_lat": 36.5, "origin_lng": 139.9, "origin_label": "A",
+            "dest_lat": 36.6, "dest_lng": 139.9, "dest_label": "B",
+            "transmission": "AT", "handle": "right",
+        }).id
+
+    with client.session_transaction() as s:
+        s["admin_id"] = seed_data["admin_id"]
+    r = client.post(f"/admin/request/{rid}/delete", follow_redirects=True)
+    body = r.get_data(as_text=True)
+    assert "削除しました" in body
+    assert "失敗" not in body
+    with app.app_context():
+        assert db.session.get(Request, rid) is None
