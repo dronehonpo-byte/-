@@ -1,0 +1,8 @@
+# OpenAI 画像生成 MCP サーバー 依存パッケージ
+#   pip install -r image-api/requirements.txt
+
+# MCP サーバー SDK（stdio で Claude Code とつなぐ）
+mcp>=1.2.0
+
+# OpenAI 公式 SDK（gpt-image-1 / DALL·E の呼び出し）
+openai>=1.30.0
