@@ -1,0 +1,13 @@
+# 秘密情報は絶対にコミットしない
+.env
+*.env
+!*.env.example
+
+# 生成画像
+generated-images/
+
+# Python / venv
+.venv/
+venv/
+__pycache__/
+*.pyc
