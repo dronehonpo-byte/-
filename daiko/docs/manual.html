@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<style>
+  @page { size: A4; margin: 16mm 14mm; }
+  * { box-sizing: border-box; }
+  body { font-family: "Hiragino Sans", "Noto Sans JP", "Yu Gothic", sans-serif; color: #16241d; line-height: 1.7; font-size: 10.5pt; margin: 0; }
+  h1 { font-size: 24pt; color: #0a5e34; margin: 0 0 4px; letter-spacing: -.02em; }
+  h2 { font-size: 14pt; color: #0a5e34; border-bottom: 2.5px solid #00c46a; padding-bottom: 4px; margin: 22px 0 10px; page-break-after: avoid; }
+  h3 { font-size: 11.5pt; color: #0e7a45; margin: 14px 0 5px; page-break-after: avoid; }
+  p { margin: 4px 0; }
+  ul, ol { margin: 5px 0 5px 0; padding-left: 1.3em; }
+  li { margin: 2px 0; }
+  .cover { text-align: center; padding: 40px 0 10px; }
+  .cover .sub { color: #5f7367; font-size: 12pt; margin-top: 6px; }
+  .badge { display: inline-block; background: #eafbf2; color: #0a5e34; border: 1px solid #00c46a; border-radius: 999px; padding: 2px 12px; font-size: 9pt; font-weight: 700; margin: 3px 2px; }
+  .card { border: 1px solid #d9e5df; border-radius: 10px; padding: 10px 14px; margin: 8px 0; background: #fbfdfc; }
+  .warn { border: 1.5px solid #e0533d; background: #fff5f3; }
+  .warn h3 { color: #c8391f; margin-top: 0; }
+  table { width: 100%; border-collapse: collapse; margin: 8px 0; font-size: 9.8pt; }
+  th, td { border: 1px solid #d9e5df; padding: 6px 9px; text-align: left; vertical-align: top; }
+  th { background: #eef6f1; color: #0a5e34; }
+  code { background: #eef2f0; padding: 1px 6px; border-radius: 5px; font-family: "SFMono-Regular", Consolas, monospace; font-size: 9.5pt; }
+  .step { counter-reset: none; }
+  .muted { color: #5f7367; font-size: 9.5pt; }
+  .pagebreak { page-break-before: always; }
+  .toc li { margin: 3px 0; }
+  .kv td:first-child { width: 34%; font-weight: 700; background: #f7faf8; }
+  .foot { margin-top: 26px; border-top: 1px solid #d9e5df; padding-top: 8px; color: #5f7367; font-size: 8.5pt; text-align: center; }
+</style>
+</head>
+<body>
+
+<div class="cover">
+  <h1>代行の窓口</h1>
+  <div class="sub">運転代行マッチング　運用マニュアル（取扱説明書）</div>
+  <div style="margin-top:14px">
+    <span class="badge">お客様アプリ</span>
+    <span class="badge">ドライバー・業者アプリ</span>
+    <span class="badge">管理者アプリ</span>
+  </div>
+  <div class="muted" style="margin-top:16px">運営：Team Rafflesia　／　お問い合わせ：info@daikou-madoguchi.jp</div>
+</div>
+
+<div class="card">
+  <b>本書について：</b>本サービス「代行の窓口」の使い方・運用方法をまとめた説明書です。お客様・ドライバー（代行業者）・管理者それぞれの操作、実運用の始め方、注意事項を記載しています。
+</div>
+
+<h2>目次</h2>
+<ol class="toc">
+  <li>サービス概要</li>
+  <li>3つのアプリとURL・QRコード</li>
+  <li>スマホでアプリとして使う（ホーム画面に追加）</li>
+  <li>通知（プッシュ）の設定</li>
+  <li>お客様アプリの使い方</li>
+  <li>ドライバー・業者アプリの使い方</li>
+  <li>管理者アプリの使い方</li>
+  <li>実運用の始め方（チェックリスト）</li>
+  <li>一般公開の前に（重要）</li>
+  <li>ログイン情報・困ったとき</li>
+</ol>
+
+<h2>1. サービス概要</h2>
+<p>「代行の窓口」は、運転代行を頼みたい<b>お客様</b>と、<b>運転代行業者（ドライバー）</b>をつなぐマッチングサービスです。お客様が出発地・目的地などを送信すると、近くの業者が「料金・到着時間」を提示し、お客様が選んで確定します。</p>
+<p>3つの役割ごとにアプリ（画面）が分かれています。</p>
+<table class="kv">
+  <tr><td>お客様アプリ</td><td>代行を依頼し、提示の中から選んで確定。連絡先表示・履歴管理。</td></tr>
+  <tr><td>ドライバー・業者アプリ</td><td>業者登録、近くの依頼にエントリー（料金提示）、確定後の対応・完了。</td></tr>
+  <tr><td>管理者アプリ</td><td>業者の承認・停止・削除、利用者・マッチング状況の管理、データ初期化。</td></tr>
+</table>
+
+<h2>2. 3つのアプリとURL・QRコード</h2>
+<table>
+  <tr><th>アプリ</th><th>URL</th><th>アイコン色</th></tr>
+  <tr><td>お客様アプリ</td><td><code>https://daiko-ln2d.onrender.com/</code></td><td>緑</td></tr>
+  <tr><td>ドライバー・業者アプリ</td><td><code>https://daiko-ln2d.onrender.com/driver</code></td><td>青</td></tr>
+  <tr><td>管理者アプリ</td><td><code>https://daiko-ln2d.onrender.com/staff</code></td><td>アンバー（橙）</td></tr>
+</table>
+<p class="muted">QRコードは別途お渡ししたお客様用・ドライバー用の画像をご利用ください。ブラウザ（iPhoneはSafari、AndroidはChrome推奨）で開けます。</p>
+
+<h2>3. スマホでアプリとして使う（ホーム画面に追加）</h2>
+<p>各URLをスマホのブラウザで開き、ホーム画面に追加すると、通常のアプリのように起動できます。役割ごとに色分けされたアイコンになります。</p>
+<h3>iPhone（Safari）</h3>
+<ol>
+  <li>Safariで対象URLを開く</li>
+  <li>下部の「共有」ボタン → <b>「ホーム画面に追加」</b></li>
+  <li>「追加」をタップ</li>
+</ol>
+<h3>Android（Chrome）</h3>
+<ol>
+  <li>Chromeで対象URLを開く</li>
+  <li>右上メニュー（︙）→ <b>「アプリをインストール」</b>または「ホーム画面に追加」</li>
+</ol>
+<p class="muted">※ 以前に追加した古いアイコンが残っている場合は、一度削除（アンインストール）してから追加し直してください。</p>
+
+<h2>4. 通知（プッシュ）の設定</h2>
+<p>依頼・エントリー・確定・キャンセル・完了などのお知らせを、スマホの通知として受け取れます。</p>
+<ol>
+  <li>アプリにログイン後、画面下に出る <b>「🔔 通知をオン」</b> を押して許可</li>
+  <li>画面右上の 🔔 マークの数字は「未読のお知らせ件数」。押すと一覧が開き、既読になり数字が消えます。</li>
+</ol>
+<p class="muted">※ iPhoneはApple仕様上、「ホーム画面に追加」したアイコンから開いた場合のみ通知を受信できます（iOS 16.4以降）。Android/PCのChromeはブラウザのままでも受信できます。</p>
+
+<div class="pagebreak"></div>
+<h2>5. お客様アプリの使い方</h2>
+<ol>
+  <li><b>ログイン：</b>電話番号を入力 → 表示（またはSMS）される6桁の認証コードを入力。</li>
+  <li><b>依頼する：</b>「代行を依頼する」から、出発地・目的地を地図または住所入力で指定。車種・車名は任意。</li>
+  <li><b>ドライバーを選ぶ：</b>各社から届く「料金・到着時間」を見て、希望のドライバーを選んで確定。</li>
+  <li><b>連絡：</b>確定後、担当ドライバーの連絡先が表示されます。電話でやりとりできます。</li>
+  <li><b>完了：</b>ドライバーが対応を完了すると、画面が自動で「対応完了」に変わります。料金は現地精算。</li>
+  <li><b>履歴：</b>過去の依頼は履歴で確認でき、「履歴を削除」で消せます（進行中は不可）。</li>
+</ol>
+
+<h2>6. ドライバー・業者アプリの使い方</h2>
+<h3>① 業者登録（初回のみ）</h3>
+<ol>
+  <li>ドライバーアプリ（/driver）→「業者登録」</li>
+  <li>業者名・業者電話・代表ドライバー名・ドライバー電話・パスワード（6文字以上）を入力</li>
+  <li>対応可能な支払い方法を選択</li>
+  <li><b>公安委員会の認定書（PDFまたは画像）をアップロード</b>して申請</li>
+  <li>管理者の承認後に利用開始できます（承認前・停止中はログインできません）</li>
+</ol>
+<h3>② ログインと依頼対応</h3>
+<ol>
+  <li>ドライバー電話・パスワードでログイン</li>
+  <li>近くの依頼一覧から、料金・到着時間を提示して「エントリー」</li>
+  <li>お客様に選ばれたら確定。お客様の連絡先が表示されます。</li>
+  <li>「対応開始（向かう）」→ 到着・送迎 →「対応完了」で終了</li>
+</ol>
+
+<h2>7. 管理者アプリの使い方</h2>
+<p>管理者アプリ（/staff）に、管理者ID・パスワードでログインします。</p>
+<table class="kv">
+  <tr><td>概況</td><td>24時間の依頼数・進行中・完了などの状況。各枠を押すと該当一覧へ。</td></tr>
+  <tr><td>業者の承認</td><td>業者一覧で、申請中の業者を「承認」。承認後にドライバーがログイン可能に。</td></tr>
+  <tr><td>業者の停止</td><td>「停止」を押すと、その業者のドライバーはログイン・受注ができなくなります。</td></tr>
+  <tr><td>業者の削除</td><td>「この業者を削除」で、所属ドライバー・提示履歴ごと完全削除。</td></tr>
+  <tr><td>利用者一覧</td><td>登録済みのお客様を確認。</td></tr>
+  <tr><td>マッチング状況</td><td>各依頼の状態を確認。不要な依頼は「削除」で消去。</td></tr>
+  <tr><td>データ初期化</td><td>概況ページ下部の「データ初期化」で、業者・利用者・依頼を全消去（次項参照）。</td></tr>
+</table>
+
+<h2>8. 実運用の始め方（チェックリスト）</h2>
+<ol>
+  <li><b>データ初期化：</b>（実施済み）テストデータは消去済み。まっさらな状態です。今後もやり直したい場合は、管理アプリ概況ページ下部「データ初期化」で確認欄に <code>リセット</code> と入力して実行。</li>
+  <li><b>実際の代行業者を登録：</b>各業者にドライバーアプリ（/driver）から業者登録してもらう。</li>
+  <li><b>管理者が承認：</b>管理アプリの業者一覧で内容・認定書を確認し「承認」。</li>
+  <li><b>お客様へ告知：</b>お客様用URL・QRを配布。</li>
+</ol>
+
+<div class="card warn">
+  <h3>9. 一般公開の前に（重要）</h3>
+  <p>すぐにパイロット運用できる状態ですが、不特定多数へ本格公開する前に、以下2点の切り替えを推奨します（別途対応可能です）。</p>
+  <ul>
+    <li><b>SMS認証の実送信化：</b>現在はテスト用に認証コードを画面表示しています。実際の一般公開では、Twilio連携でSMSを実送信する設定に切り替えると安全です。</li>
+    <li><b>データベースの本番プラン化：</b>現在は無料枠（30日期限）です。継続運用の前に有料プラン（月約$7）への切り替えを推奨します。</li>
+  </ul>
+</div>
+
+<h2>10. ログイン情報・困ったとき</h2>
+<table class="kv">
+  <tr><td>管理者ID</td><td><code>admin</code></td></tr>
+  <tr><td>管理者パスワード</td><td>（別途安全な方法でお伝えした値）※取り扱いにご注意ください。変更も可能です。</td></tr>
+  <tr><td>サーバー</td><td>Render（常時稼働・自動更新）。GitHubへの更新が自動で反映されます。</td></tr>
+</table>
+<h3>よくある質問</h3>
+<ul>
+  <li><b>ドライバーがログインできない：</b>管理者が「承認」しているか、業者が「停止」になっていないかご確認ください。</li>
+  <li><b>依頼に誰も反応しない：</b>承認済みの代行業者（ドライバー）が登録されているかご確認ください。</li>
+  <li><b>画面が古いまま：</b>ブラウザの再読み込み、またはアプリを一度閉じて開き直してください。</li>
+</ul>
+<p>その他ご不明点・追加のご要望は、開発担当までお問い合わせください。</p>
+
+<div class="foot">代行の窓口 運用マニュアル ／ 運営：Team Rafflesia ／ info@daikou-madoguchi.jp</div>
+
+</body>
+</html>
