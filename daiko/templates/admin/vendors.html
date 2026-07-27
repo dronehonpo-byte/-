@@ -26,6 +26,11 @@
       <form method="post" action="{{ url_for('admin.suspend_vendor', vendor_id=v.id) }}" onsubmit="return confirm('停止しますか？')"><button class="btn btn-danger btn-block">停止</button></form>
       {% endif %}
     </div>
+    <form method="post" action="{{ url_for('admin.delete_vendor', vendor_id=v.id) }}"
+          onsubmit="return confirm('業者「{{ v.name }}」を削除します。所属ドライバー・提示履歴もすべて消えます。よろしいですか？')"
+          style="text-align:right; margin-top:8px">
+      <button class="btn btn-danger btn-sm" type="submit">🗑 この業者を削除</button>
+    </form>
   </div>
 {% else %}
   <div class="card center muted">業者の登録はまだありません。</div>

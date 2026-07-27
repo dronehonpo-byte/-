@@ -11,6 +11,7 @@ from flask import (
     flash,
     redirect,
     render_template,
+    request,
     send_from_directory,
     url_for,
 )
@@ -113,6 +114,45 @@ def approve_vendor(vendor_id: int):
 def suspend_vendor(vendor_id: int):
     _set_vendor_status(vendor_id, VendorStatus.SUSPENDED, "停止しました。")
     return redirect(url_for("admin.vendors"))
+
+
+@bp.route("/vendors/<int:vendor_id>/delete", methods=["POST"])
+@admin_required
+def delete_vendor(vendor_id: int):
+    """業者を所属ドライバー・提示ごと削除する."""
+    from ..services import maintenance
+
+    vendor = db.session.get(Vendor, vendor_id)
+    if vendor is None:
+        abort(404)
+    name = vendor.name
+    try:
+        maintenance.purge_vendor(vendor_id)
+        flash(f"業者「{name}」を削除しました。", "info")
+    except Exception as exc:
+        db.session.rollback()
+        current_app.logger.exception("delete_vendor failed")
+        flash(f"削除に失敗しました：{type(exc).__name__}", "danger")
+    return redirect(url_for("admin.vendors"))
+
+
+@bp.route("/reset", methods=["POST"])
+@admin_required
+def reset_data():
+    """【危険】業者・利用者・依頼などの運用データを全消去（管理者は残す）."""
+    from ..services import maintenance
+
+    if request.form.get("confirm") != "リセット":
+        flash("確認欄に「リセット」と入力してください。初期化は行いませんでした。", "warning")
+        return redirect(url_for("admin.dashboard"))
+    try:
+        n = maintenance.wipe_operational_data()
+        flash(f"運用データを初期化しました（利用者{n}件ほか全削除）。実運用を開始できます。", "info")
+    except Exception as exc:
+        db.session.rollback()
+        current_app.logger.exception("reset_data failed")
+        flash(f"初期化に失敗しました：{type(exc).__name__}", "danger")
+    return redirect(url_for("admin.dashboard"))
 
 
 @bp.route("/matching")

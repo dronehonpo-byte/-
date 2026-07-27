@@ -33,6 +33,30 @@ def register_cli(app: Flask) -> None:
             push.ensure_schema()
         click.echo("デモ/テストデータを投入しました。")
 
+    @app.cli.command("seed-prod")
+    def seed_prod():
+        """本番用：管理者アカウントのみを冪等に用意（デモ業者・客は作らない）."""
+        from .models import Admin
+        from .services import push
+
+        db.create_all()
+        admin_id = app.config["ADMIN_ID"]
+        if Admin.query.filter_by(login_id=admin_id).first() is None:
+            admin = Admin(login_id=admin_id)
+            admin.set_password(app.config["ADMIN_PASSWORD"] or "adminpass")
+            db.session.add(admin)
+            db.session.commit()
+        push.ensure_schema()
+        click.echo("本番用の初期化が完了しました（管理者のみ）。")
+
+    @app.cli.command("reset-data")
+    def reset_data():
+        """運用データ（業者・利用者・依頼など）を全消去（管理者は残す）."""
+        from .services import maintenance
+
+        n = maintenance.wipe_operational_data()
+        click.echo(f"運用データを初期化しました（利用者 {n} 件ほか全削除・管理者は保持）。")
+
     @app.cli.command("seed")
     def seed():
         """初期管理者と参加業者（エンペラー代行）を投入する."""

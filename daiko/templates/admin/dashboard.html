@@ -33,6 +33,18 @@
     </table>
   </div>
 </div>
+
+<div class="card" style="margin-top:14px; border:1.5px solid var(--danger)">
+  <h3 style="color:var(--danger)">⚠ データ初期化（実運用の開始前）</h3>
+  <p class="small muted">テスト用の業者・利用者・依頼をすべて消去して、まっさらな状態から実運用を始めます。
+  <b>元に戻せません。</b>管理者アカウントは残ります。</p>
+  <form method="post" action="{{ url_for('admin.reset_data') }}"
+        onsubmit="return confirm('本当に全データを初期化しますか？元に戻せません。')">
+    <label class="small">確認のため <b>リセット</b> と入力してください</label>
+    <input type="text" name="confirm" placeholder="リセット" autocomplete="off" style="margin:6px 0">
+    <button class="btn btn-danger btn-block" type="submit">すべての業者・利用者・依頼を初期化する</button>
+  </form>
+</div>
 {% endblock %}
 {% block tabbar %}
 <div class="tabbar">
