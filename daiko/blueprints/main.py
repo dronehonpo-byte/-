@@ -1,7 +1,7 @@
 """共通ルート — ランディング、ロール選択、PWA、通知API."""
 from __future__ import annotations
 
-from flask import Blueprint, current_app, jsonify, render_template, request
+from flask import Blueprint, current_app, jsonify, redirect, render_template, request, url_for
 
 from ..auth import current_admin, current_customer, current_driver
 from ..extensions import db
@@ -18,14 +18,30 @@ def index():
 
 @bp.route("/driver")
 def driver_entry():
-    """ドライバー・業者専用の入口."""
-    return render_template("entry_driver.html", driver=current_driver())
+    """ドライバー入口（旧URL）→ ドライバーアプリ領域 /d/ へ."""
+    return redirect(url_for("driver.dashboard"))
 
 
 @bp.route("/staff")
 def staff_entry():
-    """管理者専用の入口."""
-    return render_template("entry_admin.html", admin=current_admin())
+    """管理者入口（旧URL）→ 管理アプリ領域 /admin/ へ."""
+    return redirect(url_for("admin.dashboard"))
+
+
+# 旧・認証URLの互換リダイレクト（既存のブックマーク／ホーム画面アイコン対策）
+@bp.route("/auth/driver/login")
+def _legacy_driver_login():
+    return redirect(url_for("auth.driver_login"))
+
+
+@bp.route("/auth/vendor/register")
+def _legacy_vendor_register():
+    return redirect(url_for("auth.vendor_register"))
+
+
+@bp.route("/auth/admin/login")
+def _legacy_admin_login():
+    return redirect(url_for("auth.admin_login"))
 
 
 @bp.route("/healthz")
@@ -43,21 +59,22 @@ def manifest(app_kind: str | None = None):
     開くと各アプリのトップが起動する。Android では manifest の URL・id・scope・
     アイコンをすべて別にすることで、別アプリとして個別インストールされやすくなる。
     """
-    # (表示名, start_url, アイコンの接頭辞)  ※役割ごとに色違いアイコンで区別
+    # (表示名, start_url, scope, アイコンの接頭辞)
+    # scope を役割ごとに分けることで Android でも「別アプリ」として個別インストールできる。
     apps = {
-        "customer": ("お客様の窓口", "/", "icon"),
-        "driver": ("ドライバーの窓口", "/driver", "icon-driver"),
-        "admin": ("管理者の窓口", "/staff", "icon-admin"),
+        "customer": ("お客様の窓口", "/", "/", "icon"),
+        "driver": ("ドライバーの窓口", "/d/", "/d/", "icon-driver"),
+        "admin": ("管理者の窓口", "/admin/", "/admin/", "icon-admin"),
     }
     kind = app_kind or request.args.get("app", "customer")
-    name, start, ic = apps.get(kind, apps["customer"])
+    name, start, scope, ic = apps.get(kind, apps["customer"])
     data = {
         "id": start,
         "name": name,
         "short_name": name,
         "description": "運転代行マッチング — 宇都宮市の運転代行をスマホで",
         "start_url": start,
-        "scope": "/",
+        "scope": scope,
         "display": "standalone",
         "background_color": "#ffffff",
         "theme_color": "#00c46a",

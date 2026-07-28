@@ -16,7 +16,7 @@ from flask import (
     url_for,
 )
 
-from ..auth import admin_required
+from ..auth import admin_required, current_admin
 from ..extensions import db
 from ..models import (
     Customer,
@@ -33,8 +33,10 @@ bp = Blueprint("admin", __name__, url_prefix="/admin")
 
 
 @bp.route("/")
-@admin_required
 def dashboard():
+    """管理アプリのトップ。未ログインは入口(ログイン)、ログイン済みは概況."""
+    if current_admin() is None:
+        return render_template("entry_admin.html", admin=None)
     since = datetime.utcnow() - timedelta(days=1)
     stats = {
         "today_requests": Request.query.filter(Request.created_at >= since).count(),

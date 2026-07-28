@@ -181,7 +181,7 @@ def test_suspended_vendor_driver_cannot_login(app, seed_data, client):
         v = db.session.get(Vendor, seed_data["vendor_id"])
         v.status = VendorStatus.SUSPENDED
         db.session.commit()
-    r = client.post("/auth/driver/login",
+    r = client.post("/d/login",
                     data={"phone": "09000000001", "password": "pass123"},
                     follow_redirects=True)
     body = r.get_data(as_text=True)

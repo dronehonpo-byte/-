@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from flask import Blueprint, flash, g, jsonify, redirect, render_template, request, url_for
 
-from ..auth import driver_required
+from ..auth import current_driver, driver_required
 from ..extensions import db
 from ..models import Entry, EntryStatus, Request, RequestStatus
 from ..services import matching
@@ -14,9 +14,12 @@ bp = Blueprint("driver", __name__, url_prefix="/d")
 
 
 @bp.route("/")
-@driver_required
 def dashboard():
-    return render_template("driver/dashboard.html", driver=g.driver)
+    """ドライバーアプリのトップ。未ログインは入口(ログイン/業者登録)、ログイン済みは画面本体。"""
+    driver = current_driver()
+    if driver is None:
+        return render_template("entry_driver.html", driver=None)
+    return render_template("driver/dashboard.html", driver=driver)
 
 
 @bp.route("/requests.json")

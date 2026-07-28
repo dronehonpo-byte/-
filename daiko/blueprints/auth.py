@@ -35,13 +35,15 @@ from ..models import (
 from ..services import sms
 from ..services.notifications import notify_admins
 
-bp = Blueprint("auth", __name__, url_prefix="/auth")
+# prefixは付けず、ルートごとに「役割のscope配下」の絶対パスを指定する
+# （PWAを役割別に分離＝Androidで別アプリ化するため）。エンドポイント名は不変。
+bp = Blueprint("auth", __name__)
 
 
 # ─────────────────────────────────────────────
 # お客様：電話番号 + SMS 認証コード（パスワード不要）
 # ─────────────────────────────────────────────
-@bp.route("/customer/login", methods=["GET", "POST"])
+@bp.route("/auth/customer/login", methods=["GET", "POST"])
 def customer_login():
     if current_customer() is not None:
         return redirect(url_for("customer.home"))
@@ -60,7 +62,7 @@ def customer_login():
     return render_template("auth/customer_login.html")
 
 
-@bp.route("/customer/verify", methods=["POST"])
+@bp.route("/auth/customer/verify", methods=["POST"])
 def customer_verify():
     phone = sms.normalize_phone(request.form.get("phone", ""))
     code = request.form.get("code", "")
@@ -85,7 +87,7 @@ def customer_verify():
 # ─────────────────────────────────────────────
 # ドライバー：電話番号 + パスワード
 # ─────────────────────────────────────────────
-@bp.route("/driver/login", methods=["GET", "POST"])
+@bp.route("/d/login", methods=["GET", "POST"])
 def driver_login():
     if request.method == "POST":
         phone = sms.normalize_phone(request.form.get("phone", ""))
@@ -110,7 +112,7 @@ def driver_login():
 # 業者登録（認定書アップロード → 管理者承認）
 # 初回は代表ドライバー1名を同時に作成する
 # ─────────────────────────────────────────────
-@bp.route("/vendor/register", methods=["GET", "POST"])
+@bp.route("/d/register", methods=["GET", "POST"])
 def vendor_register():
     if request.method == "POST":
         form = request.form
@@ -199,7 +201,7 @@ def admin_login():
 # ─────────────────────────────────────────────
 # ログアウト
 # ─────────────────────────────────────────────
-@bp.route("/logout/<role>")
+@bp.route("/auth/logout/<role>")
 def do_logout(role: str):
     if role in {"customer", "driver", "admin"}:
         logout(role)

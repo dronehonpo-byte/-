@@ -32,26 +32,42 @@ def test_customer_sms_login_flow(client, app):
 
 
 def test_driver_login_and_dashboard(client, seed_data):
-    r = client.post("/auth/driver/login", data={"phone": "09000000001", "password": "pass123"})
+    # ログインはドライバーapp領域 /d/login に移設
+    r = client.post("/d/login", data={"phone": "09000000001", "password": "pass123"})
     assert r.status_code == 302
     r = client.get("/d/")
     assert r.status_code == 200
     assert "近くの依頼".encode() in r.data
 
 
+def test_driver_entry_shown_when_not_logged_in(client, seed_data):
+    # 未ログインで /d/ を開くとドライバー入口が表示される
+    r = client.get("/d/")
+    assert r.status_code == 200
+    assert "ドライバー".encode() in r.data
+
+
 def test_admin_login_required(client):
-    # 未ログインは管理画面に入れずログインへ
-    r = client.get("/admin/", follow_redirects=False)
+    # 未ログインで保護ルートはログインへ（/admin/login に移設）
+    r = client.get("/admin/customers", follow_redirects=False)
     assert r.status_code == 302
-    assert "/auth/admin/login" in r.headers["Location"]
+    assert "/admin/login" in r.headers["Location"]
 
 
 def test_admin_login_and_dashboard(client, seed_data):
-    r = client.post("/auth/admin/login", data={"login_id": "admin", "password": "adminpass"})
+    r = client.post("/admin/login", data={"login_id": "admin", "password": "adminpass"})
     assert r.status_code == 302
     r = client.get("/admin/")
     assert r.status_code == 200
     assert "ダッシュボード".encode() in r.data
+
+
+def test_legacy_urls_redirect(client):
+    # 旧URLは新URLへリダイレクト（既存ブックマーク互換）
+    assert "/d/" in client.get("/driver").headers["Location"]
+    assert "/admin/" in client.get("/staff").headers["Location"]
+    assert "/d/login" in client.get("/auth/driver/login").headers["Location"]
+    assert "/admin/login" in client.get("/auth/admin/login").headers["Location"]
 
 
 def test_admin_delete_request_route(client, app, seed_data):
