@@ -8,7 +8,12 @@ def test_health(client):
 
 
 def test_landing(client):
+    # / はお客様アプリ領域 /c/ へリダイレクト
     r = client.get("/")
+    assert r.status_code == 302
+    assert "/c/" in r.headers["Location"]
+    # /c/（未ログイン）はランディングを表示
+    r = client.get("/c/", follow_redirects=True)
     assert r.status_code == 200
     assert "代行の窓口".encode() in r.data
 
@@ -20,12 +25,12 @@ def test_manifest_and_sw(client):
 
 def test_customer_sms_login_flow(client, app):
     # コード送信（console: 画面にコードが返る）
-    r = client.post("/auth/customer/login", data={"phone": "08099998888"})
+    r = client.post("/c/login", data={"phone": "08099998888"})
     assert r.status_code == 200
     with client.session_transaction() as sess:
         code = sess["_otp"]["code"]
     # コード検証 → プロフィールへリダイレクト（新規）
-    r = client.post("/auth/customer/verify", data={"phone": "08099998888", "code": code})
+    r = client.post("/c/verify", data={"phone": "08099998888", "code": code})
     assert r.status_code == 302
     with app.app_context():
         assert Customer.query.filter_by(phone="08099998888").first() is not None

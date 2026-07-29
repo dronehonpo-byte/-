@@ -43,7 +43,7 @@ bp = Blueprint("auth", __name__)
 # ─────────────────────────────────────────────
 # お客様：電話番号 + SMS 認証コード（パスワード不要）
 # ─────────────────────────────────────────────
-@bp.route("/auth/customer/login", methods=["GET", "POST"])
+@bp.route("/c/login", methods=["GET", "POST"])
 def customer_login():
     if current_customer() is not None:
         return redirect(url_for("customer.home"))
@@ -62,7 +62,7 @@ def customer_login():
     return render_template("auth/customer_login.html")
 
 
-@bp.route("/auth/customer/verify", methods=["POST"])
+@bp.route("/c/verify", methods=["POST"])
 def customer_verify():
     phone = sms.normalize_phone(request.form.get("phone", ""))
     code = request.form.get("code", "")

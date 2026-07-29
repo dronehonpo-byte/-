@@ -15,7 +15,7 @@ from flask import (
     url_for,
 )
 
-from ..auth import customer_required
+from ..auth import current_customer, customer_required
 from ..extensions import db
 from ..models import Entry, EntryStatus, Request, RequestStatus
 from ..services import matching
@@ -25,10 +25,13 @@ bp = Blueprint("customer", __name__, url_prefix="/c")
 
 
 @bp.route("/")
-@customer_required
 def home():
+    """お客様アプリのトップ。未ログインはランディング、ログイン済みはホーム."""
+    customer = current_customer()
+    if customer is None:
+        return render_template("landing.html", customer=None)
     active = (
-        g.customer.requests.filter(
+        customer.requests.filter(
             Request.status.notin_(
                 [RequestStatus.COMPLETED, RequestStatus.CANCELLED, RequestStatus.EXPIRED]
             )

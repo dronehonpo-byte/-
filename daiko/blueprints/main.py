@@ -12,8 +12,8 @@ bp = Blueprint("main", __name__)
 
 @bp.route("/")
 def index():
-    """お客様専用トップ（入口を分離）."""
-    return render_template("landing.html", customer=current_customer())
+    """ルート → お客様アプリ領域 /c/ へ（各役割を独立scopeに分離）."""
+    return redirect(url_for("customer.home"))
 
 
 @bp.route("/driver")
@@ -44,6 +44,11 @@ def _legacy_admin_login():
     return redirect(url_for("auth.admin_login"))
 
 
+@bp.route("/auth/customer/login")
+def _legacy_customer_login():
+    return redirect(url_for("auth.customer_login"))
+
+
 @bp.route("/healthz")
 def healthz():
     return {"status": "ok"}, 200
@@ -62,7 +67,7 @@ def manifest(app_kind: str | None = None):
     # (表示名, start_url, scope, アイコンの接頭辞)
     # scope を役割ごとに分けることで Android でも「別アプリ」として個別インストールできる。
     apps = {
-        "customer": ("お客様の窓口", "/", "/", "icon"),
+        "customer": ("お客様の窓口", "/c/", "/c/", "icon"),
         "driver": ("ドライバーの窓口", "/d/", "/d/", "icon-driver"),
         "admin": ("管理者の窓口", "/admin/", "/admin/", "icon-admin"),
     }
