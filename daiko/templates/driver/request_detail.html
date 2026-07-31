@@ -57,7 +57,7 @@
       <label>到着予定（分） <span class="req">*</span></label>
       <input type="number" name="eta_minutes" min="1" step="1" inputmode="numeric" placeholder="例：15" required>
       <label>キャンセル料の案内（任意）</label>
-      <input type="text" name="cancellation_fee" value="{{ g.driver.vendor.cancellation_policy or '' }}" placeholder="例：確定後のキャンセルは1,000円">
+      <input type="text" name="cancellation_fee" value="{{ g.driver.vendor.fare_other or '' }}" placeholder="例：確定後のキャンセルは1,000円">
       <br><br>
       <button class="btn btn-green btn-block btn-lg" type="submit">この条件でエントリー</button>
     </form>

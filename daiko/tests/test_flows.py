@@ -96,3 +96,21 @@ def test_admin_delete_request_route(client, app, seed_data):
     assert "失敗" not in body
     with app.app_context():
         assert db.session.get(Request, rid) is None
+
+
+def test_vendor_register_without_cert_and_with_fares(client, app):
+    """認定書なしで登録でき、料金3項目が保存される（実テスト向け）."""
+    from daiko.models import Vendor
+
+    r = client.post("/d/register", data={
+        "vendor_name": "テスト代行", "vendor_phone": "0281234567",
+        "driver_name": "山田", "driver_phone": "09088887777", "password": "pass123",
+        "fare_base": "2000円", "fare_add": "1kmごと300円", "fare_other": "深夜割増",
+    }, follow_redirects=True)
+    assert "申請しました" in r.get_data(as_text=True)
+    with app.app_context():
+        v = Vendor.query.filter_by(name="テスト代行").first()
+        assert v is not None and v.cert_filename is None
+        assert v.fare_base == "2000円" and v.fare_add == "1kmごと300円" and v.fare_other == "深夜割増"
+    # フォームにキャンセル項目が無い
+    assert "cancellation_policy" not in client.get("/d/register").get_data(as_text=True)

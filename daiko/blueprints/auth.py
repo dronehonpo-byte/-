@@ -137,6 +137,7 @@ def vendor_register():
         if Driver.query.filter_by(phone=driver_phone).first():
             errors.append("このドライバー電話番号は既に登録されています。")
 
+        # 認定書は任意（実テスト中）。アップロードされた場合のみ検証・保存する。
         cert = request.files.get("cert")
         cert_filename = None
         if cert and cert.filename:
@@ -147,8 +148,6 @@ def vendor_register():
                 Path(current_app.config["CERT_DIR"]).mkdir(parents=True, exist_ok=True)
                 cert_filename = f"{uuid.uuid4().hex}.{ext}"
                 cert.save(os.path.join(current_app.config["CERT_DIR"], cert_filename))
-        else:
-            errors.append("公安委員会認定書をアップロードしてください。")
 
         if errors:
             for e in errors:
@@ -162,7 +161,9 @@ def vendor_register():
             phone=vendor_phone,
             email=form.get("email", "").strip() or None,
             cert_filename=cert_filename,
-            cancellation_policy=form.get("cancellation_policy", "").strip() or None,
+            fare_base=form.get("fare_base", "").strip() or None,
+            fare_add=form.get("fare_add", "").strip() or None,
+            fare_other=form.get("fare_other", "").strip() or None,
             payment_methods=",".join(payment_methods) or None,
             status=VendorStatus.PENDING,
         )

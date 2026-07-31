@@ -4,7 +4,7 @@
 {% block content %}
 <h2 class="page-title">代行業者の登録申請</h2>
 <div class="card">
-  <p class="small muted">公安委員会認定書をアップロードして申請してください。管理者（運営者）の承認後に稼働できます。
+  <p class="small muted">必要事項をご入力のうえ申請してください。管理者（運営者）の承認後に稼働できます。
   代表ドライバー1名のログインも同時に作成します。</p>
   <form method="post" action="{{ url_for('auth.vendor_register') }}" enctype="multipart/form-data">
     <h3>事業者情報</h3>
@@ -14,10 +14,17 @@
     <input type="tel" name="vendor_phone" inputmode="numeric" value="{{ form.vendor_phone or '' }}" required>
     <label>連絡用メール（任意）</label>
     <input type="email" name="email" value="{{ form.email or '' }}">
-    <label>公安委員会認定書（PDF / 画像） <span class="req">*</span></label>
-    <input type="file" name="cert" accept=".pdf,.png,.jpg,.jpeg,.webp" required>
-    <label>キャンセル料・料金に関する案内（任意）</label>
-    <textarea name="cancellation_policy" placeholder="例：確定後のキャンセルは1,000円を申し受けます">{{ form.cancellation_policy or '' }}</textarea>
+    <label>公安委員会認定書（PDF / 画像）（任意）</label>
+    <input type="file" name="cert" accept=".pdf,.png,.jpg,.jpeg,.webp">
+    <p class="hint" style="margin-top:0">※実テスト中は任意です。本番運用時はご提出をお願いします。</p>
+
+    <h3>料金に関する案内</h3>
+    <label>￥初乗り</label>
+    <input type="text" name="fare_base" value="{{ form.fare_base or '' }}" placeholder="例：2,000円（2kmまで）">
+    <label>￥追加</label>
+    <input type="text" name="fare_add" value="{{ form.fare_add or '' }}" placeholder="例：以降1kmごとに300円">
+    <label>￥その他</label>
+    <input type="text" name="fare_other" value="{{ form.fare_other or '' }}" placeholder="例：深夜割増・キャンセル料など">
 
     <label>対応するお支払い方法（任意・複数選択可）</label>
     <p class="hint" style="margin-top:0">選んだ方法はアイコンでお客様に表示されます（料金案内）。</p>

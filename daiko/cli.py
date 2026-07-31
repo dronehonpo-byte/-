@@ -28,9 +28,11 @@ def register_cli(app: Flask) -> None:
         from .seed import ensure_seed
         from .services import push
 
+        from .services import maintenance
         ensure_seed(app, demo=True)
         with app.app_context():
             push.ensure_schema()
+            maintenance.ensure_schema()
         click.echo("デモ/テストデータを投入しました。")
 
     @app.cli.command("seed-prod")
@@ -39,6 +41,7 @@ def register_cli(app: Flask) -> None:
         from .models import Admin
         from .services import push
 
+        from .services import maintenance
         db.create_all()
         admin_id = app.config["ADMIN_ID"]
         if Admin.query.filter_by(login_id=admin_id).first() is None:
@@ -47,6 +50,7 @@ def register_cli(app: Flask) -> None:
             db.session.add(admin)
             db.session.commit()
         push.ensure_schema()
+        maintenance.ensure_schema()
         click.echo("本番用の初期化が完了しました（管理者のみ）。")
 
     @app.cli.command("reset-data")

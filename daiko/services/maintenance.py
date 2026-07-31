@@ -10,6 +10,26 @@ from sqlalchemy import text
 from ..extensions import db
 
 
+def ensure_schema() -> None:
+    """既存テーブルに後から追加した列を冪等に補う（Postgres）。SQLiteはcreate_allで新規作成のため不要."""
+    from sqlalchemy import text
+
+    if db.engine.dialect.name != "postgresql":
+        return
+    stmts = [
+        "ALTER TABLE vendors ADD COLUMN IF NOT EXISTS fare_base VARCHAR(60)",
+        "ALTER TABLE vendors ADD COLUMN IF NOT EXISTS fare_add VARCHAR(60)",
+        "ALTER TABLE vendors ADD COLUMN IF NOT EXISTS fare_other VARCHAR(255)",
+    ]
+    try:
+        with db.engine.begin() as conn:
+            for s in stmts:
+                conn.execute(text(s))
+    except Exception:
+        from flask import current_app
+        current_app.logger.exception("vendor schema migration skipped")
+
+
 def purge_vendor(vendor_id: int) -> None:
     """1業者とその所属ドライバー・提示・通知・購読を削除する."""
     p = {"vid": vendor_id}

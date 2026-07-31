@@ -13,7 +13,11 @@
       </div>
       {% if v.cert_filename %}<a class="btn btn-outline small" href="{{ url_for('admin.vendor_cert', vendor_id=v.id) }}" target="_blank">認定書</a>{% endif %}
     </div>
-    {% if v.cancellation_policy %}<p class="small muted" style="margin-top:6px">キャンセル料: {{ v.cancellation_policy }}</p>{% endif %}
+    {% if v.fare_base or v.fare_add or v.fare_other %}
+    <div class="small muted" style="margin-top:6px">
+      料金案内：{% if v.fare_base %}初乗り {{ v.fare_base }}{% endif %}{% if v.fare_add %} ／ 追加 {{ v.fare_add }}{% endif %}{% if v.fare_other %} ／ その他 {{ v.fare_other }}{% endif %}
+    </div>
+    {% endif %}
     {% if v.payment_method_list %}<div class="small muted" style="margin-top:6px">対応支払い: {{ pay.badges(v.payment_method_list) }}</div>{% endif %}
     <div class="small" style="margin-top:8px">所属ドライバー:
       {% for d in v.drivers %}<span class="chip chip-info">{{ d.name }}（{{ d.phone }}）</span> {% else %}<span class="muted">なし</span>{% endfor %}

@@ -134,9 +134,13 @@ class Vendor(db.Model):
     name = db.Column(db.String(120), nullable=False)
     phone = db.Column(db.String(20), nullable=False)
     email = db.Column(db.String(120))
-    cert_filename = db.Column(db.String(255))  # 公安委員会認定書ファイル
+    cert_filename = db.Column(db.String(255))  # 公安委員会認定書ファイル（任意）
     status = db.Column(db.Enum(VendorStatus), default=VendorStatus.PENDING, nullable=False)
-    # キャンセル料・料金トラブル時の連絡など、業者ごとの料金ポリシー（自由記述）
+    # 料金に関する案内（固定3項目）
+    fare_base = db.Column(db.String(60))    # 初乗り
+    fare_add = db.Column(db.String(60))     # 追加
+    fare_other = db.Column(db.String(255))  # その他
+    # 旧：キャンセル料など自由記述（互換のため保持。新規登録では使用しない）
     cancellation_policy = db.Column(db.Text)
     # 対応お支払い方法（キーのカンマ区切り。例: "cash,visa,paypay"）
     payment_methods = db.Column(db.Text)

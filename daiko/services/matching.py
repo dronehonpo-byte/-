@@ -167,7 +167,7 @@ def add_entry(request_id: int, driver: Driver, price: int, eta_minutes: int, can
         vendor_id=driver.vendor_id,
         price=int(price),
         eta_minutes=int(eta_minutes),
-        cancellation_fee=cancellation_fee or (driver.vendor.cancellation_policy if driver.vendor else None),
+        cancellation_fee=cancellation_fee or (driver.vendor.fare_other if driver.vendor else None),
         status=EntryStatus.OFFERED,
     )
     db.session.add(entry)
