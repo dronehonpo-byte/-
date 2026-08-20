@@ -54,6 +54,19 @@ def healthz():
     return {"status": "ok"}, 200
 
 
+@bp.route("/healthz/db")
+def healthz_db():
+    """DB接続の疎通確認（原因切り分け用）."""
+    from sqlalchemy import text
+
+    try:
+        db.session.execute(text("SELECT 1"))
+        return {"db": "ok"}, 200
+    except Exception as e:  # 接続不可の実際のエラーを返す
+        db.session.rollback()
+        return {"db": "error", "detail": str(e)[:300]}, 503
+
+
 # ── PWA ──
 @bp.route("/manifest.webmanifest")  # 後方互換（?app=）
 @bp.route("/manifest.<app_kind>.webmanifest")  # 役割ごとに別URL（Androidで別アプリ認識されやすい）

@@ -58,6 +58,30 @@ def create_app(config_class: type | object = Config) -> Flask:
     app.register_blueprint(driver_bp)
     app.register_blueprint(admin_bp)
 
+    # DB接続エラー時は生の500ではなく分かりやすい案内を返す
+    # （context_processorがDBに触れて再度失敗しないよう、テンプレートを使わず素のHTMLを返す）
+    from sqlalchemy.exc import OperationalError, DBAPIError
+
+    @app.errorhandler(OperationalError)
+    @app.errorhandler(DBAPIError)
+    def _handle_db_error(err):
+        try:
+            db.session.rollback()
+        except Exception:
+            pass
+        html = (
+            "<!doctype html><html lang='ja'><head><meta charset='utf-8'>"
+            "<meta name='viewport' content='width=device-width, initial-scale=1'>"
+            "<title>一時的にご利用いただけません</title></head>"
+            "<body style='font-family:sans-serif;max-width:34em;margin:16vh auto;padding:0 24px;text-align:center;color:#16241d'>"
+            "<div style='font-size:44px'>🛠️</div>"
+            "<h1 style='font-size:20px;color:#0a5e34'>ただいま一時的にご利用いただけません</h1>"
+            "<p style='color:#5f7367;font-size:14px;line-height:1.8'>データベースに接続できませんでした。"
+            "お手数ですが、しばらく経ってから再度お試しください。<br>復旧までしばらくお待ちください。</p>"
+            "</body></html>"
+        )
+        return html, 503
+
     # テンプレートグローバル
     from .auth import current_admin, current_customer, current_driver
     from .models import (

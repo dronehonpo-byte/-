@@ -37,21 +37,27 @@ def register_cli(app: Flask) -> None:
 
     @app.cli.command("seed-prod")
     def seed_prod():
-        """本番用：管理者アカウントのみを冪等に用意（デモ業者・客は作らない）."""
-        from .models import Admin
-        from .services import push
+        """本番用：管理者アカウントのみを冪等に用意（デモ業者・客は作らない）.
 
-        from .services import maintenance
-        db.create_all()
-        admin_id = app.config["ADMIN_ID"]
-        if Admin.query.filter_by(login_id=admin_id).first() is None:
-            admin = Admin(login_id=admin_id)
-            admin.set_password(app.config["ADMIN_PASSWORD"] or "adminpass")
-            db.session.add(admin)
-            db.session.commit()
-        push.ensure_schema()
-        maintenance.ensure_schema()
-        click.echo("本番用の初期化が完了しました（管理者のみ）。")
+        DBが一時的に接続不可でもデプロイを止めないよう、失敗しても警告だけ出して継続する。
+        """
+        from .models import Admin
+        from .services import maintenance, push
+
+        try:
+            db.create_all()
+            admin_id = app.config["ADMIN_ID"]
+            if Admin.query.filter_by(login_id=admin_id).first() is None:
+                admin = Admin(login_id=admin_id)
+                admin.set_password(app.config["ADMIN_PASSWORD"] or "adminpass")
+                db.session.add(admin)
+                db.session.commit()
+            push.ensure_schema()
+            maintenance.ensure_schema()
+            click.echo("本番用の初期化が完了しました（管理者のみ）。")
+        except Exception as e:  # DB未接続でもデプロイは通す
+            db.session.rollback()
+            click.echo(f"[警告] DB初期化をスキップしました（DBに接続できない可能性）: {e}")
 
     @app.cli.command("reset-data")
     def reset_data():
