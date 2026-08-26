@@ -1,0 +1,27 @@
+name: Deploy web preview to GitHub Pages
+
+on:
+  push:
+    branches: [claude/kids-habit-ios-app-qzmcwt]
+    paths: ["KidsHabitWeb/**", ".github/workflows/deploy-web-preview.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Publish KidsHabitWeb to gh-pages branch
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./KidsHabitWeb
+          destination_dir: kids
+          keep_files: true
