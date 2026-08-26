@@ -31,12 +31,12 @@
   </div>
   <script src="https://cdn.jsdelivr.net/npm/@stlite/mountable@0.75.0/build/stlite.js"></script>
   <script>
-    const BASE = "https://cdn.jsdelivr.net/gh/dronehonpo-byte/-@e190a965b585257f2347dc80a57187c36d7b6572/sem_easy/";
+    const BASE = "https://cdn.jsdelivr.net/gh/dronehonpo-byte/-@60075481904a2d58740e4b3dd7e31e3ac3e6fe62/sem_easy/";
     const PATHS = ["app.py", "users.json", "modules/__init__.py", "modules/common.py", "modules/auth.py", "modules/data_loader.py", "modules/scales.py", "modules/model_spec.py", "modules/fitindices.py", "modules/estimator.py", "modules/candidates.py", "modules/pathdiagram.py", "modules/interpret.py", "modules/reproduce.py", "exporters/__init__.py", "exporters/tables.py", "exporters/excel_exporter.py", "exporters/word_exporter.py", "exporters/pdf_exporter.py", "pages/00_home.py", "pages/01_data.py", "pages/02_check.py", "pages/03_model.py", "pages/04_estimate.py", "pages/05_result.py", "sample_data/sample_cfa_正常例.csv", "sample_data/sample_媒介モデル.csv", "sample_data/sample_順序尺度_5件法.csv", "sample_data/sample_欠損あり.csv", "sample_data/sample_問題データ.csv", "assets/fonts/ipaexg.ttf", ".streamlit/config.toml"];
     const files = {};
     for (const p of PATHS) { files[p] = { url: BASE + encodeURI(p) }; }
     stlite.mount(
-      { requirements: ["numpy", "pandas", "scipy", "statsmodels", "scikit-learn", "sympy", "matplotlib", "openpyxl", "python-docx", "chardet", "https://cdn.jsdelivr.net/gh/dronehonpo-byte/-@e190a965b585257f2347dc80a57187c36d7b6572/sem_easy/web/wheels/numdifftools-0.10.1-py3-none-any.whl", "https://cdn.jsdelivr.net/gh/dronehonpo-byte/-@e190a965b585257f2347dc80a57187c36d7b6572/sem_easy/web/wheels/semopy-2.3.11-py3-none-any.whl"], entrypoint: "app.py", files: files },
+      { requirements: ["numpy", "pandas", "scipy", "statsmodels", "scikit-learn", "sympy", "matplotlib", "openpyxl", "python-docx", "chardet", "https://cdn.jsdelivr.net/gh/dronehonpo-byte/-@60075481904a2d58740e4b3dd7e31e3ac3e6fe62/sem_easy/web/wheels/semopy-2.3.11-py3-none-any.whl"], entrypoint: "app.py", files: files },
       document.getElementById("root")
     );
   </script>
