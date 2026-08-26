@@ -1,0 +1,16 @@
+{
+  "name": "violin-omr-service",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Audiveris(OSS) をラップした楽譜認識サービス（スキャン→MusicXML）",
+  "main": "server.mjs",
+  "scripts": {
+    "start": "node server.mjs"
+  },
+  "dependencies": {
+    "express": "^4.21.1",
+    "image-size": "^1.1.1",
+    "multer": "^1.4.5-lts.1"
+  }
+}
