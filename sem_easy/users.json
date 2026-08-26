@@ -1,0 +1,20 @@
+{
+  "doi": {
+    "hash": "78c44bb2d8a3af1d4f714d645e482a6bcf2f413206c94eebc81c4fbaa74b1aff",
+    "salt": "876f06a7859913f523aaf8e32f1267b1",
+    "display_name": "土居拓務",
+    "created_at": "2026-08-26T15:28:21+09:00",
+    "expires": null,
+    "failures": 0,
+    "locked_until": null
+  },
+  "miyabee": {
+    "hash": "b894e1e62804764e5b39516e32d7e9d3255d5b7aab1230ebd22dc01bfcdbc880",
+    "salt": "68e7e94f16920f547291bddaa5cdfec8",
+    "display_name": "株式会社Miyabee（管理用）",
+    "created_at": "2026-08-26T15:28:21+09:00",
+    "expires": null,
+    "failures": 0,
+    "locked_until": null
+  }
+}
