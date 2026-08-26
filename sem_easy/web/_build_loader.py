@@ -40,6 +40,13 @@ PATHS = [
     ".streamlit/config.toml",
 ]
 
+# ブラウザ版のみに配置する追加ファイル（仮想パス -> リポジトリ上のパス）。
+# .preview_mode を置くことでログインを省略した動作確認ができる。
+# 納品するパソコン版にはこのファイルが無いため、認証が必須のまま維持される。
+EXTRA_FILES = {
+    ".preview_mode": "web/preview_flag.txt",
+}
+
 # Pyodide が標準で提供するパッケージのみを指定する。
 # （reportlab は Pyodide 非対応のため入れない。PDF 出力は画面側で無効化される）
 BASE_REQUIREMENTS = [
@@ -64,6 +71,7 @@ STLITE_VERSION = "0.75.0"
 def build(commit: str = DEFAULT_COMMIT) -> None:
     base = f"https://cdn.jsdelivr.net/gh/{REPO}@{commit}/sem_easy/"
     reqs = BASE_REQUIREMENTS + [base + w for w in WHEELS]
+    extra_json = json.dumps(EXTRA_FILES, ensure_ascii=False)
     html = f"""<!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -101,6 +109,10 @@ def build(commit: str = DEFAULT_COMMIT) -> None:
     const PATHS = {json.dumps(PATHS, ensure_ascii=False)};
     const files = {{}};
     for (const p of PATHS) {{ files[p] = {{ url: BASE + encodeURI(p) }}; }}
+    const EXTRA = {extra_json};
+    for (const [vpath, rpath] of Object.entries(EXTRA)) {{
+      files[vpath] = {{ url: BASE + encodeURI(rpath) }};
+    }}
     stlite.mount(
       {{ requirements: {json.dumps(reqs)}, entrypoint: "app.py", files: files }},
       document.getElementById("root")

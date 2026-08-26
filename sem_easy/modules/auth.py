@@ -21,18 +21,48 @@ JST = timezone(timedelta(hours=9))
 
 USERS_FILE = Path(__file__).resolve().parent.parent / "users.json"
 
+# 動作確認用のプレビューモード。
+# このファイルが存在する場合のみ、ログインを省略して中身を確認できる。
+# 納品するパソコン版には含めないため、通常は ID・パスワード認証が必須となる。
+PREVIEW_FLAG = Path(__file__).resolve().parent.parent / ".preview_mode"
+
 PBKDF2_ROUNDS = 200_000
 MAX_FAILURES = 5           # この回数を超えるとロック
 LOCK_MINUTES = 15          # ロック時間（分）
 SESSION_HOURS = 8          # セッション有効時間
 
 
+def _pbkdf2_pure(password: bytes, salt: bytes, rounds: int) -> bytes:
+    """PBKDF2-HMAC-SHA256 の純 Python 実装（32バイト出力）。
+
+    ブラウザ実行環境（Pyodide）では hashlib.pbkdf2_hmac が提供されないため、
+    その場合の代替として用いる。出力は hashlib.pbkdf2_hmac と完全に一致する。
+    """
+    u = hmac.new(password, salt + b"\x00\x00\x00\x01", hashlib.sha256).digest()
+    out = bytearray(u)
+    for _ in range(rounds - 1):
+        u = hmac.new(password, u, hashlib.sha256).digest()
+        for i in range(len(out)):
+            out[i] ^= u[i]
+    return bytes(out)
+
+
+def _pbkdf2(password: bytes, salt: bytes, rounds: int) -> bytes:
+    """環境に応じて PBKDF2 を実行する（結果はどちらでも同一）。"""
+    fn = getattr(hashlib, "pbkdf2_hmac", None)
+    if fn is not None:
+        try:
+            return fn("sha256", password, salt, rounds)
+        except (ValueError, TypeError):
+            pass
+    return _pbkdf2_pure(password, salt, rounds)
+
+
 def hash_password(password: str, salt: str | None = None) -> tuple[str, str]:
     """パスワードをハッシュ化する。平文は保存しない。"""
     if salt is None:
         salt = secrets.token_hex(16)
-    dk = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"),
-                             bytes.fromhex(salt), PBKDF2_ROUNDS)
+    dk = _pbkdf2(password.encode("utf-8"), bytes.fromhex(salt), PBKDF2_ROUNDS)
     return dk.hex(), salt
 
 
@@ -168,9 +198,26 @@ def logout() -> None:
             del st.session_state[k]
 
 
+def preview_mode() -> bool:
+    """ログインを省略する動作確認モードかどうか。"""
+    return PREVIEW_FLAG.exists()
+
+
 def require_login() -> str:
     """未ログインならログイン画面を表示して停止する。全ページの先頭で呼ぶ。"""
     import streamlit as st
+
+    # 動作確認用プレビュー：ログインを省略し、その旨を明示する
+    if preview_mode():
+        if not st.session_state.get("auth_user"):
+            st.session_state["auth_user"] = "preview"
+            st.session_state["auth_started_at"] = _now().isoformat(timespec="seconds")
+        st.info(
+            "**動作確認用プレビュー版です。**（ログインを省略しています）"
+            "　実際にお使いいただく版では、ID とパスワードの入力が必要になります。",
+            icon="👀",
+        )
+        return "preview"
 
     uid = current_user()
     if uid:

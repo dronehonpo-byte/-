@@ -107,3 +107,41 @@ def test_user_data_separation():
     """利用者ごとにセッションのキーが分離されること。"""
     assert auth.session_key("a", "df") != auth.session_key("b", "df")
     assert auth.session_key("a", "df").startswith("u::a::")
+
+
+# ---------- プレビューモード（ログイン省略）----------
+
+def test_preview_mode_off_by_default():
+    """通常（納品版）はプレビューモードではなく、認証が必須であること。"""
+    assert not auth.preview_mode(), "リポジトリに .preview_mode を含めてはいけません"
+
+
+def test_preview_mode_skips_login(tmp_path, monkeypatch):
+    """プレビュー用の目印ファイルがある場合のみログインを省略すること。"""
+    flag = tmp_path / ".preview_mode"
+    monkeypatch.setattr(auth, "PREVIEW_FLAG", flag)
+    assert not auth.preview_mode()
+    flag.write_text("preview", encoding="utf-8")
+    assert auth.preview_mode()
+
+
+def test_pbkdf2_pure_matches_stdlib():
+    """純 Python 実装が標準ライブラリと同じ結果になること。
+
+    ブラウザ実行環境には hashlib.pbkdf2_hmac が無いため代替実装を用いるが、
+    両者で同じハッシュになる必要がある（同じパスワードで認証できるため）。
+    """
+    import hashlib
+
+    pw, salt = b"SEM0703", bytes.fromhex("ab" * 16)
+    expected = hashlib.pbkdf2_hmac("sha256", pw, salt, auth.PBKDF2_ROUNDS)
+    assert auth._pbkdf2_pure(pw, salt, auth.PBKDF2_ROUNDS) == expected
+
+
+def test_pbkdf2_wrapper_falls_back(monkeypatch):
+    """pbkdf2_hmac が無い環境でもハッシュ化できること。"""
+    import hashlib
+
+    expected = auth._pbkdf2(b"pw", bytes.fromhex("cd" * 16), 1000)
+    monkeypatch.delattr(hashlib, "pbkdf2_hmac", raising=False)
+    assert auth._pbkdf2(b"pw", bytes.fromhex("cd" * 16), 1000) == expected
