@@ -40,13 +40,21 @@ PATHS = [
     ".streamlit/config.toml",
 ]
 
-# Pyodide 標準で入るもの。semopy と numdifftools は同梱ホイールから導入する。
+# Pyodide が標準で提供するパッケージのみを指定する。
+# （reportlab は Pyodide 非対応のため入れない。PDF 出力は画面側で無効化される）
 BASE_REQUIREMENTS = [
     "numpy", "pandas", "scipy", "statsmodels", "scikit-learn",
     "sympy", "matplotlib", "openpyxl", "python-docx", "chardet",
 ]
+
+# semopy は Pyodide にホイールが無いため同梱ホイールから導入する。
+# このホイールは numdifftools への依存を取り除いてある。
+#   理由：numdifftools が numpy>=2.0 を要求するため、micropip が Pyodide 同梱の
+#   numpy ではなく PyPI の numpy を探しに行き、
+#   「Can't find a pure Python 3 wheel for: numpy」で起動に失敗する。
+#   semopy は numdifftools を関数内でしか import しておらず、本アプリが使う
+#   Model / calc_stats では不要であることをテストで確認済み。
 WHEELS = [
-    "web/wheels/numdifftools-0.10.1-py3-none-any.whl",
     "web/wheels/semopy-2.3.11-py3-none-any.whl",
 ]
 
