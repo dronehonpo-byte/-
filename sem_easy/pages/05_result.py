@@ -137,16 +137,31 @@ with tab_out:
         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         use_container_width=True,
     )
-    c2.download_button(
-        "Word（レポート）", word_exporter.export(res, tb, images=images),
-        "sem_report.docx",
-        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-        use_container_width=True,
-    )
-    c3.download_button(
-        "PDF（レポート）", pdf_exporter.export(res, tb, images=images),
-        "sem_report.pdf", "application/pdf", use_container_width=True,
-    )
+    try:
+        c2.download_button(
+            "Word（レポート）", word_exporter.export(res, tb, images=images),
+            "sem_report.docx",
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            use_container_width=True,
+        )
+    except Exception:  # noqa: BLE001
+        with c2:
+            st.button("Word（レポート）", disabled=True, use_container_width=True)
+            st.caption("この環境では Word を作成できません。")
+    # PDF はブラウザ実行版では利用できない場合があるため、失敗しても他の出力を妨げない
+    try:
+        pdf_bytes = pdf_exporter.export(res, tb, images=images)
+        c3.download_button(
+            "PDF（レポート）", pdf_bytes,
+            "sem_report.pdf", "application/pdf", use_container_width=True,
+        )
+    except Exception:  # noqa: BLE001
+        with c3:
+            st.button("PDF（レポート）", disabled=True, use_container_width=True)
+            st.caption(
+                "この環境では PDF を作成できません。"
+                "Excel / Word をご利用いただくか、パソコン版をお使いください。"
+            )
 
     st.divider()
     st.markdown("**分析条件（保存・再現のため）**")
